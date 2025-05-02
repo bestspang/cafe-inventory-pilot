@@ -6,15 +6,17 @@ import LoadingScreen from '@/components/layout/LoadingScreen';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
+    if (loading) return; // Wait for auth to be determined
+    
     if (isAuthenticated) {
       navigate('/dashboard');
     } else {
       navigate('/login');
     }
-  }, [navigate, isAuthenticated]);
+  }, [navigate, isAuthenticated, loading]);
 
   return <LoadingScreen />;
 };
