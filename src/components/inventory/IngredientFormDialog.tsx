@@ -71,7 +71,7 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
       defaultReorderPoint: ingredient.defaultReorderPoint
     } : {
       name: '',
-      categoryId: '',
+      categoryId: categories.length > 0 ? categories[0].id : '',
       unit: '',
       defaultReorderPoint: 10
     }
@@ -117,7 +117,7 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a category" />

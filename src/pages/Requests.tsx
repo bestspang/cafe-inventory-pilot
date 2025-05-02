@@ -115,7 +115,7 @@ const Requests = () => {
   
   // Initialize state from URL parameters
   const initialStatus = searchParams.get('status') || 'all';
-  const initialBranch = searchParams.get('branch') || (user?.role === 'owner' ? '' : user?.branchId || '');
+  const initialBranch = searchParams.get('branch') || (user?.role === 'owner' ? 'all' : user?.branchId || 'all');
   
   const [status, setStatus] = useState<'all' | 'pending' | 'fulfilled'>(initialStatus as any);
   const [selectedBranch, setSelectedBranch] = useState(initialBranch);
@@ -130,7 +130,7 @@ const Requests = () => {
     }
     
     // Filter by selected branch
-    if (selectedBranch && request.branchId !== selectedBranch) {
+    if (selectedBranch && selectedBranch !== 'all' && request.branchId !== selectedBranch) {
       return false;
     }
     
@@ -211,7 +211,7 @@ const Requests = () => {
                   <SelectValue placeholder="All Branches" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Branches</SelectItem>
+                  <SelectItem value="all">All Branches</SelectItem>
                   {availableBranches.map(branch => (
                     <SelectItem key={branch.id} value={branch.id}>
                       {branch.name}

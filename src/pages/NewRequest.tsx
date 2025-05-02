@@ -197,7 +197,7 @@ const NewRequest = () => {
                     <FormLabel>Branch</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
-                      defaultValue={field.value}
+                      defaultValue={field.value || (availableBranches.length > 0 ? availableBranches[0].id : undefined)}
                       disabled={user?.role !== 'owner'}
                     >
                       <FormControl>
@@ -229,7 +229,7 @@ const NewRequest = () => {
                     <div>
                       <FormLabel htmlFor={`ingredient-${item.id}`}>Ingredient</FormLabel>
                       <Select
-                        value={item.ingredientId}
+                        value={item.ingredientId || undefined}
                         onValueChange={(value) => updateItem(item.id, 'ingredientId', value)}
                       >
                         <SelectTrigger id={`ingredient-${item.id}`}>
