@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,6 @@ const LoginForm: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const { login, loading } = useAuth();
   const navigate = useNavigate();
-  const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,11 +43,6 @@ const LoginForm: React.FC = () => {
   const fillDemoCredentials = (demoEmail: string) => {
     setEmail(demoEmail);
     setPassword('password123');
-    
-    // Auto-submit after a short delay to allow state to update
-    setTimeout(() => {
-      formRef.current?.requestSubmit();
-    }, 200);
   };
 
   return (
@@ -69,7 +63,7 @@ const LoginForm: React.FC = () => {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <form onSubmit={handleSubmit} ref={formRef}>
+        <form onSubmit={handleSubmit}>
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
@@ -108,7 +102,7 @@ const LoginForm: React.FC = () => {
                   onClick={() => fillDemoCredentials('owner@cafeapp.com')}
                 >
                   <User className="mr-2" size={14} />
-                  <span className="font-medium">Owner Demo</span>
+                  <span className="font-medium">Owner</span>
                   <span className="ml-auto text-xs text-muted-foreground">owner@cafeapp.com</span>
                 </Button>
                 <Button 
@@ -118,7 +112,7 @@ const LoginForm: React.FC = () => {
                   onClick={() => fillDemoCredentials('manager@cafeapp.com')}
                 >
                   <User className="mr-2" size={14} />
-                  <span className="font-medium">Manager Demo</span>
+                  <span className="font-medium">Manager</span>
                   <span className="ml-auto text-xs text-muted-foreground">manager@cafeapp.com</span>
                 </Button>
                 <Button 
@@ -128,7 +122,7 @@ const LoginForm: React.FC = () => {
                   onClick={() => fillDemoCredentials('staff@cafeapp.com')}
                 >
                   <User className="mr-2" size={14} />
-                  <span className="font-medium">Staff Demo</span>
+                  <span className="font-medium">Staff</span>
                   <span className="ml-auto text-xs text-muted-foreground">staff@cafeapp.com</span>
                 </Button>
               </div>
