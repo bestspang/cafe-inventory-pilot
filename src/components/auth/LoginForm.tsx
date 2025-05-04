@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,15 +9,22 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/components/ui/sonner';
 import { User, Key } from 'lucide-react';
+import { useDemoMode } from '@/context/DemoModeContext';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [autoSubmitting, setAutoSubmitting] = useState(false);
   const { login, loading } = useAuth();
+  const { isDemoMode } = useDemoMode();
   const navigate = useNavigate();
 
+  // Auto-submit timer reference
+  const autoSubmitTimerRef = React.useRef<number | null>(null);
+
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -40,6 +47,38 @@ const LoginForm: React.FC = () => {
     }
   };
 
+  // Fill demo credentials and auto-submit after delay
+  const fillAndSubmitDemoCredentials = (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword('password123');
+    
+    // Clear any existing timer
+    if (autoSubmitTimerRef.current) {
+      window.clearTimeout(autoSubmitTimerRef.current);
+    }
+    
+    setAutoSubmitting(true);
+    
+    // Auto-submit after 200ms delay
+    autoSubmitTimerRef.current = window.setTimeout(() => {
+      const form = document.querySelector('form');
+      if (form) {
+        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      }
+      setAutoSubmitting(false);
+    }, 200);
+  };
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSubmitTimerRef.current) {
+        window.clearTimeout(autoSubmitTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Just fill credentials without auto-submit
   const fillDemoCredentials = (demoEmail: string) => {
     setEmail(demoEmail);
     setPassword('password123');
@@ -86,8 +125,8 @@ const LoginForm: React.FC = () => {
                 required
               />
             </div>
-            <Button type="submit" disabled={loading} className="mt-2">
-              {loading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
+            <Button type="submit" disabled={loading || autoSubmitting} className="mt-2">
+              {loading || autoSubmitting ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
             </Button>
             
             <div className="text-sm text-muted-foreground mt-2">
@@ -99,7 +138,7 @@ const LoginForm: React.FC = () => {
                   variant="outline" 
                   size="sm" 
                   className="w-full justify-start"
-                  onClick={() => fillDemoCredentials('owner@cafeapp.com')}
+                  onClick={() => isDemoMode ? fillAndSubmitDemoCredentials('owner@cafeapp.com') : fillDemoCredentials('owner@cafeapp.com')}
                 >
                   <User className="mr-2" size={14} />
                   <span className="font-medium">Owner</span>
@@ -109,7 +148,7 @@ const LoginForm: React.FC = () => {
                   variant="outline" 
                   size="sm" 
                   className="w-full justify-start"
-                  onClick={() => fillDemoCredentials('manager@cafeapp.com')}
+                  onClick={() => isDemoMode ? fillAndSubmitDemoCredentials('manager@cafeapp.com') : fillDemoCredentials('manager@cafeapp.com')}
                 >
                   <User className="mr-2" size={14} />
                   <span className="font-medium">Manager</span>
@@ -119,7 +158,7 @@ const LoginForm: React.FC = () => {
                   variant="outline" 
                   size="sm" 
                   className="w-full justify-start"
-                  onClick={() => fillDemoCredentials('staff@cafeapp.com')}
+                  onClick={() => isDemoMode ? fillAndSubmitDemoCredentials('staff@cafeapp.com') : fillDemoCredentials('staff@cafeapp.com')}
                 >
                   <User className="mr-2" size={14} />
                   <span className="font-medium">Staff</span>
