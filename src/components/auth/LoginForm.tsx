@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,8 +15,21 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [autoSubmitting, setAutoSubmitting] = useState(false);
   const { login, loading } = useAuth();
   const navigate = useNavigate();
+  const formRef = React.useRef<HTMLFormElement>(null);
+
+  // Handle auto-submit when demo credentials are filled
+  useEffect(() => {
+    if (autoSubmitting && formRef.current) {
+      const timer = setTimeout(() => {
+        formRef.current?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        setAutoSubmitting(false);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [autoSubmitting]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +56,7 @@ const LoginForm: React.FC = () => {
   const fillDemoCredentials = (demoEmail: string) => {
     setEmail(demoEmail);
     setPassword('password123');
+    setAutoSubmitting(true); // Trigger auto-submit
   };
 
   return (
@@ -63,7 +77,7 @@ const LoginForm: React.FC = () => {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <form onSubmit={handleSubmit}>
+        <form ref={formRef} onSubmit={handleSubmit}>
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>

@@ -1,10 +1,12 @@
 
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { seedDemoData } from "@/utils/seedDemoData";
 
 // Layout
 import AppLayout from "./components/layout/AppLayout";
@@ -20,44 +22,52 @@ import Requests from "./pages/Requests";
 import NewRequest from "./pages/NewRequest";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import NotFound from "./pages/NotFound";
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            
-            <Route path="/" element={<AppLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="inventory" element={<Inventory />} />
-              <Route path="stock-check" element={<StockCheck />} />
-              <Route path="requests" element={<Requests />} />
-              <Route path="requests/new" element={<NewRequest />} />
+const App = () => {
+  // Seed demo data on app initialization
+  useEffect(() => {
+    seedDemoData().catch(console.error);
+  }, []);
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<Index />} />
               
-              {/* Coming Soon Pages */}
-              <Route path="suppliers" element={<ComingSoonPage />} />
-              <Route path="purchase-orders" element={<ComingSoonPage />} />
-              <Route path="branches" element={<ComingSoonPage />} />
-              <Route path="reports" element={<ComingSoonPage />} />
-              <Route path="users" element={<ComingSoonPage />} />
-              <Route path="settings" element={<ComingSoonPage />} />
-              <Route path="profile" element={<ComingSoonPage />} />
-              
-              {/* Catch-all for other routes */}
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+              <Route path="/" element={<AppLayout />}>
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="inventory" element={<Inventory />} />
+                <Route path="stock-check" element={<StockCheck />} />
+                <Route path="requests" element={<Requests />} />
+                <Route path="requests/new" element={<NewRequest />} />
+                
+                {/* Coming Soon Pages */}
+                <Route path="suppliers" element={<ComingSoonPage />} />
+                <Route path="purchase-orders" element={<ComingSoonPage />} />
+                <Route path="branches" element={<ComingSoonPage />} />
+                <Route path="reports" element={<ComingSoonPage />} />
+                <Route path="users" element={<ComingSoonPage />} />
+                <Route path="settings" element={<ComingSoonPage />} />
+                <Route path="profile" element={<ComingSoonPage />} />
+                
+                {/* Catch-all for other routes */}
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
