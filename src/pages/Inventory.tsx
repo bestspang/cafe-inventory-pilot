@@ -88,7 +88,7 @@ const Inventory = () => {
   const { toast } = useToast();
   const [ingredients, setIngredients] = useState(mockIngredients);
   const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -100,7 +100,7 @@ const Inventory = () => {
   // Filter ingredients based on search and category
   const filteredIngredients = ingredients.filter(ingredient => {
     const matchesSearch = ingredient.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = categoryFilter ? ingredient.categoryId === categoryFilter : true;
+    const matchesCategory = categoryFilter === 'all' ? true : ingredient.categoryId === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
@@ -200,7 +200,7 @@ const Inventory = () => {
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               {mockCategories.map(category => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
@@ -235,7 +235,7 @@ const Inventory = () => {
       ) : (
         <div className="text-center py-12 border border-dashed rounded-lg">
           <p className="text-muted-foreground">No ingredients found.</p>
-          {search || categoryFilter ? (
+          {search || categoryFilter !== 'all' ? (
             <p className="text-sm mt-2">
               Try adjusting your search or filter criteria.
             </p>
