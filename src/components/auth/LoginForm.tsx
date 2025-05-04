@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/components/ui/sonner';
+import { User, Key } from 'lucide-react';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -37,6 +38,11 @@ const LoginForm: React.FC = () => {
       setError(err.message || 'Authentication failed');
       console.error('Login error:', err);
     }
+  };
+
+  const fillDemoCredentials = (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword('password123');
   };
 
   return (
@@ -85,22 +91,40 @@ const LoginForm: React.FC = () => {
             </Button>
             
             <div className="text-sm text-muted-foreground mt-2">
-              <p className="text-center">
-                Demo Accounts:
+              <p className="text-center font-medium mb-2">
+                Demo Accounts
               </p>
-              <div className="flex flex-col gap-1 mt-2 text-xs">
-                <div className="flex justify-between">
-                  <span>Email: owner@cafeapp.com</span>
-                  <span>Password: password123</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Email: manager@cafeapp.com</span>
-                  <span>Password: password123</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Email: staff@cafeapp.com</span>
-                  <span>Password: password123</span>
-                </div>
+              <div className="grid gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-start"
+                  onClick={() => fillDemoCredentials('owner@cafeapp.com')}
+                >
+                  <User className="mr-2" size={14} />
+                  <span className="font-medium">Owner</span>
+                  <span className="ml-auto text-xs text-muted-foreground">owner@cafeapp.com</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-start"
+                  onClick={() => fillDemoCredentials('manager@cafeapp.com')}
+                >
+                  <User className="mr-2" size={14} />
+                  <span className="font-medium">Manager</span>
+                  <span className="ml-auto text-xs text-muted-foreground">manager@cafeapp.com</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-start"
+                  onClick={() => fillDemoCredentials('staff@cafeapp.com')}
+                >
+                  <User className="mr-2" size={14} />
+                  <span className="font-medium">Staff</span>
+                  <span className="ml-auto text-xs text-muted-foreground">staff@cafeapp.com</span>
+                </Button>
               </div>
             </div>
           </div>
