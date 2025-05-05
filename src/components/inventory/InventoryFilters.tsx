@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Category } from '@/types';
-import { ViewMode } from '@/hooks/useInventory';
+import { ViewMode } from '@/types/inventory';
 
 interface InventoryFiltersProps {
   search: string;

@@ -1,185 +1,50 @@
+
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
-import { Ingredient, Category } from '@/types';
-import { StockItem } from '@/types/stock-check';
+import { Ingredient } from '@/types';
+import { ViewMode } from '@/types/inventory';
+import { useCategoryManager } from './inventory/useCategoryManager';
+import { useIngredientManager } from './inventory/useIngredientManager';
+import { useFilterManager } from './inventory/useFilterManager';
 
-// Mock data for demo purposes
-const mockCategories: Category[] = [
-  { id: '1', name: 'Dairy' },
-  { id: '2', name: 'Produce' },
-  { id: '3', name: 'Coffee & Tea' },
-  { id: '4', name: 'Bakery' },
-  { id: '5', name: 'Packaging' }
-];
-
-const mockIngredients: StockItem[] = [
-  { 
-    id: '1', 
-    name: 'Coffee Beans', 
-    categoryId: '3', 
-    categoryName: 'Coffee & Tea',
-    unit: 'kg', 
-    defaultReorderPoint: 5,
-    onHandQty: 8
-  },
-  { 
-    id: '2', 
-    name: 'Whole Milk', 
-    categoryId: '1',
-    categoryName: 'Dairy', 
-    unit: 'liter', 
-    defaultReorderPoint: 10,
-    onHandQty: 6
-  },
-  { 
-    id: '3', 
-    name: 'Avocado', 
-    categoryId: '2',
-    categoryName: 'Produce', 
-    unit: 'pcs', 
-    defaultReorderPoint: 15,
-    onHandQty: 4
-  },
-  { 
-    id: '4', 
-    name: 'Croissant', 
-    categoryId: '4',
-    categoryName: 'Bakery', 
-    unit: 'pcs', 
-    defaultReorderPoint: 20,
-    onHandQty: 12
-  },
-  { 
-    id: '5', 
-    name: 'To-Go Cups (12oz)', 
-    categoryId: '5',
-    categoryName: 'Packaging', 
-    unit: 'box', 
-    defaultReorderPoint: 3,
-    onHandQty: 1
-  },
-];
-
-export type ViewMode = 'grid' | 'list';
+export { ViewMode };
 
 export const useInventory = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [ingredients, setIngredients] = useState<StockItem[]>(mockIngredients);
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [currentIngredient, setCurrentIngredient] = useState<Ingredient | undefined>(undefined);
   
   // Only owners and managers can modify ingredients
   const canModify = ['owner', 'manager'].includes(user?.role || '');
+  
+  // Use our smaller, focused hooks
+  const { categories, handleNewCategory } = useCategoryManager();
+  const { 
+    ingredients, 
+    currentIngredient, 
+    setCurrentIngredient, 
+    handleAddEdit,
+    handleEdit,
+    handleDelete,
+    confirmDelete
+  } = useIngredientManager(setFormDialogOpen, setDeleteDialogOpen);
+  const {
+    search,
+    setSearch,
+    categoryFilter,
+    setCategoryFilter,
+    viewMode,
+    setViewMode,
+    filterIngredients,
+    hasFilters
+  } = useFilterManager();
 
-  // Filter ingredients based on search and category
-  const filteredIngredients = ingredients.filter(ingredient => {
-    const matchesSearch = ingredient.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' ? true : ingredient.categoryId === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  // Apply filters to ingredients
+  const filteredIngredients = filterIngredients(ingredients);
 
-  const handleAddEdit = (data: Partial<Ingredient>) => {
-    // Check if categoryId starts with 'new-', indicating a new category
-    if (data.categoryId && data.categoryId.startsWith('new-')) {
-      // Extract the category name from our temporary categories
-      const newCategoryName = categories.find(c => c.id === data.categoryId)?.name;
-      
-      if (newCategoryName) {
-        // Create a "real" category with a non-temporary ID
-        const newCategory = {
-          id: Date.now().toString(),
-          name: newCategoryName
-        };
-        
-        // Update our categories state
-        setCategories(prev => {
-          // Filter out the temporary category and add the new one
-          const filtered = prev.filter(c => c.id !== data.categoryId);
-          return [...filtered, newCategory];
-        });
-        
-        // Update the data object with the new category ID
-        data.categoryId = newCategory.id;
-        
-        toast({
-          title: "Category created",
-          description: `${newCategoryName} has been added as a new category.`
-        });
-      }
-    }
-
-    if (currentIngredient) {
-      // Edit existing ingredient
-      setIngredients(prev => 
-        prev.map(item => 
-          item.id === currentIngredient.id 
-            ? { 
-                ...item, 
-                ...data,
-                categoryName: categories.find(c => c.id === data.categoryId)?.name || item.categoryName
-              } 
-            : item
-        )
-      );
-      
-      toast({
-        title: "Ingredient updated",
-        description: `${data.name} has been updated successfully.`
-      });
-    } else {
-      // Add new ingredient
-      const newIngredient = {
-        id: Date.now().toString(),
-        name: data.name!,
-        categoryId: data.categoryId!,
-        categoryName: categories.find(c => c.id === data.categoryId)?.name || '',
-        unit: data.unit!,
-        defaultReorderPoint: data.defaultReorderPoint!,
-        onHandQty: 0
-      };
-      
-      setIngredients(prev => [...prev, newIngredient]);
-      
-      toast({
-        title: "Ingredient added",
-        description: `${data.name} has been added to your inventory.`
-      });
-    }
-    
-    setCurrentIngredient(undefined);
-  };
-
-  const handleEdit = (ingredient: Ingredient) => {
-    setCurrentIngredient(ingredient);
-    setFormDialogOpen(true);
-  };
-
-  const handleDelete = (ingredient: Ingredient) => {
-    setCurrentIngredient(ingredient);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (currentIngredient) {
-      setIngredients(prev => prev.filter(item => item.id !== currentIngredient.id));
-      
-      toast({
-        title: "Ingredient deleted",
-        description: `${currentIngredient.name} has been removed from your inventory.`,
-        variant: "destructive"
-      });
-      
-      setCurrentIngredient(undefined);
-      setDeleteDialogOpen(false);
-    }
+  // Wrapper for handleAddEdit to include category creation
+  const handleAddEditIngredient = (data: Partial<Ingredient>) => {
+    handleAddEdit(data, categories, handleNewCategory);
   };
 
   return {
@@ -198,10 +63,10 @@ export const useInventory = () => {
     setCurrentIngredient,
     canModify,
     categories,
-    handleAddEdit,
+    handleAddEdit: handleAddEditIngredient,
     handleEdit,
     handleDelete,
     confirmDelete,
-    hasFilters: search !== '' || categoryFilter !== 'all'
+    hasFilters
   };
 };
