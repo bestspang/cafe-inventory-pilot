@@ -82,8 +82,8 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
   });
 
   const handleSubmit = (data: FormValues) => {
+    console.log('Submitting form with data:', data);
     onSubmit(data);
-    onOpenChange(false);
     form.reset();
     setShowNewCategoryInput(false);
     setNewCategoryName('');
@@ -92,14 +92,13 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
   const handleAddCategory = () => {
     if (newCategoryName.trim().length < 2) return;
     
+    console.log('Adding new category:', newCategoryName);
+    
     // Generate temporary ID for new category (this will be properly set on the server)
     const tempId = `new-${Date.now()}`;
     
     // Add the new category to the categories array
     const newCategory = { id: tempId, name: newCategoryName };
-    
-    // This would typically be handled by a server request in a real application
-    // For this demo, we'll simulate adding it to the list
     
     // Close new category input
     setShowNewCategoryInput(false);
@@ -109,8 +108,15 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
     form.setValue('categoryId', tempId);
   };
 
+  const handleFormClose = () => {
+    form.reset();
+    setShowNewCategoryInput(false);
+    setNewCategoryName('');
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleFormClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{ingredient ? 'Edit Ingredient' : 'Add New Ingredient'}</DialogTitle>
@@ -237,11 +243,7 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={() => {
-                  onOpenChange(false);
-                  setShowNewCategoryInput(false);
-                  setNewCategoryName('');
-                }}
+                onClick={handleFormClose}
               >
                 Cancel
               </Button>

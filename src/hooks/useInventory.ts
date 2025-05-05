@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Ingredient } from '@/types';
-import { ViewMode } from '@/types/inventory';
+import { type ViewMode } from '@/types/inventory';
 import { useCategoryManager } from './inventory/useCategoryManager';
 import { useIngredientManager } from './inventory/useIngredientManager';
 import { useFilterManager } from './inventory/useFilterManager';
@@ -45,6 +45,7 @@ export const useInventory = () => {
 
   // Wrapper for handleAddEdit to include category creation
   const handleAddEditIngredient = async (data: Partial<Ingredient>) => {
+    console.log('handleAddEditIngredient called with data:', data);
     await handleAddEdit(data, categories, handleNewCategory);
   };
 

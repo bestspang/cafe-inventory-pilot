@@ -80,16 +80,22 @@ export const useIngredientManager = (
     getCategoryId?: (tempId: string, name: string) => Promise<string>
   ) => {
     try {
+      console.log('Handling ingredient save:', data);
+      
       // Process new category if needed
       let categoryId = data.categoryId;
       if (categoryId && categoryId.startsWith('new-') && getCategoryId) {
+        console.log('Processing new category with ID:', categoryId);
         const newCategoryName = categories.find(c => c.id === categoryId)?.name;
         if (newCategoryName) {
           categoryId = await getCategoryId(categoryId, newCategoryName);
+          console.log('New category created with ID:', categoryId);
         }
       }
 
       if (currentIngredient) {
+        console.log('Updating existing ingredient:', currentIngredient.id);
+        
         // Update existing ingredient
         const { error } = await supabase
           .from('ingredients')
@@ -102,8 +108,11 @@ export const useIngredientManager = (
           .eq('id', currentIngredient.id);
         
         if (error) {
+          console.error('Supabase error updating ingredient:', error);
           throw error;
         }
+        
+        console.log('Ingredient updated successfully');
         
         // Update local state
         setIngredients(prev => 
@@ -126,6 +135,13 @@ export const useIngredientManager = (
           description: `${data.name} has been updated successfully.`
         });
       } else {
+        console.log('Adding new ingredient with data:', {
+          name: data.name,
+          category_id: categoryId,
+          unit: data.unit,
+          default_reorder_point: data.defaultReorderPoint
+        });
+        
         // Add new ingredient
         const { data: newIngredient, error } = await supabase
           .from('ingredients')
@@ -146,8 +162,15 @@ export const useIngredientManager = (
           .single();
         
         if (error) {
+          console.error('Supabase error inserting ingredient:', error);
           throw error;
         }
+        
+        if (!newIngredient) {
+          throw new Error('No data returned from ingredient creation');
+        }
+        
+        console.log('New ingredient created:', newIngredient);
         
         // Add to local state
         const newItem: StockItem = {
@@ -167,16 +190,17 @@ export const useIngredientManager = (
           description: `${data.name} has been added to your inventory.`
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving ingredient:', error);
       toast({
         title: "Failed to save ingredient",
-        description: "Please try again later.",
+        description: error.message || "Please try again later.",
         variant: "destructive"
       });
     }
     
     setCurrentIngredient(undefined);
+    setFormDialogOpen(false);
   };
 
   const handleEdit = (ingredient: Ingredient) => {

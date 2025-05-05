@@ -54,6 +54,8 @@ export const useCategoryManager = (): CategoryManagerResult => {
   // Handle adding a new category to the database
   const handleNewCategory = async (tempId: string, categoryName: string): Promise<string> => {
     try {
+      console.log('Creating new category:', categoryName);
+      
       // Insert the new category into the database
       const { data, error } = await supabase
         .from('categories')
@@ -62,8 +64,15 @@ export const useCategoryManager = (): CategoryManagerResult => {
         .single();
       
       if (error) {
+        console.error('Supabase error creating category:', error);
         throw error;
       }
+      
+      if (!data) {
+        throw new Error('No data returned from category creation');
+      }
+      
+      console.log('Category created successfully:', data);
       
       const newCategory = {
         id: data.id,
@@ -83,11 +92,11 @@ export const useCategoryManager = (): CategoryManagerResult => {
       });
       
       return newCategory.id;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating category:', error);
       toast({
         title: "Failed to create category",
-        description: "Please try again later.",
+        description: error.message || "Please try again later.",
         variant: "destructive"
       });
       // Return the temp ID if we fail - the UI will still work
