@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
@@ -62,6 +61,8 @@ const mockIngredients: StockItem[] = [
   },
 ];
 
+export type ViewMode = 'grid' | 'list';
+
 export const useInventory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -69,6 +70,7 @@ export const useInventory = () => {
   const [categories, setCategories] = useState<Category[]>(mockCategories);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -186,6 +188,8 @@ export const useInventory = () => {
     setSearch,
     categoryFilter,
     setCategoryFilter,
+    viewMode,
+    setViewMode,
     formDialogOpen,
     setFormDialogOpen,
     deleteDialogOpen,

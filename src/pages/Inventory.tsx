@@ -3,6 +3,7 @@ import React from 'react';
 import { useInventory } from '@/hooks/useInventory';
 import InventoryFilters from '@/components/inventory/InventoryFilters';
 import IngredientCard from '@/components/inventory/IngredientCard';
+import IngredientList from '@/components/inventory/IngredientList';
 import IngredientFormDialog from '@/components/inventory/IngredientFormDialog';
 import DeleteIngredientDialog from '@/components/inventory/DeleteIngredientDialog';
 import InventoryEmptyState from '@/components/inventory/InventoryEmptyState';
@@ -14,6 +15,8 @@ const Inventory = () => {
     setSearch,
     categoryFilter,
     setCategoryFilter,
+    viewMode,
+    setViewMode,
     formDialogOpen,
     setFormDialogOpen,
     deleteDialogOpen,
@@ -46,6 +49,8 @@ const Inventory = () => {
         setSearch={setSearch}
         categoryFilter={categoryFilter}
         setCategoryFilter={setCategoryFilter}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
         categories={categories}
         onAddIngredient={() => {
           setCurrentIngredient(undefined);
@@ -55,16 +60,24 @@ const Inventory = () => {
       />
 
       {ingredients.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {ingredients.map((ingredient) => (
-            <IngredientCard
-              key={ingredient.id}
-              ingredient={ingredient}
-              onEdit={() => handleEdit(ingredient)}
-              onDelete={() => handleDelete(ingredient)}
-            />
-          ))}
-        </div>
+        viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ingredients.map((ingredient) => (
+              <IngredientCard
+                key={ingredient.id}
+                ingredient={ingredient}
+                onEdit={() => handleEdit(ingredient)}
+                onDelete={() => handleDelete(ingredient)}
+              />
+            ))}
+          </div>
+        ) : (
+          <IngredientList
+            ingredients={ingredients}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )
       ) : (
         <InventoryEmptyState 
           hasFilters={hasFilters}
