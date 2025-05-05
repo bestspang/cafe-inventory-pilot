@@ -18,7 +18,7 @@ export const useInventory = () => {
   const canModify = ['owner', 'manager'].includes(user?.role || '');
   
   // Use our smaller, focused hooks
-  const { categories, handleNewCategory } = useCategoryManager();
+  const { categories, handleNewCategory, isLoading: categoriesLoading } = useCategoryManager();
   const { 
     ingredients, 
     currentIngredient, 
@@ -26,7 +26,8 @@ export const useInventory = () => {
     handleAddEdit,
     handleEdit,
     handleDelete,
-    confirmDelete
+    confirmDelete,
+    isLoading: ingredientsLoading
   } = useIngredientManager(setFormDialogOpen, setDeleteDialogOpen);
   const {
     search,
@@ -43,9 +44,11 @@ export const useInventory = () => {
   const filteredIngredients = filterIngredients(ingredients);
 
   // Wrapper for handleAddEdit to include category creation
-  const handleAddEditIngredient = (data: Partial<Ingredient>) => {
-    handleAddEdit(data, categories, handleNewCategory);
+  const handleAddEditIngredient = async (data: Partial<Ingredient>) => {
+    await handleAddEdit(data, categories, handleNewCategory);
   };
+
+  const isLoading = categoriesLoading || ingredientsLoading;
 
   return {
     ingredients: filteredIngredients,
@@ -67,6 +70,7 @@ export const useInventory = () => {
     handleEdit,
     handleDelete,
     confirmDelete,
-    hasFilters
+    hasFilters,
+    isLoading
   };
 };
