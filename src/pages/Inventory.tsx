@@ -19,6 +19,7 @@ const Inventory = () => {
     deleteDialogOpen,
     setDeleteDialogOpen,
     currentIngredient,
+    setCurrentIngredient,
     canModify,
     categories,
     handleAddEdit,
