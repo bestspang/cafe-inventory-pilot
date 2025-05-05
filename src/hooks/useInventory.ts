@@ -7,7 +7,7 @@ import { useCategoryManager } from './inventory/useCategoryManager';
 import { useIngredientManager } from './inventory/useIngredientManager';
 import { useFilterManager } from './inventory/useFilterManager';
 
-export { ViewMode };
+export { type ViewMode };
 
 export const useInventory = () => {
   const { user } = useAuth();
