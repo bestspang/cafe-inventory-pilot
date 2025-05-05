@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,6 +28,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import { Ingredient, Category } from '@/types';
 
 const formSchema = z.object({
@@ -62,6 +63,9 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
   ingredient,
   categories
 }) => {
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: ingredient ? {
@@ -81,6 +85,28 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
     onSubmit(data);
     onOpenChange(false);
     form.reset();
+    setShowNewCategoryInput(false);
+    setNewCategoryName('');
+  };
+
+  const handleAddCategory = () => {
+    if (newCategoryName.trim().length < 2) return;
+    
+    // Generate temporary ID for new category (this will be properly set on the server)
+    const tempId = `new-${Date.now()}`;
+    
+    // Add the new category to the categories array
+    const newCategory = { id: tempId, name: newCategoryName };
+    
+    // This would typically be handled by a server request in a real application
+    // For this demo, we'll simulate adding it to the list
+    
+    // Close new category input
+    setShowNewCategoryInput(false);
+    setNewCategoryName('');
+    
+    // Set the form value to the new category ID
+    form.setValue('categoryId', tempId);
   };
 
   return (
@@ -116,21 +142,64 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
               name="categoryId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories.map(category => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Category</FormLabel>
+                    {!showNewCategoryInput && (
+                      <Button 
+                        type="button" 
+                        variant="link" 
+                        className="p-0 h-auto text-sm"
+                        onClick={() => setShowNewCategoryInput(true)}
+                      >
+                        Create new category
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {showNewCategoryInput ? (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="New category name"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        onClick={handleAddCategory}
+                        disabled={newCategoryName.trim().length < 2}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          setShowNewCategoryInput(false);
+                          setNewCategoryName('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map(category => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -168,7 +237,11 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={() => onOpenChange(false)}
+                onClick={() => {
+                  onOpenChange(false);
+                  setShowNewCategoryInput(false);
+                  setNewCategoryName('');
+                }}
               >
                 Cancel
               </Button>

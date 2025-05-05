@@ -66,6 +66,7 @@ export const useInventory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [ingredients, setIngredients] = useState<StockItem[]>(mockIngredients);
+  const [categories, setCategories] = useState<Category[]>(mockCategories);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   
@@ -84,6 +85,35 @@ export const useInventory = () => {
   });
 
   const handleAddEdit = (data: Partial<Ingredient>) => {
+    // Check if categoryId starts with 'new-', indicating a new category
+    if (data.categoryId && data.categoryId.startsWith('new-')) {
+      // Extract the category name from our temporary categories
+      const newCategoryName = categories.find(c => c.id === data.categoryId)?.name;
+      
+      if (newCategoryName) {
+        // Create a "real" category with a non-temporary ID
+        const newCategory = {
+          id: Date.now().toString(),
+          name: newCategoryName
+        };
+        
+        // Update our categories state
+        setCategories(prev => {
+          // Filter out the temporary category and add the new one
+          const filtered = prev.filter(c => c.id !== data.categoryId);
+          return [...filtered, newCategory];
+        });
+        
+        // Update the data object with the new category ID
+        data.categoryId = newCategory.id;
+        
+        toast({
+          title: "Category created",
+          description: `${newCategoryName} has been added as a new category.`
+        });
+      }
+    }
+
     if (currentIngredient) {
       // Edit existing ingredient
       setIngredients(prev => 
@@ -92,7 +122,7 @@ export const useInventory = () => {
             ? { 
                 ...item, 
                 ...data,
-                categoryName: mockCategories.find(c => c.id === data.categoryId)?.name || item.categoryName
+                categoryName: categories.find(c => c.id === data.categoryId)?.name || item.categoryName
               } 
             : item
         )
@@ -108,7 +138,7 @@ export const useInventory = () => {
         id: Date.now().toString(),
         name: data.name!,
         categoryId: data.categoryId!,
-        categoryName: mockCategories.find(c => c.id === data.categoryId)?.name || '',
+        categoryName: categories.find(c => c.id === data.categoryId)?.name || '',
         unit: data.unit!,
         defaultReorderPoint: data.defaultReorderPoint!,
         onHandQty: 0
@@ -163,7 +193,7 @@ export const useInventory = () => {
     currentIngredient,
     setCurrentIngredient,
     canModify,
-    categories: mockCategories,
+    categories,
     handleAddEdit,
     handleEdit,
     handleDelete,
