@@ -43,7 +43,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
           </linearGradient>
         </defs>
         <Tooltip 
-          content={({ active, payload }) => <SparklineTooltip active={active} payload={payload} />}
+          content={<SparklineTooltip />}
           cursor={{ stroke: '#666', strokeWidth: 1, strokeDasharray: '3 3' }}
         />
         <Area
@@ -59,16 +59,16 @@ export const Sparkline: React.FC<SparklineProps> = ({
   );
 };
 
-// Define a properly typed tooltip component
-type SparklineTooltipProps = {
+// Define a custom tooltip component that works with recharts' expected types
+interface SparklineTooltipProps {
   active?: boolean;
-  payload?: Array<{
-    value: number;
-    dataKey: string;
-  }>;
+  payload?: Array<any>;
+  label?: string;
 }
 
-const SparklineTooltip: React.FC<SparklineTooltipProps> = ({ active, payload }) => {
+const SparklineTooltip: React.FC<SparklineTooltipProps> = (props) => {
+  const { active, payload } = props;
+  
   if (!active || !payload || !payload[0]) {
     return null;
   }
