@@ -58,6 +58,12 @@ export default function BranchesTable({
     }
   };
 
+  // Handle successful branch edit
+  const handleSuccessfulEdit = async () => {
+    await onSave();
+    setEditingBranch(null);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-3 p-4">
@@ -104,15 +110,19 @@ export default function BranchesTable({
         </Table>
       </div>
 
-      <BranchFormDialog
-        branch={editingBranch}
-        open={!!editingBranch}
-        onOpenChange={(open) => {
-          if (!open) setEditingBranch(null);
-        }}
-        onSave={onSave}
-      />
+      {/* Edit Branch Dialog - only render when there's a branch to edit */}
+      {editingBranch && (
+        <BranchFormDialog
+          branch={editingBranch}
+          open={!!editingBranch}
+          onOpenChange={(open) => {
+            if (!open) setEditingBranch(null);
+          }}
+          onSave={handleSuccessfulEdit}
+        />
+      )}
       
+      {/* Delete Branch Dialog */}
       <DeleteBranchDialog
         branch={confirmDelete}
         open={!!confirmDelete}

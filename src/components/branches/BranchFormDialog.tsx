@@ -46,9 +46,9 @@ export default function BranchFormDialog({
     console.log('[BranchFormDialog] Current isEditing state:', isEditing);
     console.log('[BranchFormDialog] Current branch state (for ID):', branch);
     
-    let success = false;
-    
     try {
+      let success = false;
+      
       if (isEditing && branch) {
         console.log(`[BranchFormDialog] Attempting to update branch ${branch.id} with name: ${data.name}`);
         success = await updateBranch({
@@ -72,6 +72,7 @@ export default function BranchFormDialog({
           await onSave();
         }
         
+        // Force close the dialog
         onOpenChange(false);
       } else {
         console.log('[BranchFormDialog] Operation reported as failed, keeping dialog open');
@@ -84,11 +85,23 @@ export default function BranchFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      console.log(`[BranchFormDialog] Dialog onOpenChange called. New state: ${isOpen ? 'opening' : 'closing'}`);
-      onOpenChange(isOpen);
-    }}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog 
+      open={open} 
+      onOpenChange={(isOpen) => {
+        console.log(`[BranchFormDialog] Dialog onOpenChange called. New state: ${isOpen ? 'opening' : 'closing'}`);
+        onOpenChange(isOpen);
+      }}
+      modal={true} // Ensure modal behavior to prevent background interaction
+    >
+      <DialogContent 
+        className="sm:max-w-[500px]"
+        onInteractOutside={(e) => {
+          // Prevent interaction outside during loading state
+          if (isLoading) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             {isEditing ? 'Edit Branch' : 'Add New Branch'}
