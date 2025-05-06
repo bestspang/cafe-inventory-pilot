@@ -59,7 +59,8 @@ export const Sparkline: React.FC<SparklineProps> = ({
   );
 };
 
-const SparklineTooltip = ({ active, payload }: TooltipProps) => {
+// Add the correct generic type arguments to TooltipProps
+const SparklineTooltip = ({ active, payload }: TooltipProps<number, string>) => {
   if (!active || !payload || !payload[0]) {
     return null;
   }
