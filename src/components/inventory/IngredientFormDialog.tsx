@@ -101,18 +101,16 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle className="flex items-center justify-between">
-              {error.title}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="ml-2 h-6 px-2"
-                onClick={copyErrorToClipboard}
-              >
-                <Copy className="h-3 w-3 mr-1" /> Copy
-              </Button>
-            </AlertTitle>
+            <AlertTitle>{error.title}</AlertTitle>
             <AlertDescription className="break-words">{error.message}</AlertDescription>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={copyErrorToClipboard}
+            >
+              <Copy className="h-3 w-3 mr-1" /> Copy Error Details
+            </Button>
           </Alert>
         )}
         
