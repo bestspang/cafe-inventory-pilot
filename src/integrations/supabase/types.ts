@@ -15,18 +15,21 @@ export type Database = {
           ingredient_id: string
           last_checked: string | null
           on_hand_qty: number
+          reorder_pt: number
         }
         Insert: {
           branch_id: string
           ingredient_id: string
           last_checked?: string | null
           on_hand_qty?: number
+          reorder_pt?: number
         }
         Update: {
           branch_id?: string
           ingredient_id?: string
           last_checked?: string | null
           on_hand_qty?: number
+          reorder_pt?: number
         }
         Relationships: [
           {
@@ -92,7 +95,6 @@ export type Database = {
           category_id: string | null
           created_at: string | null
           created_by: string | null
-          default_reorder_point: number
           id: string
           name: string
           unit: string
@@ -101,7 +103,6 @@ export type Database = {
           category_id?: string | null
           created_at?: string | null
           created_by?: string | null
-          default_reorder_point?: number
           id?: string
           name: string
           unit: string
@@ -110,7 +111,6 @@ export type Database = {
           category_id?: string | null
           created_at?: string | null
           created_by?: string | null
-          default_reorder_point?: number
           id?: string
           name?: string
           unit?: string

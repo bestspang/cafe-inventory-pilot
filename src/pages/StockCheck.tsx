@@ -21,6 +21,8 @@ const StockCheck = () => {
     branches,
     isLoading,
     handleQuantityChange,
+    handleReorderPointChange,
+    handleReorderPointSave,
     handleSave
   } = useStockCheck();
 
@@ -51,6 +53,8 @@ const StockCheck = () => {
           <StockCheckTable 
             items={filteredItems} 
             handleQuantityChange={handleQuantityChange}
+            handleReorderPointChange={handleReorderPointChange}
+            handleReorderPointSave={handleReorderPointSave}
             updatedItems={updatedItems}
           />
 

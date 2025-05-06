@@ -22,8 +22,7 @@ export const useIngredientsFetch = () => {
           name, 
           unit, 
           categoryId:category_id, 
-          categories(id, name),
-          default_reorder_point
+          categories(id, name)
         `)
         .order('name');
       
@@ -39,7 +38,6 @@ export const useIngredientsFetch = () => {
         name: item.name,
         unit: item.unit,
         categoryId: item.categoryId,
-        defaultReorderPoint: item.default_reorder_point,
         categoryName: item.categories?.name || 'Uncategorized'
       }));
       

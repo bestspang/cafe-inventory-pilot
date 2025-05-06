@@ -19,10 +19,14 @@ export const useStockCheck = () => {
     setSearch,
     isLoading: itemsLoading,
     handleQuantityChange,
+    handleReorderPointChange,
     setUpdatedItems
   } = useStockCheckItems(selectedBranch);
 
-  const { handleSave } = useStockCheckActions(
+  const { 
+    handleSave,
+    handleReorderPointSave 
+  } = useStockCheckActions(
     selectedBranch,
     stockItems,
     updatedItems,
@@ -44,6 +48,8 @@ export const useStockCheck = () => {
     branches,
     isLoading,
     handleQuantityChange,
+    handleReorderPointChange,
+    handleReorderPointSave,
     handleSave
   };
 };

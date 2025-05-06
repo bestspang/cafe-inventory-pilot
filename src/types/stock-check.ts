@@ -3,5 +3,6 @@ import { Ingredient } from '@/types';
 
 export interface StockItem extends Ingredient {
   categoryName: string;
-  onHandQty?: number; // Make this optional with the ? operator
+  onHandQty: number;
+  reorderPt: number; // Add reorderPt field for branch-specific threshold
 }

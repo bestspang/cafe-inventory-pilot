@@ -26,7 +26,6 @@ export const useStockCheckItems = (selectedBranch: string) => {
             name, 
             unit, 
             categoryId:category_id, 
-            defaultReorderPoint:default_reorder_point,
             categories(id, name)
           `);
         
@@ -35,7 +34,7 @@ export const useStockCheckItems = (selectedBranch: string) => {
         // Then, get branch inventory data for the selected branch
         const { data: branchInventory, error: inventoryError } = await supabase
           .from('branch_inventory')
-          .select('ingredient_id, on_hand_qty, last_checked')
+          .select('ingredient_id, on_hand_qty, reorder_pt, last_checked')
           .eq('branch_id', selectedBranch);
         
         if (inventoryError) throw inventoryError;
@@ -43,20 +42,26 @@ export const useStockCheckItems = (selectedBranch: string) => {
         // Map inventory data to ingredients
         const inventoryMap = new Map();
         branchInventory?.forEach(item => {
-          inventoryMap.set(item.ingredient_id, item.on_hand_qty);
+          inventoryMap.set(item.ingredient_id, { 
+            onHandQty: item.on_hand_qty,
+            reorderPt: item.reorder_pt
+          });
         });
         
         // Create stock items
-        const items = ingredients.map((ingredient: any) => ({
-          id: ingredient.id,
-          name: ingredient.name,
-          categoryId: ingredient.categoryId,
-          categoryName: ingredient.categories?.name || 'Uncategorized',
-          unit: ingredient.unit,
-          defaultReorderPoint: ingredient.defaultReorderPoint,
-          onHandQty: inventoryMap.has(ingredient.id) ? 
-            Number(inventoryMap.get(ingredient.id)) : 0
-        }));
+        const items = ingredients.map((ingredient: any) => {
+          const inventoryData = inventoryMap.get(ingredient.id) || { onHandQty: 0, reorderPt: 10 };
+          
+          return {
+            id: ingredient.id,
+            name: ingredient.name,
+            categoryId: ingredient.categoryId,
+            categoryName: ingredient.categories?.name || 'Uncategorized',
+            unit: ingredient.unit,
+            onHandQty: inventoryData.onHandQty,
+            reorderPt: inventoryData.reorderPt
+          };
+        });
         
         setStockItems(items);
       } catch (error) {
@@ -112,6 +117,16 @@ export const useStockCheckItems = (selectedBranch: string) => {
     );
     setUpdatedItems(prev => ({ ...prev, [id]: true }));
   };
+  
+  // Add new function for updating reorder points
+  const handleReorderPointChange = (id: string, reorderPt: number) => {
+    setStockItems(prev => 
+      prev.map(item => 
+        item.id === id ? { ...item, reorderPt } : item
+      )
+    );
+    setUpdatedItems(prev => ({ ...prev, [id]: true }));
+  };
 
   return {
     stockItems,
@@ -121,6 +136,7 @@ export const useStockCheckItems = (selectedBranch: string) => {
     setSearch,
     isLoading,
     handleQuantityChange,
+    handleReorderPointChange,
     setUpdatedItems
   };
 };
