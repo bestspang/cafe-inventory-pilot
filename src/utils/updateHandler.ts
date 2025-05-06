@@ -43,7 +43,8 @@ export async function handleUpdate<T extends TableName>(
     const { data: updateData, error: updateError, status, statusText } = await supabase
       .from(table)
       .update(updatePayload)
-      .eq('id', id);
+      .eq('id', id as any)
+      .select();
       
     // Log detailed response information
     console.log('[handleUpdate] Supabase update response data:', updateData);
@@ -63,7 +64,7 @@ export async function handleUpdate<T extends TableName>(
     const { data: fetchedData, error: fetchError } = await supabase
       .from(table)
       .select('*')
-      .eq('id', id)
+      .eq('id', id as any)
       .single();
       
     console.log('[handleUpdate] Fetched record data:', fetchedData);
@@ -72,7 +73,7 @@ export async function handleUpdate<T extends TableName>(
     if (fetchError) {
       // Handle case where fetching the updated record fails
       console.error('[handleUpdate] Update succeeded, but failed to fetch updated record:', fetchError);
-      toast.warn(`Update successful, but couldn't retrieve the latest data.`);
+      toast.error(`Update successful, but couldn't retrieve the latest data.`);
       // Return success: true, but potentially without data
       return { success: true, data: null, error: fetchError }; 
     } else {

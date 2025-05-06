@@ -30,7 +30,7 @@ export const useBranchManager = () => {
     return await _createBranch(branch);
   };
 
-  const updateBranch = async (branch: Partial<Branch>, refreshFn?: () => Promise<void>) => {
+  const updateBranch = async (branch: Partial<Branch> & { id: string }, refreshFn?: () => Promise<void>) => {
     return await _updateBranch(branch, refreshFn);
   };
 

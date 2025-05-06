@@ -25,8 +25,8 @@ export default function StaffManager({ branchId }: StaffManagerProps) {
     staff, 
     isLoading, 
     addStaffMember, 
-    deleteStaffMember, 
-    refetch 
+    deleteStaffMember,
+    fetchStaff 
   } = useBranchStaff(branchId);
   
   const [newStaffName, setNewStaffName] = useState('');
@@ -42,14 +42,11 @@ export default function StaffManager({ branchId }: StaffManagerProps) {
     setIsAdding(true);
     
     try {
-      const success = await addStaffMember({
-        staff_name: newStaffName,
-        branch_id: branchId
-      });
+      const success = await addStaffMember(newStaffName);
       
       if (success) {
         setNewStaffName('');
-        refetch();
+        fetchStaff();
       }
     } finally {
       setIsAdding(false);
@@ -62,7 +59,7 @@ export default function StaffManager({ branchId }: StaffManagerProps) {
     try {
       const success = await deleteStaffMember(staffId);
       if (success) {
-        refetch();
+        fetchStaff();
       }
     } finally {
       setStaffBeingDeleted(null);

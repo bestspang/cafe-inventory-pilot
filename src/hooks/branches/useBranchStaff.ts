@@ -176,6 +176,7 @@ export const useBranchStaff = (branchId?: string) => {
     isAdding,
     isDeleting,
     addStaffMember,
-    deleteStaffMember
+    deleteStaffMember,
+    fetchStaff
   };
 };

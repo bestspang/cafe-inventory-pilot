@@ -17,12 +17,14 @@ interface BranchFormDialogProps {
   branch: Branch | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSave?: () => Promise<void>;
 }
 
 export default function BranchFormDialog({ 
   branch,
   open,
-  onOpenChange
+  onOpenChange,
+  onSave
 }: BranchFormDialogProps) {
   const isEditing = !!branch;
   const { createBranch, updateBranch, isLoading } = useBranchManager();
@@ -38,7 +40,7 @@ export default function BranchFormDialog({
     }
   }, [open, branch, isEditing]);
   
-  async function onSubmit(data: BranchFormValues) {
+  async function onSubmit(data: BranchFormValues): Promise<void> {
     console.group('[BranchFormDialog] onSubmit triggered');
     console.log('[BranchFormDialog] Form values (data):', data);
     console.log('[BranchFormDialog] Current isEditing state:', isEditing);
@@ -64,6 +66,12 @@ export default function BranchFormDialog({
       if (success) {
         console.log('[BranchFormDialog] Operation successful, closing dialog and refreshing data');
         await refetch();
+        
+        // If onSave prop is provided, call it
+        if (onSave) {
+          await onSave();
+        }
+        
         onOpenChange(false);
       } else {
         console.log('[BranchFormDialog] Operation reported as failed, keeping dialog open');
@@ -73,8 +81,6 @@ export default function BranchFormDialog({
     } finally {
       console.groupEnd(); // End [BranchFormDialog] onSubmit triggered
     }
-    
-    return success;
   }
 
   return (
