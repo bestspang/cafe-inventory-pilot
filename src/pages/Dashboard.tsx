@@ -16,20 +16,24 @@ const Dashboard = () => {
   const [branchFilter, setBranchFilter] = useState<'all' | 'healthy' | 'at-risk'>('all');
   
   // Fetch metrics data from Supabase
-  const { metrics, isLoading: metricsLoading } = useDashboardMetrics();
-  const { 
-    totalBranches = 0, 
-    lowStockItems = 0, 
-    pendingRequests = 0, 
-    missingStockChecks = 0 
-  } = metrics;
+  const { isLoading: metricsLoading, totalBranches, lowStockItems, pendingRequests, missingStockChecks } = useDashboardMetrics();
   
   // Fetch trend data for charts
   const { trends, isLoading: trendsLoading } = useDashboardTrends();
-  const { branchTrend, lowStockTrend, requestsTrend, stockChecksTrend } = trends;
+  // Safely access trend data with fallbacks
+  const branchTrend = trends?.branchTrend || [];
+  const lowStockTrend = trends?.lowStockTrend || [];
+  const requestsTrend = trends?.requestsTrend || [];
+  const stockChecksTrend = trends?.stockChecksTrend || [];
   
   // Fetch branch snapshots
   const { branches: displayedBranches, isLoading: branchesLoading } = useBranchSnapshots({ branchFilter });
+  
+  // Convert TrendPoint[] to number[] for StatCard sparklines
+  const branchTrendValues = branchTrend.map(point => point.value);
+  const lowStockTrendValues = lowStockTrend.map(point => point.value);
+  const requestsTrendValues = requestsTrend.map(point => point.value);
+  const stockChecksTrendValues = stockChecksTrend.map(point => point.value);
   
   // Handler for dashboard stat card clicks
   const handleStatCardClick = (metric: string) => {
@@ -49,7 +53,7 @@ const Dashboard = () => {
           title="Total Branches"
           value={isOwner ? totalBranches : 1}
           icon={<Store className="h-5 w-5" />}
-          sparklineData={branchTrend}
+          sparklineData={branchTrendValues}
           isLoading={metricsLoading}
           onClick={() => handleStatCardClick('branches')}
         />
@@ -58,7 +62,7 @@ const Dashboard = () => {
           value={lowStockItems.toString()}
           icon={<Package className="h-5 w-5" />}
           trend={{ value: 8, isPositive: false }}
-          sparklineData={lowStockTrend}
+          sparklineData={lowStockTrendValues}
           isLoading={metricsLoading}
           onClick={() => handleStatCardClick('low-stock')}
         />
@@ -67,7 +71,7 @@ const Dashboard = () => {
           value={pendingRequests}
           icon={<ClipboardCheck className="h-5 w-5" />}
           trend={{ value: 12, isPositive: true }}
-          sparklineData={requestsTrend}
+          sparklineData={requestsTrendValues}
           isLoading={metricsLoading}
           onClick={() => handleStatCardClick('requests')}
         />
@@ -75,7 +79,7 @@ const Dashboard = () => {
           title="Missing Stock Checks"
           value={isOwner ? missingStockChecks : 0}
           icon={<AlertTriangle className="h-5 w-5" />}
-          sparklineData={stockChecksTrend}
+          sparklineData={stockChecksTrendValues}
           isLoading={metricsLoading}
           onClick={() => handleStatCardClick('stock-checks')}
         />

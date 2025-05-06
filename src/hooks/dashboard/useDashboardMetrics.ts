@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -24,51 +25,45 @@ export const useDashboardMetrics = () => {
       setIsLoading(true);
       
       // Fetch total branches count
-      interface BranchCountResult { count: number }
-      const { data: branchesData, error: branchesError } = await supabase
+      const { count: branchesCount, error: branchesError } = await supabase
         .from('branches')
-        .select('*', { count: 'exact', head: true })
-        .returns<BranchCountResult>();
+        .select('*', { count: 'exact', head: true });
         
       if (branchesError) {
         console.error('Error fetching branch count:', branchesError);
       }
 
       // Fetch low stock items count
-      interface LowStockCountResult { count: number }
       const { data: lowStockData, error: lowStockError } = await supabase
-        .rpc<LowStockCountResult>('get_low_stock_count');
+        .rpc('get_low_stock_count');
         
       if (lowStockError) {
         console.error('Error fetching low stock count:', lowStockError);
       }
 
       // Fetch pending requests count
-      interface RequestCountResult { count: number }
-      const { data: requestsData, error: requestsError } = await supabase
+      const { count: requestsCount, error: requestsError } = await supabase
         .from('requests')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending')
-        .returns<RequestCountResult>();
+        .eq('status', 'pending');
         
       if (requestsError) {
         console.error('Error fetching requests count:', requestsError);
       }
 
       // Fetch missing stock checks count
-      interface StockCheckCountResult { count: number }
       const { data: missingChecksData, error: stockChecksError } = await supabase
-        .rpc<StockCheckCountResult>('get_missing_checks_count');
+        .rpc('count_missing_checks');
         
       if (stockChecksError) {
         console.error('Error fetching missing checks count:', stockChecksError);
       }
 
       setMetrics({
-        totalBranches: branchesData?.count || 0,
+        totalBranches: branchesCount || 0,
         lowStockItems: lowStockData?.count || 0,
-        pendingRequests: requestsData?.count || 0,
-        missingStockChecks: missingChecksData?.count || 0
+        pendingRequests: requestsCount || 0,
+        missingStockChecks: missingChecksData?.missing || 0
       });
     } catch (error) {
       console.error('Error fetching dashboard metrics:', error);
