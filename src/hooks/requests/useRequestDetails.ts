@@ -14,6 +14,9 @@ export const useRequestDetails = (
   const { toast } = useToast();
   const [detailedItems, setDetailedItems] = useState<DetailedRequestItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Calculate if all items are checked
+  const allItemsChecked = detailedItems.length > 0 && detailedItems.every(item => item.fulfilled);
 
   useEffect(() => {
     if (isExpanded) {
@@ -111,40 +114,69 @@ export const useRequestDetails = (
   };
 
   const handleSaveFulfillment = async () => {
+    // Don't allow save if not all items are checked
+    if (!allItemsChecked) {
+      toast({
+        title: 'Action not allowed',
+        description: 'All items must be marked as fulfilled before saving',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     try {
-      // Prepare updates for each item
-      const updates = detailedItems.map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        fulfilled: item.fulfilled
-      }));
-      
-      // Update each item individually
-      for (const item of updates) {
-        const { error } = await supabase
+      // First, update the branch inventory with the quantities
+      for (const item of detailedItems) {
+        // Step 1: Get the current quantity
+        const { data: inventoryItem, error: fetchError } = await supabase
+          .from('branch_inventory')
+          .select('on_hand_qty')
+          .eq('branch_id', branchId)
+          .eq('ingredient_id', item.ingredientId)
+          .single();
+
+        if (fetchError) {
+          console.error('Error fetching inventory item:', fetchError);
+          throw fetchError;
+        }
+
+        // Step 2: Calculate new quantity and update
+        const currentQty = inventoryItem?.on_hand_qty || 0;
+        const newQty = currentQty + item.quantity;
+        
+        const { error: updateError } = await supabase
+          .from('branch_inventory')
+          .update({ on_hand_qty: newQty })
+          .eq('branch_id', branchId)
+          .eq('ingredient_id', item.ingredientId);
+
+        if (updateError) {
+          console.error('Error updating inventory:', updateError);
+          throw updateError;
+        }
+
+        // Step 3: Update request items as fulfilled
+        const { error: itemUpdateError } = await supabase
           .from('request_items')
           .update({
             quantity: item.quantity,
-            fulfilled: item.fulfilled
+            fulfilled: true
           })
           .eq('id', item.id);
         
-        if (error) {
-          throw error;
+        if (itemUpdateError) {
+          throw itemUpdateError;
         }
       }
       
-      // Check if all items are fulfilled
-      const allFulfilled = detailedItems.every(item => item.fulfilled);
-      
-      // If all items are fulfilled, update the request status
-      if (allFulfilled && requestId) {
+      // Step 4: Update request status to fulfilled
+      if (requestId) {
         await handleUpdate('requests', requestId, { status: 'fulfilled' });
       }
       
       toast({
         title: 'Fulfillment saved',
-        description: 'The request fulfillment details have been updated.'
+        description: 'The request fulfillment details have been updated and inventory quantities adjusted.'
       });
       
       // Refresh the data if callback provided
@@ -167,6 +199,7 @@ export const useRequestDetails = (
     handleQuantityChange,
     handleToggleFulfilled,
     handleSaveFulfillment,
-    fetchDetailedItems
+    fetchDetailedItems,
+    allItemsChecked
   };
 };

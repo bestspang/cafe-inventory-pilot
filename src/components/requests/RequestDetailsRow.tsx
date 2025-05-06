@@ -23,7 +23,8 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
     isLoading,
     handleQuantityChange,
     handleToggleFulfilled,
-    handleSaveFulfillment
+    handleSaveFulfillment,
+    allItemsChecked
   } = useRequestDetails(
     request.id,
     request.branchId,
@@ -49,6 +50,7 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
             onQuantityChange={handleQuantityChange}
             onToggleFulfilled={handleToggleFulfilled}
             onSaveFulfillment={handleSaveFulfillment}
+            allChecked={allItemsChecked}
           />
         </div>
       </TableCell>

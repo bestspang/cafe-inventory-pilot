@@ -12,6 +12,7 @@ interface RequestItemsTableProps {
   onQuantityChange: (id: string, value: number) => void;
   onToggleFulfilled: (id: string, checked: boolean) => void;
   onSaveFulfillment: () => Promise<void>;
+  allChecked: boolean;
 }
 
 const RequestItemsTable: React.FC<RequestItemsTableProps> = ({
@@ -19,7 +20,8 @@ const RequestItemsTable: React.FC<RequestItemsTableProps> = ({
   isLoading,
   onQuantityChange,
   onToggleFulfilled,
-  onSaveFulfillment
+  onSaveFulfillment,
+  allChecked
 }) => {
   if (isLoading) {
     return <p className="text-center py-4">Loading details...</p>;
@@ -77,7 +79,12 @@ const RequestItemsTable: React.FC<RequestItemsTableProps> = ({
         </TableBody>
       </Table>
       <div className="flex justify-end p-2 bg-muted/20">
-        <Button onClick={onSaveFulfillment} variant="success">
+        <Button 
+          onClick={onSaveFulfillment} 
+          variant="success" 
+          disabled={!allChecked || items.length === 0}
+          className={!allChecked ? "opacity-50 cursor-not-allowed" : ""}
+        >
           Save Fulfillment
         </Button>
       </div>
