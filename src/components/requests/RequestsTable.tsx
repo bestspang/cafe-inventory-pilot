@@ -20,6 +20,7 @@ interface RequestsTableProps {
   showBranch: boolean;
   sortState: SortState;
   onSort: (column: string) => void;
+  onRefresh?: () => Promise<void>;
 }
 
 const RequestsTable: React.FC<RequestsTableProps> = ({ 
@@ -27,7 +28,8 @@ const RequestsTable: React.FC<RequestsTableProps> = ({
   onToggleStatus,
   showBranch,
   sortState,
-  onSort
+  onSort,
+  onRefresh
 }) => {
   const { user } = useAuth();
   const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({});
@@ -112,6 +114,7 @@ const RequestsTable: React.FC<RequestsTableProps> = ({
                 request={request}
                 showBranch={showBranch}
                 isExpanded={!!expandedRows[request.id]}
+                onRefresh={onRefresh}
               />
             </React.Fragment>
           ))}

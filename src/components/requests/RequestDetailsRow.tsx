@@ -16,10 +16,16 @@ interface RequestDetailsRowProps {
   onRefresh?: () => Promise<void>;
 }
 
-interface FulfillmentItem {
+interface DetailedItem {
   id: string;
+  ingredientId: string;
+  ingredientName: string;
   quantity: number;
-  fulfilled: boolean;
+  note?: string;
+  recommendedQty?: number;
+  currentQty?: number;
+  fulfilled?: boolean;
+  reorderPoint?: number;
 }
 
 const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({ 
@@ -29,54 +35,112 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
   onRefresh 
 }) => {
   const { toast } = useToast();
-  const [fulfillmentItems, setFulfillmentItems] = useState<{
-    [key: string]: {
-      quantity: number;
-      fulfilled: boolean;
-    }
-  }>({});
+  const [detailedItems, setDetailedItems] = useState<DetailedItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize fulfillment items when expanded
+  // Fetch detailed request items data when expanded
   useEffect(() => {
-    if (isExpanded && request.requestItems) {
-      const initialState: { [key: string]: { quantity: number; fulfilled: boolean } } = {};
-      request.requestItems.forEach(item => {
-        initialState[item.id] = {
-          quantity: item.quantity,
-          fulfilled: item.fulfilled || false
-        };
-      });
-      setFulfillmentItems(initialState);
+    if (isExpanded) {
+      fetchDetailedItems();
     }
-  }, [isExpanded, request.requestItems]);
+  }, [isExpanded, request.id]);
 
-  const handleQuantityChange = (id: string, value: number) => {
-    setFulfillmentItems(prev => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        quantity: value
+  const fetchDetailedItems = async () => {
+    if (!isExpanded || !request.branchId) return;
+    
+    setIsLoading(true);
+    try {
+      // 1. Fetch request items with ingredient info
+      const { data: items, error } = await supabase
+        .from('request_items')
+        .select(`
+          id,
+          ingredient_id,
+          quantity,
+          note,
+          recommended_qty,
+          current_qty,
+          fulfilled,
+          ingredients (
+            id,
+            name
+          )
+        `)
+        .eq('request_id', request.id);
+
+      if (error) throw error;
+      
+      if (!items || items.length === 0) {
+        setDetailedItems([]);
+        return;
       }
-    }));
+
+      // 2. In parallel, fetch current stock levels for this branch
+      const { data: inventory, error: invError } = await supabase
+        .from('branch_inventory')
+        .select('ingredient_id, on_hand_qty, reorder_pt')
+        .eq('branch_id', request.branchId)
+        .in('ingredient_id', items.map(i => i.ingredient_id));
+
+      if (invError) throw invError;
+
+      // Create a map of inventory data
+      const inventoryMap = Object.fromEntries(
+        (inventory || []).map(item => [
+          item.ingredient_id, 
+          { onHandQty: item.on_hand_qty, reorderPt: item.reorder_pt }
+        ])
+      );
+
+      // 3. Combine the data
+      const detailed = items.map(item => ({
+        id: item.id,
+        ingredientId: item.ingredient_id,
+        ingredientName: item.ingredients.name,
+        quantity: item.quantity,
+        note: item.note,
+        recommendedQty: item.recommended_qty,
+        currentQty: item.current_qty || inventoryMap[item.ingredient_id]?.onHandQty || 0,
+        fulfilled: item.fulfilled || false,
+        reorderPoint: inventoryMap[item.ingredient_id]?.reorderPt
+      }));
+
+      setDetailedItems(detailed);
+    } catch (error: any) {
+      console.error('Error fetching request details:', error);
+      toast({
+        title: 'Error loading request details',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleToggleDone = (id: string, checked: boolean) => {
-    setFulfillmentItems(prev => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        fulfilled: checked
-      }
-    }));
+  const handleQuantityChange = (id: string, value: number) => {
+    setDetailedItems(prev => 
+      prev.map(item => 
+        item.id === id ? { ...item, quantity: value } : item
+      )
+    );
+  };
+
+  const handleToggleFulfilled = (id: string, checked: boolean) => {
+    setDetailedItems(prev => 
+      prev.map(item => 
+        item.id === id ? { ...item, fulfilled: checked } : item
+      )
+    );
   };
 
   const handleSaveFulfillment = async () => {
     try {
-      // Convert the fulfillment items object to an array for batch update
-      const updates = Object.entries(fulfillmentItems).map(([id, values]) => ({
-        id,
-        quantity: values.quantity,
-        fulfilled: values.fulfilled
+      // Prepare updates for each item
+      const updates = detailedItems.map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        fulfilled: item.fulfilled
       }));
       
       // Update each item individually
@@ -95,7 +159,7 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
       }
       
       // Check if all items are fulfilled
-      const allFulfilled = Object.values(fulfillmentItems).every(item => item.fulfilled);
+      const allFulfilled = detailedItems.every(item => item.fulfilled);
       
       // If all items are fulfilled, update the request status
       if (allFulfilled && request.status !== 'fulfilled') {
@@ -103,8 +167,8 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
       }
       
       toast({
-        title: 'Fulfillment updated',
-        description: 'The request fulfillment details have been saved.'
+        title: 'Fulfillment saved',
+        description: 'The request fulfillment details have been updated.'
       });
       
       // Refresh the data if callback provided
@@ -121,7 +185,7 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
     }
   };
 
-  if (!isExpanded || !request.requestItems) {
+  if (!isExpanded) {
     return null;
   }
 
@@ -133,50 +197,66 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
       >
         <div className="px-4">
           <h4 className="text-sm font-medium mb-2">Request Details</h4>
-          <div className="bg-background border rounded-md overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-1/3">Ingredient</TableHead>
-                  <TableHead>Rec.q</TableHead>
-                  <TableHead>Current</TableHead>
-                  <TableHead>Add</TableHead>
-                  <TableHead>Mark</TableHead>
-                  <TableHead className="text-right">Note</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {request.requestItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.ingredientName}</TableCell>
-                    <TableCell>{item.recommendedQty !== undefined ? item.recommendedQty : 'N/A'}</TableCell>
-                    <TableCell>{item.currentQty !== undefined ? item.currentQty : 'N/A'}</TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        className="w-20 h-8"
-                        min={0}
-                        value={fulfillmentItems[item.id]?.quantity || item.quantity}
-                        onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 0)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Checkbox 
-                        checked={fulfillmentItems[item.id]?.fulfilled || false}
-                        onCheckedChange={(checked) => handleToggleDone(item.id, !!checked)}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">{item.note || '-'}</TableCell>
+          {isLoading ? (
+            <p className="text-center py-4">Loading details...</p>
+          ) : (
+            <div className="bg-background border rounded-md overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-1/4">Ingredient</TableHead>
+                    <TableHead className="text-right">Reorder Point</TableHead>
+                    <TableHead className="text-right">Current</TableHead>
+                    <TableHead className="text-center">Add</TableHead>
+                    <TableHead className="text-center">Mark</TableHead>
+                    <TableHead>Note</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="flex justify-end p-2 bg-muted/20">
-              <Button onClick={handleSaveFulfillment} variant="success">
-                Save Fulfillment
-              </Button>
+                </TableHeader>
+                <TableBody>
+                  {detailedItems.length > 0 ? (
+                    detailedItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.ingredientName}</TableCell>
+                        <TableCell className="text-right">
+                          {item.reorderPoint !== undefined ? item.reorderPoint : 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {item.currentQty !== undefined ? item.currentQty : 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Input
+                            type="number"
+                            className="w-20 h-8"
+                            min={0}
+                            value={item.quantity}
+                            onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 0)}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Checkbox 
+                            checked={item.fulfilled || false}
+                            onCheckedChange={(checked) => handleToggleFulfilled(item.id, !!checked)}
+                          />
+                        </TableCell>
+                        <TableCell>{item.note || '-'}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4">
+                        No items found for this request.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+              <div className="flex justify-end p-2 bg-muted/20">
+                <Button onClick={handleSaveFulfillment} variant="success">
+                  Save Fulfillment
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </TableCell>
     </TableRow>

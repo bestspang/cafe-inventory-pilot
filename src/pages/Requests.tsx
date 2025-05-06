@@ -66,6 +66,7 @@ const Requests = () => {
           showBranch={user?.role === 'owner'}
           sortState={sortState}
           onSort={handleSort}
+          onRefresh={fetchRequests}
         />
       </ScrollArea>
       
