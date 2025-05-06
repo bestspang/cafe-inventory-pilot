@@ -34,7 +34,7 @@ export async function handleUpdate<T extends TableName>(
     const { data, error, status, statusText } = await supabase
       .from(table)
       .update(changes)
-      .eq('id', id as string)
+      .eq('id', id)
       .select();
       
     // Log detailed response information

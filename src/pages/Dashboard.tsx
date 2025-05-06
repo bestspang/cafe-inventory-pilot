@@ -1,5 +1,5 @@
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardMetrics } from '@/hooks/dashboard/useDashboardMetrics';
@@ -13,19 +13,15 @@ import QuickActionsSection from '@/components/dashboard/QuickActionsSection';
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [branchFilter, setBranchFilter] = useState<'all' | 'healthy' | 'at-risk'>('all');
   
   const isOwner = user?.role === 'owner';
   const isManager = user?.role === 'manager';
   
   const { metrics, isLoading: isLoadingMetrics } = useDashboardMetrics();
-  const { 
-    branchTrendValues, 
-    lowStockTrendValues, 
-    requestsTrendValues, 
-    stockChecksTrendValues 
-  } = useDashboardTrends();
+  const { trends, isLoading: isLoadingTrends } = useDashboardTrends();
   
-  const { branches, isLoading: isLoadingBranches } = useBranchSnapshots();
+  const { branches, isLoading: isLoadingBranches } = useBranchSnapshots({ branchFilter });
   
   const handleStatCardClick = useCallback((metric: string) => {
     switch (metric) {
@@ -46,7 +42,10 @@ export default function Dashboard() {
     }
   }, [navigate]);
   
-  const isLoading = isLoadingMetrics || isLoadingBranches;
+  const isLoading = isLoadingMetrics || isLoadingBranches || isLoadingTrends;
+
+  // Filter branches based on the current filter
+  const displayedBranches = branches;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -57,10 +56,10 @@ export default function Dashboard() {
       
       <DashboardMetrics
         metrics={metrics}
-        branchTrendValues={branchTrendValues}
-        lowStockTrendValues={lowStockTrendValues}
-        requestsTrendValues={requestsTrendValues}
-        stockChecksTrendValues={stockChecksTrendValues}
+        branchTrendValues={trends.branchTrends}
+        lowStockTrendValues={trends.lowStockTrends}
+        requestsTrendValues={trends.requestsTrends}
+        stockChecksTrendValues={trends.stockChecksTrends}
         isLoading={isLoading}
         isOwner={isOwner}
         onStatCardClick={handleStatCardClick}
@@ -76,8 +75,11 @@ export default function Dashboard() {
         <div className="xl:col-span-3 space-y-6">
           {isOwner && (
             <BranchesSection 
-              branches={branches} 
-              isLoading={isLoadingBranches} 
+              isOwner={isOwner}
+              branchFilter={branchFilter}
+              setBranchFilter={setBranchFilter}
+              displayedBranches={displayedBranches}
+              branchesLoading={isLoadingBranches}
             />
           )}
         </div>

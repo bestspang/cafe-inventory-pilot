@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 
@@ -13,7 +12,7 @@ export interface BranchSnapshot {
 }
 
 interface UseBranchSnapshotsProps {
-  branchFilter: 'all' | 'healthy' | 'at-risk';
+  branchFilter?: 'all' | 'healthy' | 'at-risk';
 }
 
 interface UseBranchSnapshotsResult {
@@ -22,8 +21,8 @@ interface UseBranchSnapshotsResult {
 }
 
 export const useBranchSnapshots = ({ 
-  branchFilter 
-}: UseBranchSnapshotsProps): UseBranchSnapshotsResult => {
+  branchFilter = 'all' 
+}: UseBranchSnapshotsProps = {}): UseBranchSnapshotsResult => {
   const [branches, setBranches] = useState<BranchSnapshot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
