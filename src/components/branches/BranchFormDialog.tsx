@@ -5,12 +5,13 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogClose
 } from '@/components/ui/dialog';
 import { useBranchManager } from '@/hooks/branches/useBranchManager';
 import { Branch } from '@/types/branch';
 import BranchForm from './BranchForm';
 import { BranchFormValues } from '@/lib/schemas/branch-schema';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useBranchesData } from '@/hooks/branches/useBranchesData';
 
 interface BranchFormDialogProps {
@@ -29,16 +30,15 @@ export default function BranchFormDialog({
   const isEditing = !!branch;
   const { createBranch, updateBranch, isLoading } = useBranchManager();
   const { refetch } = useBranchesData();
+  // Track internal submission state
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Reset submission state when dialog opens/closes
   useEffect(() => {
-    // Debug logging to track props and state
-    if (open) {
-      console.group('[BranchFormDialog] Dialog opened/props changed');
-      console.log('[BranchFormDialog] Is editing:', isEditing);
-      console.log('[BranchFormDialog] Branch data prop:', branch);
-      console.groupEnd();
+    if (!open) {
+      setIsSubmitting(false);
     }
-  }, [open, branch, isEditing]);
+  }, [open]);
   
   async function onSubmit(data: BranchFormValues): Promise<void> {
     console.group('[BranchFormDialog] onSubmit triggered');
@@ -47,6 +47,8 @@ export default function BranchFormDialog({
     console.log('[BranchFormDialog] Current branch state (for ID):', branch);
     
     try {
+      // Set submitting state to prevent multiple submissions
+      setIsSubmitting(true);
       let success = false;
       
       if (isEditing && branch) {
@@ -72,13 +74,15 @@ export default function BranchFormDialog({
           await onSave();
         }
         
-        // Force close the dialog
+        // Explicitly close the dialog and reset state
         onOpenChange(false);
       } else {
         console.log('[BranchFormDialog] Operation reported as failed, keeping dialog open');
+        setIsSubmitting(false);
       }
     } catch (error) {
       console.error('[BranchFormDialog] Error in onSubmit handler:', error);
+      setIsSubmitting(false);
     } finally {
       console.groupEnd(); // End [BranchFormDialog] onSubmit triggered
     }
@@ -88,16 +92,27 @@ export default function BranchFormDialog({
     <Dialog 
       open={open} 
       onOpenChange={(isOpen) => {
+        // Only allow closing if not in middle of submission
+        if (isSubmitting && !isOpen) {
+          return;
+        }
+        
         console.log(`[BranchFormDialog] Dialog onOpenChange called. New state: ${isOpen ? 'opening' : 'closing'}`);
         onOpenChange(isOpen);
       }}
-      modal={true} // Ensure modal behavior to prevent background interaction
+      modal={true}
     >
       <DialogContent 
         className="sm:max-w-[500px]"
         onInteractOutside={(e) => {
-          // Prevent interaction outside during loading state
-          if (isLoading) {
+          // Prevent interaction outside during loading or submission
+          if (isLoading || isSubmitting) {
+            e.preventDefault();
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          // Prevent escape key closing during loading or submission
+          if (isLoading || isSubmitting) {
             e.preventDefault();
           }
         }}
@@ -115,11 +130,14 @@ export default function BranchFormDialog({
         
         <BranchForm 
           branch={branch} 
-          isLoading={isLoading}
+          isLoading={isLoading || isSubmitting}
           onSubmit={onSubmit}
           onCancel={() => {
-            console.log('[BranchFormDialog] Cancel button clicked, closing dialog');
-            onOpenChange(false);
+            // Only allow cancel if not submitting
+            if (!isSubmitting) {
+              console.log('[BranchFormDialog] Cancel button clicked, closing dialog');
+              onOpenChange(false);
+            }
           }}
         />
       </DialogContent>

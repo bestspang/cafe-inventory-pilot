@@ -26,6 +26,7 @@ export default function BranchesTable({
 }: BranchesTableProps) {
   const [expandedBranch, setExpandedBranch] = useState<string | null>(null);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<Branch | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sortField, setSortField] = useState<string>('name');
@@ -58,10 +59,26 @@ export default function BranchesTable({
     }
   };
 
+  // Open edit dialog and set the branch to edit
+  const handleOpenEditDialog = (branch: Branch) => {
+    setEditingBranch(branch);
+    setIsEditDialogOpen(true);
+  };
+
+  // Handle closing the edit dialog
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+    // Use a timeout to delay clearing the editing branch
+    // This ensures the dialog fully animates out before removing the data
+    setTimeout(() => {
+      setEditingBranch(null);
+    }, 300); // Match this with the dialog's animation duration
+  };
+
   // Handle successful branch edit
   const handleSuccessfulEdit = async () => {
     await onSave();
-    setEditingBranch(null);
+    handleCloseEditDialog();
   };
 
   if (isLoading) {
@@ -100,7 +117,7 @@ export default function BranchesTable({
                   branch={branch}
                   expandedBranch={expandedBranch}
                   setExpandedBranch={setExpandedBranch}
-                  onEdit={(branch) => setEditingBranch(branch)}
+                  onEdit={handleOpenEditDialog}
                   onDelete={(branch) => setConfirmDelete(branch)}
                   onToggleStatus={onToggleStatus}
                 />
@@ -110,17 +127,13 @@ export default function BranchesTable({
         </Table>
       </div>
 
-      {/* Edit Branch Dialog - only render when there's a branch to edit */}
-      {editingBranch && (
-        <BranchFormDialog
-          branch={editingBranch}
-          open={!!editingBranch}
-          onOpenChange={(open) => {
-            if (!open) setEditingBranch(null);
-          }}
-          onSave={handleSuccessfulEdit}
-        />
-      )}
+      {/* Edit Branch Dialog */}
+      <BranchFormDialog
+        branch={editingBranch}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSave={handleSuccessfulEdit}
+      />
       
       {/* Delete Branch Dialog */}
       <DeleteBranchDialog
