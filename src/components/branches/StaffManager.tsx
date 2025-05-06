@@ -1,20 +1,27 @@
 
 import { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useBranchStaff } from '@/hooks/branches/useBranchStaff';
-import { StaffMember } from '@/types/branch';
-import { toast } from '@/components/ui/sonner';
-import { Badge } from '@/components/ui/badge';
+import { Trash2 } from 'lucide-react';
 import { 
   Table, 
-  TableBody,
+  TableBody, 
   TableCell, 
   TableHead, 
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import { useBranchStaff } from '@/hooks/branches/useBranchStaff';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog';
 
 interface StaffManagerProps {
   branchId: string;
@@ -32,10 +39,11 @@ export default function StaffManager({ branchId }: StaffManagerProps) {
   const [newStaffName, setNewStaffName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [staffBeingDeleted, setStaffBeingDeleted] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  const handleAddStaff = async () => {
+  async function handleAddStaff(e: React.FormEvent) {
+    e.preventDefault();
     if (!newStaffName.trim()) {
-      toast.error("Staff member name cannot be empty");
       return;
     }
     
@@ -51,86 +59,101 @@ export default function StaffManager({ branchId }: StaffManagerProps) {
     } finally {
       setIsAdding(false);
     }
-  };
+  }
   
-  const handleDeleteStaff = async (staffId: string) => {
-    setStaffBeingDeleted(staffId);
+  async function handleDeleteStaff() {
+    if (!staffBeingDeleted) return;
+    setIsDeleting(true);
     
     try {
-      const success = await deleteStaffMember(staffId);
+      const success = await deleteStaffMember(staffBeingDeleted);
       if (success) {
         fetchStaff();
       }
     } finally {
       setStaffBeingDeleted(null);
+      setIsDeleting(false);
     }
-  };
+  }
   
   return (
     <div className="space-y-4">
-      <div className="flex items-center">
-        <h3 className="text-md font-semibold">Staff Members</h3>
-        <Badge variant="outline" className="ml-2">
-          {staff.length}
-        </Badge>
-      </div>
-      
-      <div className="flex gap-2">
+      <form onSubmit={handleAddStaff} className="flex gap-2">
         <Input
-          placeholder="Add staff member"
+          placeholder="Add staff member..."
           value={newStaffName}
           onChange={(e) => setNewStaffName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleAddStaff();
-          }}
-          disabled={isAdding}
+          className="flex-1"
         />
         <Button 
-          onClick={handleAddStaff} 
-          disabled={!newStaffName.trim() || isAdding}
-          size="sm"
+          type="submit" 
+          disabled={isAdding || !newStaffName.trim()}
         >
-          <Plus className="h-4 w-4 mr-1" />
-          Add
+          {isAdding ? 'Adding...' : 'Add Staff'}
         </Button>
-      </div>
+      </form>
       
-      {staff.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className="w-16"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {staff.map((member: StaffMember) => (
-              <TableRow key={member.id}>
-                <TableCell>{member.staff_name}</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteStaff(member.id)}
-                    disabled={staffBeingDeleted === member.id}
-                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    {staffBeingDeleted === member.id ? (
-                      <span className="h-4 w-4 animate-spin">...</span>
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      {isLoading ? (
+        <div className="py-8 text-center text-muted-foreground">
+          Loading staff...
+        </div>
+      ) : staff.length === 0 ? (
+        <div className="py-8 text-center text-muted-foreground">
+          No staff members found for this branch.
+        </div>
       ) : (
-        <div className="text-center p-4 border rounded-md text-muted-foreground bg-muted/50">
-          No staff members added yet.
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead className="w-24 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {staff.map((member) => (
+                <TableRow key={member.id}>
+                  <TableCell>{member.staffName}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setStaffBeingDeleted(member.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
+      
+      <AlertDialog 
+        open={!!staffBeingDeleted} 
+        onOpenChange={(open) => !open && setStaffBeingDeleted(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently remove this staff
+              member from this branch.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteStaff}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
