@@ -93,6 +93,13 @@ const StockCheckActivity: React.FC = () => {
           fetchActivities();
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'stock_check_items' },
+        () => {
+          fetchActivities();
+        }
+      )
       .subscribe();
     
     return () => {

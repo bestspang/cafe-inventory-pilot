@@ -18,6 +18,15 @@ const StockCheck = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [activeTab, setActiveTab] = useState<'stock-check' | 'activity'>('stock-check');
   
+  // Check URL parameters for tab
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam === 'activity') {
+      setActiveTab('activity');
+    }
+  }, []);
+  
   const {
     selectedBranch,
     setSelectedBranch,

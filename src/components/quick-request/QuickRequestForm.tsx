@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -196,6 +197,16 @@ const QuickRequestForm: React.FC = () => {
     setIsLoading(true);
     
     try {
+      // Get items with quantity > 0
+      const itemsWithQuantity = formState.ingredients
+        .filter(ing => ing.quantity > 0)
+        .map(ing => ({
+          ingredient_id: ing.id,
+          quantity: ing.quantity,
+          unit: ing.unit,
+          name: ing.name // Include ingredient name for reference
+        }));
+      
       // Find staff details
       const selectedStaff = staffMembers.find(s => s.id === formState.staffId);
       
@@ -203,30 +214,31 @@ const QuickRequestForm: React.FC = () => {
         throw new Error('Selected staff not found');
       }
       
+      const currentTime = new Date().toISOString();
+      
       if (formState.action === 'request') {
-        // Create request
-        const { data: requestData, error: requestError } = await supabase
+        // 1a) Create a new request
+        const { data, error: requestError } = await supabase
           .from('requests')
           .insert({
             branch_id: formState.branchId,
             user_id: null, // null for public requests
             status: 'pending',
-            comment: formState.comment
+            comment: formState.comment,
+            requested_at: currentTime
           })
           .select('id')
           .single();
         
         if (requestError) throw requestError;
         
-        // Create request items
-        const requestItems = formState.ingredients
-          .filter(ing => ing.quantity > 0)
-          .map(ing => ({
-            request_id: requestData.id,
-            ingredient_id: ing.id,
-            quantity: ing.quantity,
-            note: `Requested by: ${selectedStaff.staffName}`
-          }));
+        // 1b) Insert request items
+        const requestItems = itemsWithQuantity.map(item => ({
+          request_id: data.id,
+          ingredient_id: item.ingredient_id,
+          quantity: item.quantity,
+          note: `Requested by: ${selectedStaff.staffName}`
+        }));
         
         const { error: itemsError } = await supabase
           .from('request_items')
@@ -239,13 +251,17 @@ const QuickRequestForm: React.FC = () => {
           description: 'Your ingredient request has been submitted successfully'
         });
         
+        // Navigate to requests page after successful submission
+        navigate('/requests');
+        
       } else if (formState.action === 'stock-update') {
-        // Create stock check
-        const { data: stockCheckData, error: stockCheckError } = await supabase
+        // 2a) Create a new stock check
+        const { data, error: stockCheckError } = await supabase
           .from('stock_checks')
           .insert({
             branch_id: formState.branchId,
             user_id: null, // null for public stock checks
+            checked_at: currentTime,
             comment: `Public stock check by: ${selectedStaff.staffName}. ${formState.comment}`
           })
           .select('id')
@@ -253,14 +269,12 @@ const QuickRequestForm: React.FC = () => {
         
         if (stockCheckError) throw stockCheckError;
         
-        // Create stock check items
-        const stockItems = formState.ingredients
-          .filter(ing => ing.quantity > 0)
-          .map(ing => ({
-            stock_check_id: stockCheckData.id,
-            ingredient_id: ing.id,
-            on_hand_qty: ing.quantity
-          }));
+        // 2b) Insert stock check items
+        const stockItems = itemsWithQuantity.map(item => ({
+          stock_check_id: data.id,
+          ingredient_id: item.ingredient_id,
+          on_hand_qty: item.quantity
+        }));
         
         const { error: stockItemsError } = await supabase
           .from('stock_check_items')
@@ -268,10 +282,30 @@ const QuickRequestForm: React.FC = () => {
         
         if (stockItemsError) throw stockItemsError;
         
+        // 2c) Update branch_inventory for immediate reflection
+        const branchInventoryUpdates = itemsWithQuantity.map(item => ({
+          branch_id: formState.branchId,
+          ingredient_id: item.ingredient_id,
+          on_hand_qty: item.quantity,
+          last_checked: currentTime
+        }));
+        
+        const { error: inventoryUpdateError } = await supabase
+          .from('branch_inventory')
+          .upsert(branchInventoryUpdates, { 
+            onConflict: ['branch_id', 'ingredient_id'],
+            ignoreDuplicates: false
+          });
+        
+        if (inventoryUpdateError) throw inventoryUpdateError;
+        
         toast({
           title: 'Stock Update Submitted',
           description: 'Your stock update has been submitted successfully'
         });
+        
+        // Navigate to stock check page after successful submission
+        navigate('/stock-check?tab=activity');
       }
       
       // Reset the form

@@ -239,9 +239,29 @@ const Requests = () => {
       .channel('requests-changes')
       .on('postgres_changes', 
         { 
-          event: '*', 
+          event: 'INSERT', 
           schema: 'public', 
           table: 'requests' 
+        }, 
+        () => {
+          fetchRequests();
+        }
+      )
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'requests' 
+        }, 
+        () => {
+          fetchRequests();
+        }
+      )
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'request_items' 
         }, 
         () => {
           fetchRequests();
