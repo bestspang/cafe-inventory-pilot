@@ -11,7 +11,7 @@ interface UpdateResponse<T> {
 /**
  * Generic update handler with detailed logging for debugging update operations
  */
-export async function handleUpdate<T extends 'branches' | 'ingredients'>(
+export async function handleUpdate<T extends string>(
   table: T,
   id: string,
   changes: Record<string, any>,

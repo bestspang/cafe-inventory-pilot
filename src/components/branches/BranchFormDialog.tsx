@@ -46,12 +46,13 @@ export default function BranchFormDialog({
     try {
       if (isEditing && branch) {
         console.log(`Attempting to update branch ${branch.id} with name: ${data.name}`);
+        // Pass the refetch function to ensure data refreshes after update
         success = await updateBranch({
           id: branch.id,
           name: data.name,
           address: data.address,
           timezone: data.timezone
-        });
+        }, refetch);
         console.log('Update result:', success ? 'Success' : 'Failed');
       } else {
         console.log('Attempting to create new branch');

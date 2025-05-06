@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Branches() {
   const { user } = useAuth();
-  const { branches, isLoading: isLoadingBranches } = useBranchesData();
+  const { branches, isLoading: isLoadingBranches, refetch } = useBranchesData();
   const { deleteBranch, toggleBranchStatus } = useBranchManager();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
@@ -57,8 +57,16 @@ export default function Branches() {
         <BranchesTable 
           branches={branches}
           isLoading={isLoadingBranches}
-          onDelete={deleteBranch}
-          onToggleStatus={toggleBranchStatus}
+          onDelete={async (branchId) => {
+            const success = await deleteBranch(branchId);
+            if (success) refetch();
+            return success;
+          }}
+          onToggleStatus={async (branch) => {
+            const success = await toggleBranchStatus(branch);
+            if (success) refetch();
+            return success;
+          }}
         />
       )}
       

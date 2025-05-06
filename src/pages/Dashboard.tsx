@@ -16,24 +16,28 @@ const Dashboard = () => {
   const [branchFilter, setBranchFilter] = useState<'all' | 'healthy' | 'at-risk'>('all');
   
   // Fetch metrics data from Supabase
-  const { isLoading: metricsLoading, totalBranches, lowStockItems, pendingRequests, missingStockChecks } = useDashboardMetrics();
+  const { metrics, isLoading: metricsLoading } = useDashboardMetrics();
+  const totalBranches = metrics?.totalBranches ?? 0;
+  const lowStockItems = metrics?.lowStockItems ?? 0;
+  const pendingRequests = metrics?.pendingRequests ?? 0;
+  const missingStockChecks = metrics?.missingStockChecks ?? 0;
   
   // Fetch trend data for charts
   const { trends, isLoading: trendsLoading } = useDashboardTrends();
   // Safely access trend data with fallbacks
-  const branchTrend = trends?.branchTrend || [];
-  const lowStockTrend = trends?.lowStockTrend || [];
-  const requestsTrend = trends?.requestsTrend || [];
-  const stockChecksTrend = trends?.stockChecksTrend || [];
+  const branchTrends = trends?.branchTrends || [];
+  const lowStockTrends = trends?.lowStockTrends || [];
+  const requestsTrends = trends?.requestsTrends || [];
+  const stockChecksTrends = trends?.stockChecksTrends || [];
   
   // Fetch branch snapshots
   const { branches: displayedBranches, isLoading: branchesLoading } = useBranchSnapshots({ branchFilter });
   
   // Convert TrendPoint[] to number[] for StatCard sparklines
-  const branchTrendValues = branchTrend.map(point => point.value);
-  const lowStockTrendValues = lowStockTrend.map(point => point.value);
-  const requestsTrendValues = requestsTrend.map(point => point.value);
-  const stockChecksTrendValues = stockChecksTrend.map(point => point.value);
+  const branchTrendValues = branchTrends.map(point => point.value);
+  const lowStockTrendValues = lowStockTrends.map(point => point.value);
+  const requestsTrendValues = requestsTrends.map(point => point.value);
+  const stockChecksTrendValues = stockChecksTrends.map(point => point.value);
   
   // Handler for dashboard stat card clicks
   const handleStatCardClick = (metric: string) => {
