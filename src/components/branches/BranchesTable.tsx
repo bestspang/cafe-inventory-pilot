@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import BranchTableHeader from './BranchTableHeader';
@@ -14,13 +13,15 @@ interface BranchesTableProps {
   isLoading: boolean;
   onDelete: (id: string) => Promise<boolean>;
   onToggleStatus: (branch: Branch) => Promise<boolean>;
+  onSave: () => Promise<void>;
 }
 
 export default function BranchesTable({ 
   branches, 
   isLoading,
   onDelete,
-  onToggleStatus
+  onToggleStatus,
+  onSave
 }: BranchesTableProps) {
   const [expandedBranch, setExpandedBranch] = useState<string | null>(null);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
@@ -108,6 +109,7 @@ export default function BranchesTable({
         onOpenChange={(open) => {
           if (!open) setEditingBranch(null);
         }}
+        onSave={onSave}
       />
       
       <DeleteBranchDialog

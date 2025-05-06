@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -54,7 +53,7 @@ export default function Branches() {
           </Button>
         </div>
       ) : (
-        <BranchesTable 
+        <BranchesTable
           branches={branches}
           isLoading={isLoadingBranches}
           onDelete={async (branchId) => {
@@ -67,6 +66,7 @@ export default function Branches() {
             if (success) refetch();
             return success;
           }}
+          onSave={refetch}
         />
       )}
       
