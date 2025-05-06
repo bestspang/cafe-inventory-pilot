@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { handleUpdate } from '@/utils/updateHandler';
 import { DetailedRequestItem } from '@/types/requests';
 
 export const useRequestDetails = (

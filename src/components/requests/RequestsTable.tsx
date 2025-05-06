@@ -114,22 +114,28 @@ const RequestsTable: React.FC<RequestsTableProps> = ({
           .select('on_hand_qty')
           .eq('branch_id', request.branchId)
           .eq('ingredient_id', item.ingredient_id)
-          .single();
+          .maybeSingle();  // Using maybeSingle() instead of single() to handle missing rows
 
         if (fetchError) {
           console.error('Error fetching inventory item:', fetchError);
           throw fetchError;
         }
 
-        // Step 2: Calculate new quantity and update
+        // Step 2: Calculate new quantity and update or insert
         const currentQty = inventoryItem?.on_hand_qty || 0;
         const newQty = currentQty + item.quantity;
         
+        // Use upsert instead of update to handle cases where the inventory item doesn't exist
         const { error: updateError } = await supabase
           .from('branch_inventory')
-          .update({ on_hand_qty: newQty })
-          .eq('branch_id', request.branchId)
-          .eq('ingredient_id', item.ingredient_id);
+          .upsert({ 
+            branch_id: request.branchId, 
+            ingredient_id: item.ingredient_id,
+            on_hand_qty: newQty,
+            last_checked: new Date().toISOString()
+          }, {
+            onConflict: ['branch_id', 'ingredient_id']
+          });
 
         if (updateError) {
           console.error('Error updating inventory:', updateError);
