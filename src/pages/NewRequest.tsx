@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Minus, X } from 'lucide-react';
@@ -36,47 +35,43 @@ const mockBranches = [
   { id: '4', name: 'Airport Kiosk' },
 ];
 
+// Update the mock ingredients to match the current StockItem type
 const mockIngredients: (Ingredient & { categoryName: string })[] = [
-  { 
-    id: '1', 
-    name: 'Coffee Beans', 
-    categoryId: '3', 
-    categoryName: 'Coffee & Tea',
-    unit: 'kg', 
-    defaultReorderPoint: 5
-  },
-  { 
-    id: '2', 
-    name: 'Whole Milk', 
+  {
+    id: '1',
+    name: 'Coffee Beans',
     categoryId: '1',
-    categoryName: 'Dairy', 
-    unit: 'liter', 
-    defaultReorderPoint: 10
+    unit: 'kg',
+    categoryName: 'Beverages'
   },
-  { 
-    id: '3', 
-    name: 'Avocado', 
+  {
+    id: '2',
+    name: 'Sugar',
     categoryId: '2',
-    categoryName: 'Produce', 
-    unit: 'pcs', 
-    defaultReorderPoint: 15
+    unit: 'kg',
+    categoryName: 'Condiments'
   },
-  { 
-    id: '4', 
-    name: 'Croissant', 
-    categoryId: '4',
-    categoryName: 'Bakery', 
-    unit: 'pcs', 
-    defaultReorderPoint: 20
+  {
+    id: '3',
+    name: 'Milk',
+    categoryId: '1',
+    unit: 'L',
+    categoryName: 'Beverages'
   },
-  { 
-    id: '5', 
-    name: 'To-Go Cups (12oz)', 
-    categoryId: '5',
-    categoryName: 'Packaging', 
-    unit: 'box', 
-    defaultReorderPoint: 3
+  {
+    id: '4',
+    name: 'Cups (Large)',
+    categoryId: '3',
+    unit: 'box',
+    categoryName: 'Supplies'
   },
+  {
+    id: '5',
+    name: 'Napkins',
+    categoryId: '3',
+    unit: 'pack',
+    categoryName: 'Supplies'
+  }
 ];
 
 interface RequestItem {

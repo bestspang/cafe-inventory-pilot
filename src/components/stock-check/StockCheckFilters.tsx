@@ -1,10 +1,8 @@
 
 import React from 'react';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { DataTableToolbar } from '@/components/ui/data-table/DataTableToolbar';
 import { DataTableViewOptions } from '@/components/ui/data-table/DataTableViewOptions';
-import { InventoryFilters } from '@/hooks/inventory/useInventoryFilters';
+import { StockCheckFilters } from '@/hooks/stock-check/useStockCheckFilters';
 import {
   Select,
   SelectContent,
@@ -12,31 +10,25 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Category } from '@/types';
-import { ViewMode } from '@/components/ui/data-table/DataTableViewOptions';
 
-interface InventoryFiltersProps {
-  filters: InventoryFilters;
-  setFilters: (filters: InventoryFilters) => void;
-  viewMode: ViewMode;
-  setViewMode: (mode: ViewMode) => void;
-  categories: Category[];
-  onAddIngredient: () => void;
-  canModify: boolean;
+interface StockCheckFilterProps {
+  filters: StockCheckFilters;
+  setFilters: (filters: StockCheckFilters) => void;
+  categories: { id: string, name: string }[];
   resetFilters: () => void;
   activeFilterCount: number;
+  viewMode: 'list' | 'grid';
+  setViewMode: (mode: 'list' | 'grid') => void;
 }
 
-const InventoryFilters: React.FC<InventoryFiltersProps> = ({
+const StockCheckFilters: React.FC<StockCheckFilterProps> = ({
   filters,
   setFilters,
-  viewMode,
-  setViewMode,
   categories,
-  onAddIngredient,
-  canModify,
   resetFilters,
-  activeFilterCount
+  activeFilterCount,
+  viewMode,
+  setViewMode
 }) => {
   return (
     <div className="sticky top-0 z-10 bg-background py-4 border-b mb-4">
@@ -73,19 +65,12 @@ const InventoryFilters: React.FC<InventoryFiltersProps> = ({
           <DataTableViewOptions 
             viewMode={viewMode} 
             setViewMode={setViewMode} 
-            gridViewEnabled={true}
+            gridViewEnabled={false}
           />
-          
-          {canModify && (
-            <Button onClick={onAddIngredient}>
-              <Plus className="h-4 w-4 mr-1" />
-              Add Ingredient
-            </Button>
-          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default InventoryFilters;
+export default StockCheckFilters;

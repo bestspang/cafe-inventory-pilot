@@ -1,22 +1,24 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useStockCheck } from '@/hooks/useStockCheck';
 import StockCheckBranchSelector from '@/components/stock-check/StockCheckBranchSelector';
-import StockCheckSearchBar from '@/components/stock-check/StockCheckSearchBar';
 import StockCheckTable from '@/components/stock-check/StockCheckTable';
 import StockCheckLoadingState from '@/components/stock-check/StockCheckLoadingState';
+import StockCheckFilters from '@/components/stock-check/StockCheckFilters';
+import { useStockCheckFilters } from '@/hooks/stock-check/useStockCheckFilters';
+import { ViewMode } from '@/components/ui/data-table/DataTableViewOptions';
 
 const StockCheck = () => {
   const { user } = useAuth();
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  
   const {
-    search,
-    setSearch,
     selectedBranch,
     setSelectedBranch,
-    filteredItems,
+    stockItems,
     updatedItems,
     branches,
     isLoading,
@@ -25,6 +27,31 @@ const StockCheck = () => {
     handleReorderPointSave,
     handleSave
   } = useStockCheck();
+
+  // Extract categories from stock items for the filter
+  const categories = React.useMemo(() => {
+    const uniqueCategories = new Map();
+    stockItems.forEach(item => {
+      if (item.categoryId && item.categoryName) {
+        uniqueCategories.set(item.categoryId, {
+          id: item.categoryId,
+          name: item.categoryName
+        });
+      }
+    });
+    return Array.from(uniqueCategories.values());
+  }, [stockItems]);
+
+  // Use the filtering and sorting hook
+  const {
+    filters,
+    setFilters,
+    sortState,
+    handleSort,
+    resetFilters,
+    activeFilterCount,
+    filteredAndSortedItems
+  } = useStockCheckFilters(stockItems);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -42,27 +69,37 @@ const StockCheck = () => {
             isLoading={isLoading}
           />
         </div>
-        
-        <StockCheckSearchBar search={search} setSearch={setSearch} />
       </div>
 
       {isLoading ? (
         <StockCheckLoadingState />
       ) : (
         <>
+          <StockCheckFilters
+            filters={filters}
+            setFilters={setFilters}
+            categories={categories}
+            resetFilters={resetFilters}
+            activeFilterCount={activeFilterCount}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+          />
+
           <StockCheckTable 
-            items={filteredItems} 
+            items={filteredAndSortedItems} 
             handleQuantityChange={handleQuantityChange}
             handleReorderPointChange={handleReorderPointChange}
             handleReorderPointSave={handleReorderPointSave}
             updatedItems={updatedItems}
+            sortState={sortState}
+            onSort={handleSort}
           />
 
-          {filteredItems.length === 0 && (
+          {filteredAndSortedItems.length === 0 && stockItems.length > 0 && (
             <div className="text-center py-8">
               <p className="text-muted-foreground">
-                {search ? 
-                  "No ingredients found matching your search." : 
+                {filters.search || filters.categoryId !== 'all' ? 
+                  "No ingredients found matching your filters." : 
                   "No ingredients available for this branch."}
               </p>
             </div>

@@ -8,6 +8,7 @@ import IngredientFormDialog from '@/components/inventory/IngredientFormDialog';
 import DeleteIngredientDialog from '@/components/inventory/DeleteIngredientDialog';
 import InventoryEmptyState from '@/components/inventory/InventoryEmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useInventoryFilters } from '@/hooks/inventory/useInventoryFilters';
 
 const InventorySkeletons = ({ viewMode }: { viewMode: 'grid' | 'list' }) => {
   return viewMode === 'grid' ? (
@@ -39,12 +40,6 @@ const InventorySkeletons = ({ viewMode }: { viewMode: 'grid' | 'list' }) => {
 const Inventory = () => {
   const {
     ingredients,
-    search,
-    setSearch,
-    categoryFilter,
-    setCategoryFilter,
-    viewMode,
-    setViewMode,
     formDialogOpen,
     setFormDialogOpen,
     deleteDialogOpen,
@@ -57,9 +52,22 @@ const Inventory = () => {
     handleEdit,
     handleDelete,
     confirmDelete,
-    hasFilters,
     isLoading
   } = useInventory();
+
+  // Use our new filter hook
+  const {
+    filters,
+    setFilters,
+    sortState,
+    handleSort,
+    viewMode,
+    setViewMode,
+    resetFilters,
+    activeFilterCount,
+    hasFilters,
+    filteredAndSortedItems
+  } = useInventoryFilters(ingredients);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -73,51 +81,57 @@ const Inventory = () => {
         </p>
       </div>
 
-      <InventoryFilters
-        search={search}
-        setSearch={setSearch}
-        categoryFilter={categoryFilter}
-        setCategoryFilter={setCategoryFilter}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        categories={categories}
-        onAddIngredient={() => {
-          setCurrentIngredient(undefined);
-          setFormDialogOpen(true);
-        }}
-        canModify={canModify}
-      />
-
       {isLoading ? (
         <InventorySkeletons viewMode={viewMode} />
-      ) : ingredients.length > 0 ? (
-        viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ingredients.map((ingredient) => (
-              <IngredientCard
-                key={ingredient.id}
-                ingredient={ingredient}
-                onEdit={() => handleEdit(ingredient)}
-                onDelete={() => handleDelete(ingredient)}
-              />
-            ))}
-          </div>
-        ) : (
-          <IngredientList
-            ingredients={ingredients}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        )
       ) : (
-        <InventoryEmptyState 
-          hasFilters={hasFilters}
-          canModify={canModify}
-          onAddIngredient={() => {
-            setCurrentIngredient(undefined);
-            setFormDialogOpen(true);
-          }}
-        />
+        <>
+          <InventoryFilters
+            filters={filters}
+            setFilters={setFilters}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            categories={categories}
+            onAddIngredient={() => {
+              setCurrentIngredient(undefined);
+              setFormDialogOpen(true);
+            }}
+            canModify={canModify}
+            resetFilters={resetFilters}
+            activeFilterCount={activeFilterCount}
+          />
+
+          {filteredAndSortedItems.length > 0 ? (
+            viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredAndSortedItems.map((ingredient) => (
+                  <IngredientCard
+                    key={ingredient.id}
+                    ingredient={ingredient}
+                    onEdit={() => handleEdit(ingredient)}
+                    onDelete={() => handleDelete(ingredient)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <IngredientList
+                ingredients={filteredAndSortedItems}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                sortState={sortState}
+                onSort={handleSort}
+              />
+            )
+          ) : (
+            <InventoryEmptyState 
+              hasFilters={hasFilters}
+              canModify={canModify}
+              onAddIngredient={() => {
+                setCurrentIngredient(undefined);
+                setFormDialogOpen(true);
+              }}
+            />
+          )}
+        </>
       )}
       
       {/* Add/Edit Ingredient Dialog */}
