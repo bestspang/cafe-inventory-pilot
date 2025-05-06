@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -287,14 +286,15 @@ const QuickRequestForm: React.FC = () => {
           branch_id: formState.branchId,
           ingredient_id: item.ingredient_id,
           on_hand_qty: item.quantity,
-          last_checked: currentTime
+          last_checked: currentTime,
+          reorder_pt: 10 // Add default reorder_pt as it's required by the table schema
         }));
         
-        // Fix: Pass the proper onConflict format as string array
+        // Fix: Use string instead of array for onConflict
         const { error: inventoryUpdateError } = await supabase
           .from('branch_inventory')
           .upsert(branchInventoryUpdates, { 
-            onConflict: ['branch_id', 'ingredient_id'] 
+            onConflict: 'branch_id,ingredient_id' 
           });
         
         if (inventoryUpdateError) throw inventoryUpdateError;
