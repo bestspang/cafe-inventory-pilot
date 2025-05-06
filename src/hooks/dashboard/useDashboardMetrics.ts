@@ -1,9 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 
-// Interface for the missing checks response
 interface MissingChecksResponse {
   missing: number;
 }
@@ -56,15 +56,20 @@ export const useDashboardMetrics = (): DashboardMetrics => {
         if (pendingError) throw pendingError;
         setPendingRequests(pendingCount || 0);
         
-        // Safely handle the RPC call with proper typing and null coalescing
+        // Safely handle the RPC call with proper typing
         const { data: missingChecksData, error: missingChecksError } = await supabase
-          .rpc('count_missing_checks') as { data: MissingChecksResponse[] | null; error: any };
+          .rpc('count_missing_checks');
 
         if (missingChecksError) throw missingChecksError;
         
-        // Safely unwrap the data with null-coalescing
-        const missingChecks = missingChecksData && missingChecksData[0] ? missingChecksData[0].missing : 0;
-        setMissingStockChecks(missingChecks);
+        // Check data exists and has the expected structure 
+        if (missingChecksData && Array.isArray(missingChecksData) && missingChecksData.length > 0) {
+          const typedData = missingChecksData as MissingChecksResponse[];
+          setMissingStockChecks(typedData[0]?.missing || 0);
+        } else {
+          setMissingStockChecks(0);
+        }
+        
       } catch (error) {
         console.error('Error fetching dashboard metrics:', error);
         toast({

@@ -1,27 +1,10 @@
 
 import React, { useState } from 'react';
-import { Globe, Edit, Trash2, CheckCircle2, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Table, TableBody } from '@/components/ui/table';
 import { Branch } from '@/types/branch';
-import BranchDetailPanel from './BranchDetailPanel';
+import BranchTableHeader from './BranchTableHeader';
+import BranchTableRow from './BranchTableRow';
+import DeleteBranchDialog from './DeleteBranchDialog';
 import BranchFormDialog from './BranchFormDialog';
 
 interface BranchesTableProps {
@@ -100,121 +83,29 @@ export default function BranchesTable({
     <>
       <div className="rounded-md border shadow-sm overflow-hidden">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[300px] cursor-pointer" onClick={() => toggleSort('name')}>
-                <div className="flex items-center">
-                  Name
-                  {sortField === 'name' && (
-                    sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
-                  )}
-                </div>
-              </TableHead>
-              <TableHead className="min-w-[150px]">Address</TableHead>
-              <TableHead className="min-w-[120px]">Timezone</TableHead>
-              <TableHead 
-                className="w-[100px] cursor-pointer"
-                onClick={() => toggleSort('status')}
-              >
-                <div className="flex items-center">
-                  Status
-                  {sortField === 'status' && (
-                    sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
-                  )}
-                </div>
-              </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+          <BranchTableHeader 
+            sortField={sortField} 
+            sortDirection={sortDirection} 
+            onSort={toggleSort} 
+          />
           <TableBody>
             {sortedBranches.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+              <tr>
+                <td colSpan={5} className="text-center py-8 text-muted-foreground">
                   No branches found
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ) : (
               sortedBranches.map((branch) => (
-                <React.Fragment key={branch.id}>
-                  <TableRow 
-                    className={
-                      expandedBranch === branch.id 
-                        ? 'border-b-0 hover:bg-muted/80' 
-                        : 'hover:bg-muted/50'
-                    }
-                    onClick={() => {
-                      setExpandedBranch(expandedBranch === branch.id ? null : branch.id);
-                    }}
-                  >
-                    <TableCell className="font-medium">
-                      <div className="flex items-center">
-                        <span>{branch.name}</span>
-                        {expandedBranch === branch.id ? (
-                          <ChevronUp className="ml-2 h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronDown className="ml-2 h-4 w-4 text-muted-foreground" />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{branch.address || '—'}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                        {branch.timezone || 'UTC'}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {branch.is_open ? (
-                        <Badge variant="success" className="bg-green-600">Open</Badge>
-                      ) : (
-                        <Badge variant="destructive">Closed</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingBranch(branch);
-                        }}
-                      >
-                        <Edit className="h-4 w-4 mr-1" /> Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setConfirmDelete(branch);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                      <Button
-                        variant={branch.is_open ? "destructive" : "success"}
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleStatus(branch);
-                        }}
-                      >
-                        {branch.is_open ? (
-                          <XCircle className="h-4 w-4" />
-                        ) : (
-                          <CheckCircle2 className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                  {expandedBranch === branch.id && (
-                    <TableRow className="bg-muted/30">
-                      <TableCell colSpan={5} className="p-0">
-                        <BranchDetailPanel branchId={branch.id} />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </React.Fragment>
+                <BranchTableRow
+                  key={branch.id}
+                  branch={branch}
+                  expandedBranch={expandedBranch}
+                  setExpandedBranch={setExpandedBranch}
+                  onEdit={(branch) => setEditingBranch(branch)}
+                  onDelete={(branch) => setConfirmDelete(branch)}
+                  onToggleStatus={onToggleStatus}
+                />
               ))
             )}
           </TableBody>
@@ -229,32 +120,13 @@ export default function BranchesTable({
         }}
       />
       
-      <Dialog open={!!confirmDelete} onOpenChange={(open) => !open && setConfirmDelete(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Branch</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete {confirmDelete?.name}? This action cannot be undone
-              and will delete all related data.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setConfirmDelete(null)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'Deleting...' : 'Delete Branch'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteBranchDialog
+        branch={confirmDelete}
+        open={!!confirmDelete}
+        onOpenChange={(open) => !open && setConfirmDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={isDeleting}
+      />
     </>
   );
 }
