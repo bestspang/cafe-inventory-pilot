@@ -4,6 +4,9 @@ export interface RequestItemDB {
   ingredient_id: string;
   quantity: number;
   note?: string;
+  recommended_qty?: number;
+  current_qty?: number;
+  fulfilled?: boolean;
   ingredients: {
     name: string;
   };
@@ -40,5 +43,8 @@ export interface RequestItem {
     ingredientName: string;
     quantity: number;
     note?: string;
+    recommendedQty?: number;
+    currentQty?: number;
+    fulfilled?: boolean;
   }[];
 }

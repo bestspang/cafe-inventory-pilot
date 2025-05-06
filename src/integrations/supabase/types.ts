@@ -260,26 +260,35 @@ export type Database = {
       request_items: {
         Row: {
           created_at: string | null
+          current_qty: number | null
+          fulfilled: boolean | null
           id: string
           ingredient_id: string
           note: string | null
           quantity: number
+          recommended_qty: number | null
           request_id: string
         }
         Insert: {
           created_at?: string | null
+          current_qty?: number | null
+          fulfilled?: boolean | null
           id?: string
           ingredient_id: string
           note?: string | null
           quantity: number
+          recommended_qty?: number | null
           request_id: string
         }
         Update: {
           created_at?: string | null
+          current_qty?: number | null
+          fulfilled?: boolean | null
           id?: string
           ingredient_id?: string
           note?: string | null
           quantity?: number
+          recommended_qty?: number | null
           request_id?: string
         }
         Relationships: [

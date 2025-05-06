@@ -1,39 +1,49 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TableCell, TableRow, Table, TableHeader, TableHead, TableBody } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { RequestItem } from '@/types/requests';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { handleUpdate } from '@/utils/updateHandler';
 
 interface RequestDetailsRowProps {
   request: RequestItem;
   showBranch: boolean;
   isExpanded: boolean;
+  onRefresh?: () => Promise<void>;
+}
+
+interface FulfillmentItem {
+  id: string;
+  quantity: number;
+  fulfilled: boolean;
 }
 
 const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({ 
   request, 
   showBranch, 
-  isExpanded 
+  isExpanded,
+  onRefresh 
 }) => {
   const { toast } = useToast();
   const [fulfillmentItems, setFulfillmentItems] = useState<{
     [key: string]: {
       quantity: number;
-      isDone: boolean;
+      fulfilled: boolean;
     }
   }>({});
 
   // Initialize fulfillment items when expanded
-  React.useEffect(() => {
+  useEffect(() => {
     if (isExpanded && request.requestItems) {
-      const initialState: { [key: string]: { quantity: number; isDone: boolean } } = {};
+      const initialState: { [key: string]: { quantity: number; fulfilled: boolean } } = {};
       request.requestItems.forEach(item => {
         initialState[item.id] = {
           quantity: item.quantity,
-          isDone: false
+          fulfilled: item.fulfilled || false
         };
       });
       setFulfillmentItems(initialState);
@@ -55,36 +65,65 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
       ...prev,
       [id]: {
         ...prev[id],
-        isDone: checked
+        fulfilled: checked
       }
     }));
   };
 
-  const handleSaveFulfillment = () => {
-    // This would normally save to the database
-    console.log('Saving fulfillment data:', fulfillmentItems);
-    
-    toast({
-      title: 'Fulfillment updated',
-      description: 'The request fulfillment details have been saved.'
-    });
+  const handleSaveFulfillment = async () => {
+    try {
+      // Convert the fulfillment items object to an array for batch update
+      const updates = Object.entries(fulfillmentItems).map(([id, values]) => ({
+        id,
+        quantity: values.quantity,
+        fulfilled: values.fulfilled
+      }));
+      
+      // Update each item individually
+      for (const item of updates) {
+        const { error } = await supabase
+          .from('request_items')
+          .update({
+            quantity: item.quantity,
+            fulfilled: item.fulfilled
+          })
+          .eq('id', item.id);
+        
+        if (error) {
+          throw error;
+        }
+      }
+      
+      // Check if all items are fulfilled
+      const allFulfilled = Object.values(fulfillmentItems).every(item => item.fulfilled);
+      
+      // If all items are fulfilled, update the request status
+      if (allFulfilled && request.status !== 'fulfilled') {
+        await handleUpdate('requests', request.id, { status: 'fulfilled' });
+      }
+      
+      toast({
+        title: 'Fulfillment updated',
+        description: 'The request fulfillment details have been saved.'
+      });
+      
+      // Refresh the data if callback provided
+      if (onRefresh) {
+        await onRefresh();
+      }
+    } catch (error: any) {
+      console.error('Error saving fulfillment:', error);
+      toast({
+        title: 'Error saving fulfillment',
+        description: error.message || 'Failed to save fulfillment details',
+        variant: 'destructive'
+      });
+    }
   };
 
   if (!isExpanded || !request.requestItems) {
     return null;
   }
-
-  // Recommended quantities would normally come from the database
-  // This is a placeholder for demonstration purposes
-  const recommendedQuantities = {
-    // ingredientId: recommendedQty
-  };
-  
-  // Current quantities would normally come from the database
-  // This is a placeholder for demonstration purposes
-  const currentQuantities = {
-    // ingredientId: currentQty
-  };
 
   return (
     <TableRow className="bg-muted/40">
@@ -110,8 +149,8 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
                 {request.requestItems.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.ingredientName}</TableCell>
-                    <TableCell>{recommendedQuantities[item.ingredientId] || 'N/A'}</TableCell>
-                    <TableCell>{currentQuantities[item.ingredientId] || 'N/A'}</TableCell>
+                    <TableCell>{item.recommendedQty !== undefined ? item.recommendedQty : 'N/A'}</TableCell>
+                    <TableCell>{item.currentQty !== undefined ? item.currentQty : 'N/A'}</TableCell>
                     <TableCell>
                       <Input
                         type="number"
@@ -123,7 +162,7 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
                     </TableCell>
                     <TableCell>
                       <Checkbox 
-                        checked={fulfillmentItems[item.id]?.isDone || false}
+                        checked={fulfillmentItems[item.id]?.fulfilled || false}
                         onCheckedChange={(checked) => handleToggleDone(item.id, !!checked)}
                       />
                     </TableCell>
@@ -133,7 +172,7 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
               </TableBody>
             </Table>
             <div className="flex justify-end p-2 bg-muted/20">
-              <Button onClick={handleSaveFulfillment}>
+              <Button onClick={handleSaveFulfillment} variant="success">
                 Save Fulfillment
               </Button>
             </div>

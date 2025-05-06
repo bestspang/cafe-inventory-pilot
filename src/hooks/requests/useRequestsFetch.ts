@@ -34,7 +34,10 @@ export const useRequestsFetch = () => {
           ingredientId: item.ingredient_id,
           ingredientName: item.ingredients.name,
           quantity: item.quantity,
-          note: item.note
+          note: item.note,
+          recommendedQty: item.recommended_qty,
+          currentQty: item.current_qty,
+          fulfilled: item.fulfilled || false
         }))
       };
     });
@@ -63,6 +66,9 @@ export const useRequestsFetch = () => {
             ingredient_id,
             quantity,
             note,
+            recommended_qty,
+            current_qty,
+            fulfilled,
             ingredients (
               name
             )
