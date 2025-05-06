@@ -1,10 +1,19 @@
+
 import React from 'react';
-import { Edit, Trash2, CheckCircle2, XCircle, ChevronUp, ChevronDown } from 'lucide-react';
+import { Edit, Trash2, CheckCircle2, XCircle, ChevronUp, ChevronDown, MoreHorizontal } from 'lucide-react';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Branch } from '@/types/branch';
 import BranchDetailPanel from './BranchDetailPanel';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
+import { Globe } from 'lucide-react';
 
 interface BranchTableRowProps {
   branch: Branch;
@@ -64,40 +73,53 @@ export default function BranchTableRow({
           )}
         </TableCell>
         <TableCell className="text-right space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(branch);
-            }}
-          >
-            <Edit className="h-4 w-4 mr-1" /> Edit
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(branch);
-            }}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-          <Button
-            variant={branch.is_open ? "destructive" : "success"}
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleStatus(branch);
-            }}
-          >
-            {branch.is_open ? (
-              <XCircle className="h-4 w-4" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4" />
-            )}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(branch);
+                }}
+              >
+                <Edit className="h-4 w-4 mr-2" /> Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleStatus(branch);
+                }}
+              >
+                {branch.is_open ? (
+                  <>
+                    <XCircle className="h-4 w-4 mr-2 text-destructive" /> Close Branch
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" /> Open Branch
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(branch);
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </TableCell>
       </TableRow>
       {isExpanded && (
@@ -110,6 +132,3 @@ export default function BranchTableRow({
     </React.Fragment>
   );
 }
-
-// Need to import Globe which was missing
-import { Globe } from 'lucide-react';
