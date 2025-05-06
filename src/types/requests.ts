@@ -34,7 +34,7 @@ export interface RequestItem {
   status: 'pending' | 'fulfilled';
   itemsCount: number;
   detailText: string;
-  requestItems?: {
+  requestItems: {
     id: string;
     ingredientId: string;
     ingredientName: string;
