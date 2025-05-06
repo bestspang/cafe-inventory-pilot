@@ -19,13 +19,19 @@ export default function StaffManager({ branchId }: StaffManagerProps) {
     e.preventDefault();
     if (!newStaffName.trim()) return;
     
+    console.log('Adding staff member:', newStaffName, 'to branch:', branchId);
     const success = await addStaffMember(newStaffName);
+    
     if (success) {
+      console.log('Staff member added successfully, clearing input');
       setNewStaffName('');
+    } else {
+      console.warn('Failed to add staff member, keeping input value');
     }
   };
   
   const handleDeleteStaff = async (staffId: string) => {
+    console.log('Deleting staff member:', staffId);
     await deleteStaffMember(staffId);
   };
   
@@ -50,6 +56,7 @@ export default function StaffManager({ branchId }: StaffManagerProps) {
           value={newStaffName}
           onChange={(e) => setNewStaffName(e.target.value)}
           className="flex-1"
+          disabled={isAdding}
         />
         <Button type="submit" disabled={!newStaffName.trim() || isAdding} size="sm">
           <Plus className="h-4 w-4 mr-1" />
@@ -76,6 +83,7 @@ export default function StaffManager({ branchId }: StaffManagerProps) {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDeleteStaff(member.id)}
+                    disabled={isDeleting}
                   >
                     <Trash className="h-4 w-4 text-destructive" />
                   </Button>

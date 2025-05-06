@@ -39,16 +39,24 @@ export const useBranchUpdate = () => {
         throw error || new Error('Unknown error updating branch');
       }
       
-      // Log activity on successful update
-      await supabase
-        .from('branch_activity')
-        .insert({
-          branch_id: branch.id,
-          action: 'updated',
-          performed_by: user.id
-        });
+      // Only log activity if update was successful
+      if (success && data) {
+        try {
+          // Log activity on successful update
+          await supabase
+            .from('branch_activity')
+            .insert({
+              branch_id: branch.id,
+              action: 'updated',
+              performed_by: user.id
+            });
+        } catch (activityError) {
+          // Don't fail the overall operation if activity logging fails
+          console.error('Error logging branch activity:', activityError);
+        }
+      }
         
-      return true;
+      return success;
     } catch (error) {
       console.error('Error updating branch:', error);
       return false;

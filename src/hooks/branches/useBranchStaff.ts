@@ -23,14 +23,20 @@ export const useBranchStaff = (branchId?: string) => {
     try {
       setIsLoading(true);
       
+      console.log('Fetching staff for branch:', branchId);
+      
       const { data, error } = await supabase
         .from('store_staff')
         .select('*')
         .eq('branch_id', branchId)
         .order('staff_name');
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching branch staff:', error);
+        throw error;
+      }
       
+      console.log('Staff data received:', data);
       setStaff(data as StaffMember[]);
     } catch (error) {
       console.error('Error fetching branch staff:', error);
@@ -45,28 +51,65 @@ export const useBranchStaff = (branchId?: string) => {
   };
 
   const addStaffMember = async (staffName: string) => {
-    if (!user || !branchId || !staffName.trim()) return false;
+    if (!user || !branchId || !staffName.trim()) {
+      console.error('Cannot add staff: missing user, branch ID, or staff name');
+      return false;
+    }
     
     setIsAdding(true);
+    console.group('Adding staff member');
+    console.log('Branch ID:', branchId);
+    console.log('Staff name:', staffName);
     
     try {
-      const { error } = await supabase
+      // First, check if the user has permission to update this branch
+      // This helps debug RLS issues
+      const { data: branchCheck, error: branchError } = await supabase
+        .from('branches')
+        .select('id')
+        .eq('id', branchId)
+        .single();
+        
+      if (branchError) {
+        console.error('User lacks permission to access this branch:', branchError);
+        toast.error('Permission denied: You cannot modify this branch');
+        return false;
+      }
+      
+      // Now insert the staff member
+      const { data, error } = await supabase
         .from('store_staff')
         .insert({
           branch_id: branchId,
           staff_name: staffName.trim()
-        });
+        })
+        .select();
         
-      if (error) throw error;
+      console.log('Insert response:', { data, error });
+        
+      if (error) {
+        console.error('Database error adding staff member:', error);
+        toast.error(`Failed to add staff member: ${error.message}`);
+        return false;
+      }
       
-      toast.success('Staff member added successfully');
-      return true;
-    } catch (error) {
-      console.error('Error adding staff member:', error);
-      toast.error('Failed to add staff member');
+      if (data && data.length > 0) {
+        console.log('Staff member added successfully:', data[0]);
+        await fetchStaff(); // Refresh the staff list
+        toast.success('Staff member added successfully');
+        return true;
+      } else {
+        console.warn('No error but no data returned - possible RLS issue');
+        toast.error('Failed to add staff member: Permission denied');
+        return false;
+      }
+    } catch (error: any) {
+      console.error('Unexpected error adding staff member:', error);
+      toast.error(`Failed to add staff member: ${error?.message || 'Unknown error'}`);
       return false;
     } finally {
       setIsAdding(false);
+      console.groupEnd();
     }
   };
 
@@ -74,6 +117,8 @@ export const useBranchStaff = (branchId?: string) => {
     if (!user) return false;
     
     setIsDeleting(true);
+    console.group('Deleting staff member');
+    console.log('Staff ID:', staffId);
     
     try {
       const { error } = await supabase
@@ -81,21 +126,29 @@ export const useBranchStaff = (branchId?: string) => {
         .delete()
         .eq('id', staffId);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error removing staff member:', error);
+        toast.error(`Failed to remove staff member: ${error.message}`);
+        return false;
+      }
       
+      console.log('Staff member deleted successfully');
+      await fetchStaff(); // Refresh staff list
       toast.success('Staff member removed');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error removing staff member:', error);
-      toast.error('Failed to remove staff member');
+      toast.error(`Failed to remove staff member: ${error?.message || 'Unknown error'}`);
       return false;
     } finally {
       setIsDeleting(false);
+      console.groupEnd();
     }
   };
 
   useEffect(() => {
     if (branchId) {
+      console.log('useBranchStaff initialized with branch ID:', branchId);
       fetchStaff();
       
       // Subscribe to staff changes
@@ -103,13 +156,15 @@ export const useBranchStaff = (branchId?: string) => {
         .channel('branch_staff_changes')
         .on('postgres_changes', 
             { event: '*', schema: 'public', table: 'store_staff', filter: `branch_id=eq.${branchId}` },
-            () => {
+            (payload) => {
+              console.log('Store staff change detected:', payload);
               fetchStaff();
             }
         )
         .subscribe();
         
       return () => {
+        console.log('Cleaning up staff subscription for branch:', branchId);
         supabase.removeChannel(channel);
       };
     }

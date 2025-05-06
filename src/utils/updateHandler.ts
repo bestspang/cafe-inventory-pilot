@@ -34,13 +34,11 @@ export async function handleUpdate<T extends TableName>(
       updatePayload.updated_at = new Date().toISOString();
     }
 
-    // Execute the update operation
+    // Execute the update operation - don't use .single() on first query
     const { data, error, status, statusText } = await supabase
       .from(table)
       .update(updatePayload)
-      .eq('id', id as any) // Type assertion to handle the complex type
-      .select()
-      .single();
+      .eq('id', id as any);
       
     // Log detailed response information
     console.log('Response data:', data);
@@ -55,8 +53,21 @@ export async function handleUpdate<T extends TableName>(
     }
     
     // Check if any rows were returned (indicating success)
-    if (!data) {
-      console.warn('Update request succeeded but no data returned - possible RLS issue');
+    if (!data || data.length === 0) {
+      console.warn('Update succeeded but no data returned - fetching updated record');
+      
+      // If update succeeded but returned no data, fetch the record separately
+      const { data: fetchedData, error: fetchError } = await supabase
+        .from(table)
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (fetchError) {
+        console.warn('Could not fetch updated record:', fetchError);
+      } else {
+        console.log('Fetched updated record:', fetchedData);
+      }
     }
     
     // If successful and a refresh function was provided, call it
@@ -74,7 +85,7 @@ export async function handleUpdate<T extends TableName>(
       
     toast.success(`${entityName} updated successfully`);
     
-    return { success: true, data };
+    return { success: true, data: data && data.length ? data[0] : null };
   } catch (error) {
     console.error(`Unexpected error updating ${table}:`, error);
     toast.error(`Failed to update ${table}: Unexpected error`);
