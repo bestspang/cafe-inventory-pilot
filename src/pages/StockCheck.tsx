@@ -58,9 +58,19 @@ const StockCheck = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold">Stock Check</h1>
-        <p className="text-muted-foreground">Update your current inventory counts</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Stock Check</h1>
+          <p className="text-muted-foreground">Update your current inventory counts</p>
+        </div>
+        <div className="w-auto">
+          <StockCheckBranchSelector 
+            selectedBranch={selectedBranch} 
+            setSelectedBranch={setSelectedBranch}
+            branches={branches}
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'stock-check' | 'activity')}>
@@ -70,17 +80,6 @@ const StockCheck = () => {
         </TabsList>
         
         <TabsContent value="stock-check" className="space-y-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="w-full md:w-auto">
-              <StockCheckBranchSelector 
-                selectedBranch={selectedBranch} 
-                setSelectedBranch={setSelectedBranch}
-                branches={branches}
-                isLoading={isLoading}
-              />
-            </div>
-          </div>
-
           {isLoading ? (
             <StockCheckLoadingState />
           ) : (
