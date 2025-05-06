@@ -22,6 +22,7 @@ export interface Ingredient {
   categoryId: string;
   unit: string;
   defaultReorderPoint: number;
+  categoryName?: string; // Make this optional for flexibility
 }
 
 export interface Category {

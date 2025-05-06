@@ -45,11 +45,11 @@ export const useStockCheckActions = (
         return;
       }
       
-      // Fix the onConflict parameter to use an array of column names
+      // Fix the onConflict parameter to use the correct format
       const { error } = await supabase
         .from('branch_inventory')
         .upsert(itemsToUpdate, { 
-          onConflict: ['branch_id', 'ingredient_id'] 
+          onConflict: 'branch_id,ingredient_id' 
         });
       
       if (error) throw error;
