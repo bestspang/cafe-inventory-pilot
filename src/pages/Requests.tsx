@@ -31,8 +31,8 @@ interface RequestDB {
   branches: {
     name: string;
   };
-  store_staff: {
-    staff_name: string;
+  profiles: {
+    name: string | null;
   };
   request_items: RequestItemDB[];
 }
@@ -91,7 +91,7 @@ const Requests = () => {
         branchId: request.branch_id,
         branchName: request.branches.name,
         userId: request.user_id,
-        userName: request.store_staff?.staff_name || 'Unknown Staff',
+        userName: request.profiles?.name || 'Unknown User',
         requestedAt: request.requested_at,
         status: request.status,
         itemsCount: request.request_items.length,
@@ -121,8 +121,8 @@ const Requests = () => {
           branches (
             name
           ),
-          store_staff (
-            staff_name
+          profiles (
+            name
           ),
           request_items (
             id,
