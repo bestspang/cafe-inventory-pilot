@@ -79,14 +79,14 @@ const QuickRequestHeader: React.FC<QuickRequestHeaderProps> = ({
       </div>
       
       <div>
-        <Label htmlFor="staff">Staff Name <span className="text-destructive">*</span></Label>
+        <Label htmlFor="user_id">Staff Name <span className="text-destructive">*</span></Label>
         <Select
           value={staffId}
           onValueChange={onStaffChange}
           disabled={isLoading || !branchId || staffMembers.length === 0}
           required
         >
-          <SelectTrigger id="staff">
+          <SelectTrigger id="user_id">
             <SelectValue placeholder={
               !branchId 
                 ? "Select store first" 

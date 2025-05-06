@@ -15,7 +15,7 @@ export const useQuickRequestSubmit = () => {
     validateForm: () => boolean
   ) => {
     // Run validation first
-    if (!validateForm()) return;
+    if (!validateForm()) return false;
     
     setIsSubmitting(true);
     
@@ -30,11 +30,22 @@ export const useQuickRequestSubmit = () => {
           name: ing.name
         }));
       
-      // Find staff details
+      // Find staff details (for display purposes only)
       const selectedStaff = staffMembers.find(s => s.id === formState.staffId);
       
       if (!selectedStaff) {
         throw new Error('Selected staff not found');
+      }
+      
+      // Verify the selected staff ID exists in store_staff before proceeding
+      const { data: staffExists, error: staffError } = await supabase
+        .from('store_staff')
+        .select('id')
+        .eq('id', formState.staffId)
+        .single();
+    
+      if (staffError || !staffExists) {
+        throw new Error('Invalid staff selected. Please choose a valid staff member.');
       }
       
       const currentTime = new Date().toISOString();
@@ -65,17 +76,6 @@ export const useQuickRequestSubmit = () => {
     itemsWithQuantity: any[],
     currentTime: string
   ) => {
-    // First validate that the staff exists in the database
-    const { data: staffExists, error: staffError } = await supabase
-      .from('store_staff')
-      .select('id')
-      .eq('id', formState.staffId)
-      .single();
-    
-    if (staffError || !staffExists) {
-      throw new Error('Invalid staff selected. Please choose a valid staff member.');
-    }
-    
     // Create a new request with the staff ID as user_id
     const { data, error: requestError } = await supabase
       .from('requests')
@@ -119,17 +119,6 @@ export const useQuickRequestSubmit = () => {
     itemsWithQuantity: any[],
     currentTime: string
   ) => {
-    // First validate that the staff exists in the database
-    const { data: staffExists, error: staffError } = await supabase
-      .from('store_staff')
-      .select('id')
-      .eq('id', formState.staffId)
-      .single();
-    
-    if (staffError || !staffExists) {
-      throw new Error('Invalid staff selected. Please choose a valid staff member.');
-    }
-    
     // Create a new stock check with the staff ID as user_id
     const { data, error: stockCheckError } = await supabase
       .from('stock_checks')
