@@ -2,7 +2,11 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Category } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
+import { 
+  fetchCategories as fetchCategoriesFromDb,
+  checkCategoryExists,
+  createCategory
+} from '@/utils/inventory/categoryOperations';
 
 export interface CategoryManagerResult {
   categories: Category[];
@@ -19,25 +23,8 @@ export const useCategoryManager = (): CategoryManagerResult => {
   const fetchCategories = async () => {
     try {
       setIsLoading(true);
-      console.log('Fetching categories from database...');
-      const { data, error } = await supabase
-        .from('categories')
-        .select('id, name')
-        .order('name');
-      
-      if (error) {
-        throw error;
-      }
-      
-      console.log('Categories fetched successfully:', data);
-      
-      // Map the data to match our Category type
-      const formattedData = data.map((category: any) => ({
-        id: category.id,
-        name: category.name
-      }));
-      
-      setCategories(formattedData);
+      const categoriesData = await fetchCategoriesFromDb();
+      setCategories(categoriesData);
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast({
@@ -78,53 +65,19 @@ export const useCategoryManager = (): CategoryManagerResult => {
       }
       
       // Check if category with same name already exists
-      const { data: existingCategories } = await supabase
-        .from('categories')
-        .select('id')
-        .ilike('name', categoryName.trim())
-        .limit(1);
+      const existingCategoryId = await checkCategoryExists(categoryName);
         
-      if (existingCategories && existingCategories.length > 0) {
+      if (existingCategoryId) {
         toast({
           title: "Category already exists",
           description: `A category named "${categoryName}" already exists.`,
           variant: "destructive"
         });
-        return existingCategories[0].id; // Return existing id
+        return existingCategoryId; // Return existing id
       }
       
-      // Insert the new category into the database
-      const { data, error } = await supabase
-        .from('categories')
-        .insert([{ name: categoryName.trim() }])
-        .select('id, name')
-        .single();
-      
-      if (error) {
-        console.error('Supabase error creating category:', error);
-        toast({
-          title: "Category creation failed",
-          description: error.message || "Please try again later.",
-          variant: "destructive"
-        });
-        return null;
-      }
-      
-      if (!data) {
-        toast({
-          title: "Category creation failed",
-          description: "No data returned from category creation",
-          variant: "destructive"
-        });
-        return null;
-      }
-      
-      console.log('Category created successfully:', data);
-      
-      const newCategory = {
-        id: data.id,
-        name: data.name
-      };
+      // Create the new category
+      const newCategory = await createCategory(categoryName);
       
       // Update our categories state
       setCategories(prev => {
