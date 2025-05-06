@@ -69,27 +69,27 @@ export const useDashboardTrends = (): TrendData => {
           );
         };
         
-        // Ensure we have fallbacks for all data
-        const branchTrend = branchTrendData || [];
-        const lowStockTrend = lowStockTrendData || [];
-        const requestsTrend = requestsTrendData || [];
-        const stockChecksTrend = stockChecksTrendData || [];
+        // Ensure we have fallbacks for all data with proper null coalescing
+        const branchTrend = branchTrendData ?? [];
+        const lowStockTrend = lowStockTrendData ?? [];
+        const requestsTrend = requestsTrendData ?? [];
+        const stockChecksTrend = stockChecksTrendData ?? [];
         
         setTrendData({
-          branches: branchTrend.length > 0 
-            ? branchTrend.map((item) => item.count) 
+          branches: (branchTrend.length > 0) 
+            ? branchTrend.map((item) => (item?.count ?? 0)) 
             : mockDataForDays(4, 1, 14),
             
-          lowStock: lowStockTrend.length > 0 
-            ? lowStockTrend.map((item) => item.count) 
+          lowStock: (lowStockTrend.length > 0) 
+            ? lowStockTrend.map((item) => (item?.count ?? 0)) 
             : mockDataForDays(12, 4, 14),
             
-          requests: requestsTrend.length > 0 
-            ? requestsTrend.map((item) => item.count) 
+          requests: (requestsTrend.length > 0) 
+            ? requestsTrend.map((item) => (item?.count ?? 0)) 
             : mockDataForDays(10, 5, 14),
             
-          stockChecks: stockChecksTrend.length > 0 
-            ? stockChecksTrend.map((item) => item.count) 
+          stockChecks: (stockChecksTrend.length > 0) 
+            ? stockChecksTrend.map((item) => (item?.count ?? 0)) 
             : mockDataForDays(3, 2, 14),
             
           isLoading: false

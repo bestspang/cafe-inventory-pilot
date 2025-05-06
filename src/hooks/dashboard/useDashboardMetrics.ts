@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
 import type { Database } from '@/integrations/supabase/types';
+import { useAuth } from '@/context/AuthContext';
 
 // Define table types for proper typing
 type BranchInventoryRow = Database['public']['Tables']['branch_inventory']['Row'];
@@ -64,15 +64,15 @@ export const useDashboardMetrics = (): DashboardMetrics => {
         if (pendingError) throw pendingError;
         setPendingRequests(pendingCount || 0);
         
-        // Bypass type checking for RPC functions not yet in the types
+        // Safely handle the RPC call with proper typing and null coalescing
         const { data: missingChecksData, error: missingChecksError } = await supabase
           .rpc<any, MissingChecksResponse>('count_missing_checks');
 
         if (missingChecksError) throw missingChecksError;
         
-        // Safe access to the result - it's a number according to your schema
-        const missingChecks = missingChecksData ? missingChecksData.missing : 0;
-        setMissingStockChecks(typeof missingChecks === 'number' ? missingChecks : 0);
+        // Safely unwrap the data with null-coalescing
+        const missingChecks = missingChecksData?.missing ?? 0;
+        setMissingStockChecks(missingChecks);
       } catch (error) {
         console.error('Error fetching dashboard metrics:', error);
         toast({
