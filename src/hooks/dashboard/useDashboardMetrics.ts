@@ -58,11 +58,11 @@ export const useDashboardMetrics = (): DashboardMetrics => {
         
         // Fetch missing stock checks
         const { data: missingChecksData, error: missingChecksError } = await supabase
-          .rpc<MissingChecksResponse>('count_missing_checks');
+          .rpc<MissingChecksResponse>('count_missing_checks', {});
 
         if (missingChecksError) throw missingChecksError;
-        if (missingChecksData && missingChecksData.length > 0) {
-          setMissingStockChecks(missingChecksData[0]?.missing || 0);
+        if (missingChecksData) {
+          setMissingStockChecks(missingChecksData.missing || 0);
         }
       } catch (error) {
         console.error('Error fetching dashboard metrics:', error);
