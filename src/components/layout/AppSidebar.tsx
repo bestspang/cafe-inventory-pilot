@@ -76,9 +76,7 @@ const AppSidebar = () => {
   return <Sidebar className="border-r">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold">
-            CI
-          </div>
+          <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold">GI</div>
           <div>
             <h2 className="font-semibold">Good Inventory</h2>
             <p className="text-xs text-sidebar-foreground/70">v1.0.0</p>
