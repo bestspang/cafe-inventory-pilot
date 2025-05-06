@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -126,6 +125,7 @@ const RequestsTable: React.FC<RequestsTableProps> = ({
         const newQty = currentQty + item.quantity;
         
         // Use upsert instead of update to handle cases where the inventory item doesn't exist
+        // Fix: Properly specify the onConflict option
         const { error: updateError } = await supabase
           .from('branch_inventory')
           .upsert({ 
@@ -134,7 +134,7 @@ const RequestsTable: React.FC<RequestsTableProps> = ({
             on_hand_qty: newQty,
             last_checked: new Date().toISOString()
           }, {
-            onConflict: ['branch_id', 'ingredient_id']
+            onConflict: 'branch_id,ingredient_id'
           });
 
         if (updateError) {
