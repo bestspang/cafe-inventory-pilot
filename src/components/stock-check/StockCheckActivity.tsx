@@ -35,6 +35,7 @@ const StockCheckActivity: React.FC = () => {
           id, 
           checked_at,
           branches(name),
+          profiles(name, email),
           stock_check_items(
             id,
             on_hand_qty,
@@ -50,8 +51,11 @@ const StockCheckActivity: React.FC = () => {
         const formattedActivities: StockActivity[] = [];
         
         data.forEach(stockCheck => {
-          // Extract staff name from user_id if available (no comment field yet)
+          // Extract staff name from user profile data
           let staffName = 'Unknown';
+          if (stockCheck.profiles) {
+            staffName = stockCheck.profiles.name || stockCheck.profiles.email || 'Unknown';
+          }
           
           if (stockCheck.stock_check_items && stockCheck.stock_check_items.length > 0) {
             stockCheck.stock_check_items.forEach(item => {

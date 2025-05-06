@@ -105,7 +105,23 @@ const RequestsTable: React.FC<RequestsTableProps> = ({
         return;
       }
 
-      // Update branch inventory for each item
+      // Create a stock check record to track this activity
+      const { data: stockCheck, error: stockCheckError } = await supabase
+        .from('stock_checks')
+        .insert({
+          branch_id: request.branchId,
+          user_id: user?.id || null,
+          checked_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+        
+      if (stockCheckError) {
+        console.error('Error creating stock check:', stockCheckError);
+        throw stockCheckError;
+      }
+      
+      // Update branch inventory for each item and record in stock_check_items
       for (const item of items) {
         // Step 1: Get the current quantity
         const { data: inventoryItem, error: fetchError } = await supabase
@@ -140,6 +156,20 @@ const RequestsTable: React.FC<RequestsTableProps> = ({
         if (updateError) {
           console.error('Error updating inventory:', updateError);
           throw updateError;
+        }
+        
+        // Add entry to stock_check_items to track this activity
+        const { error: stockItemError } = await supabase
+          .from('stock_check_items')
+          .insert({
+            stock_check_id: stockCheck.id,
+            ingredient_id: item.ingredient_id,
+            on_hand_qty: newQty
+          });
+          
+        if (stockItemError) {
+          console.error('Error recording stock check item:', stockItemError);
+          throw stockItemError;
         }
       }
       
