@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -68,7 +67,7 @@ const LoginForm: React.FC = () => {
         <CardDescription>
           {isSignUp 
             ? 'Sign up to access your cafe inventory system'
-            : 'Login to access your cafe inventory system'}
+            : 'Login to access your inventory system'}
         </CardDescription>
       </CardHeader>
       <CardContent>
