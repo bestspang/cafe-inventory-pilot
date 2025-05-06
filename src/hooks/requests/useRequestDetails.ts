@@ -147,10 +147,27 @@ export const useRequestDetails = (
         
         // Update branch inventory with the fulfilled quantity
         if (item.fulfilled && branchId) {
+          // First, get the current quantity
+          const { data: currentInventory, error: fetchError } = await supabase
+            .from('branch_inventory')
+            .select('on_hand_qty')
+            .eq('branch_id', branchId)
+            .eq('ingredient_id', item.ingredient_id)
+            .single();
+          
+          if (fetchError) {
+            console.error('Error fetching current inventory:', fetchError);
+            throw fetchError;
+          }
+          
+          // Calculate new quantity
+          const newQuantity = (currentInventory?.on_hand_qty || 0) + item.quantity;
+          
+          // Update with the new quantity
           const { error: inventoryError } = await supabase
             .from('branch_inventory')
             .update({
-              on_hand_qty: supabase.rpc('increment', { x: item.quantity }),
+              on_hand_qty: newQuantity,
               last_checked: new Date().toISOString()
             })
             .eq('branch_id', branchId)
