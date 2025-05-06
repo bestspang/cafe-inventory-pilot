@@ -73,68 +73,70 @@ const StockCheck = () => {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'stock-check' | 'activity')}>
-        <TabsList>
-          <TabsTrigger value="stock-check">Stock Check</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="stock-check" className="space-y-6">
-          {isLoading ? (
-            <StockCheckLoadingState />
-          ) : (
-            <>
-              <StockCheckFilters
-                filters={filters}
-                setFilters={setFilters}
-                categories={categories}
-                resetFilters={resetFilters}
-                activeFilterCount={activeFilterCount}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                sortState={sortState}
-                onSort={handleSort}
-              />
-
-              <StockCheckTable 
-                items={filteredAndSortedItems} 
-                handleQuantityChange={handleQuantityChange}
-                handleReorderPointChange={handleReorderPointChange}
-                handleReorderPointSave={handleReorderPointSave}
-                updatedItems={updatedItems}
-                sortState={sortState}
-                onSort={handleSort}
-              />
-
-              {filteredAndSortedItems.length === 0 && stockItems.length > 0 && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    {filters.search || filters.categoryId !== 'all' ? 
-                      "No ingredients found matching your filters." : 
-                      "No ingredients available for this branch."}
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-
-          <div className="fixed bottom-8 right-8">
+      <div className="flex items-center justify-between mb-4">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'stock-check' | 'activity')} className="w-full">
+          <div className="flex items-center justify-between">
+            <TabsList>
+              <TabsTrigger value="stock-check">Stock Check</TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+            </TabsList>
+            
             <Button 
               onClick={handleSave} 
-              size="lg" 
-              className="shadow-lg"
+              size="sm" 
+              className="ml-auto"
               disabled={isLoading || Object.keys(updatedItems).length === 0}
             >
               <Save className="mr-2 h-4 w-4" />
               Save Stock Check
             </Button>
           </div>
-        </TabsContent>
+        </Tabs>
+      </div>
         
-        <TabsContent value="activity">
-          <StockCheckActivity />
-        </TabsContent>
-      </Tabs>
+      <TabsContent value="stock-check" className="space-y-6 mt-0">
+        {isLoading ? (
+          <StockCheckLoadingState />
+        ) : (
+          <>
+            <StockCheckFilters
+              filters={filters}
+              setFilters={setFilters}
+              categories={categories}
+              resetFilters={resetFilters}
+              activeFilterCount={activeFilterCount}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              sortState={sortState}
+              onSort={handleSort}
+            />
+
+            <StockCheckTable 
+              items={filteredAndSortedItems} 
+              handleQuantityChange={handleQuantityChange}
+              handleReorderPointChange={handleReorderPointChange}
+              handleReorderPointSave={handleReorderPointSave}
+              updatedItems={updatedItems}
+              sortState={sortState}
+              onSort={handleSort}
+            />
+
+            {filteredAndSortedItems.length === 0 && stockItems.length > 0 && (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">
+                  {filters.search || filters.categoryId !== 'all' ? 
+                    "No ingredients found matching your filters." : 
+                    "No ingredients available for this branch."}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </TabsContent>
+      
+      <TabsContent value="activity" className="mt-0">
+        <StockCheckActivity />
+      </TabsContent>
     </div>
   );
 };
