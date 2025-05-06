@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Check, X, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { Check, X, ChevronDown, ChevronUp, FileText, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
@@ -13,6 +13,7 @@ interface RequestTableRowProps {
   isExpanded: boolean;
   onToggleExpand: (id: string) => void;
   onToggleStatus: (id: string) => void;
+  onDeleteRequest?: (id: string) => void;
   formatDate: (dateString: string) => string;
 }
 
@@ -23,6 +24,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   isExpanded,
   onToggleExpand,
   onToggleStatus,
+  onDeleteRequest,
   formatDate,
 }) => {
   return (
@@ -65,25 +67,38 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
       </TableCell>
       
       <TableCell className="text-right">
-        {canFulfill && (
-          <Button
-            variant={request.status === 'pending' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => onToggleStatus(request.id)}
-          >
-            {request.status === 'pending' ? (
-              <>
-                <Check className="h-4 w-4 mr-1" />
-                Mark Fulfilled
-              </>
-            ) : (
-              <>
-                <X className="h-4 w-4 mr-1" />
-                Reopen
-              </>
-            )}
-          </Button>
-        )}
+        <div className="flex items-center justify-end gap-2">
+          {canFulfill && (
+            <Button
+              variant={request.status === 'pending' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onToggleStatus(request.id)}
+            >
+              {request.status === 'pending' ? (
+                <>
+                  <Check className="h-4 w-4 mr-1" />
+                  Mark Fulfilled
+                </>
+              ) : (
+                <>
+                  <X className="h-4 w-4 mr-1" />
+                  Reopen
+                </>
+              )}
+            </Button>
+          )}
+          
+          {onDeleteRequest && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onDeleteRequest(request.id)}
+              title="Delete request"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </TableCell>
     </TableRow>
   );

@@ -10,6 +10,7 @@ import { useRequestsFetch } from '@/hooks/requests/useRequestsFetch';
 import { useRequestStatusToggle } from '@/hooks/requests/useRequestStatusToggle';
 import { useRequestsFilters } from '@/hooks/requests/useRequestsFilters';
 import { useRequestsRealtime } from '@/hooks/requests/useRequestsRealtime';
+import { useRequestDelete } from '@/hooks/requests/useRequestDelete';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const Requests = () => {
@@ -18,6 +19,7 @@ const Requests = () => {
   // Use our custom hooks
   const { requests, setRequests, isLoading, branches, fetchRequests } = useRequestsFetch();
   const { handleToggleStatus } = useRequestStatusToggle(requests, setRequests);
+  const { deleteRequest } = useRequestDelete(fetchRequests);
   
   // Set up realtime subscription
   useRequestsRealtime(fetchRequests);
@@ -63,6 +65,7 @@ const Requests = () => {
         <RequestsTable 
           requests={paginatedItems} 
           onToggleStatus={handleToggleStatus} 
+          onDeleteRequest={deleteRequest}
           showBranch={user?.role === 'owner'}
           sortState={sortState}
           onSort={handleSort}
