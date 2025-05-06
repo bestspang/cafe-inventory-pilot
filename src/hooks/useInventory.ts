@@ -13,6 +13,7 @@ export const useInventory = () => {
   const { user } = useAuth();
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [costHistoryDialogOpen, setCostHistoryDialogOpen] = useState(false);
   
   // Only owners and managers can modify ingredients
   const canModify = ['owner', 'manager'].includes(user?.role || '');
@@ -49,6 +50,12 @@ export const useInventory = () => {
     await handleAddEdit(data, categories, handleNewCategory);
   };
 
+  // Handler for viewing cost history
+  const handleViewCostHistory = (ingredient: Ingredient) => {
+    setCurrentIngredient(ingredient);
+    setCostHistoryDialogOpen(true);
+  };
+
   const isLoading = categoriesLoading || ingredientsLoading;
 
   return {
@@ -63,6 +70,8 @@ export const useInventory = () => {
     setFormDialogOpen,
     deleteDialogOpen,
     setDeleteDialogOpen,
+    costHistoryDialogOpen,
+    setCostHistoryDialogOpen,
     currentIngredient,
     setCurrentIngredient,
     canModify,
@@ -71,6 +80,7 @@ export const useInventory = () => {
     handleEdit,
     handleDelete,
     confirmDelete,
+    handleViewCostHistory,
     hasFilters,
     isLoading
   };

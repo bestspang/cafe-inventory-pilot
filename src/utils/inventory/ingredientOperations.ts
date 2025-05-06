@@ -19,20 +19,78 @@ export const saveIngredient = async (
   
   try {
     if (data.id) {
-      // Update existing ingredient
-      console.log('Updating ingredient:', data.id);
-      const { error } = await supabase
-        .from('ingredients')
-        .update({
-          name: data.name,
-          category_id: categoryId,
-          unit: data.unit
-        })
-        .eq('id', data.id);
-      
-      if (error) {
-        console.error('Error updating ingredient:', error);
-        handleDatabaseError(error);
+      // Check if we're updating the cost of an existing ingredient
+      if (data.costPerUnit !== undefined) {
+        // Get current ingredient details
+        const { data: currentIngredient, error: fetchError } = await supabase
+          .from('ingredients')
+          .select('cost_per_unit')
+          .eq('id', data.id)
+          .single();
+        
+        if (fetchError) {
+          console.error('Error fetching current ingredient:', fetchError);
+          handleDatabaseError(fetchError);
+        }
+        
+        // If cost has changed, use the special RPC function to update it and log history
+        if (currentIngredient.cost_per_unit !== data.costPerUnit) {
+          const { error: costUpdateError } = await supabase.rpc('update_ingredient_cost', {
+            p_ingr_id: data.id,
+            p_new_cost: data.costPerUnit,
+            p_user_id: userId
+          });
+          
+          if (costUpdateError) {
+            console.error('Error updating ingredient cost:', costUpdateError);
+            handleDatabaseError(costUpdateError);
+          }
+          
+          // Update other fields separately to avoid duplication in cost history
+          const { error } = await supabase
+            .from('ingredients')
+            .update({
+              name: data.name,
+              category_id: categoryId,
+              unit: data.unit
+            })
+            .eq('id', data.id);
+          
+          if (error) {
+            console.error('Error updating ingredient:', error);
+            handleDatabaseError(error);
+          }
+        } else {
+          // No cost change, just update other fields
+          const { error } = await supabase
+            .from('ingredients')
+            .update({
+              name: data.name,
+              category_id: categoryId,
+              unit: data.unit
+            })
+            .eq('id', data.id);
+          
+          if (error) {
+            console.error('Error updating ingredient:', error);
+            handleDatabaseError(error);
+          }
+        }
+      } else {
+        // Update existing ingredient without cost change
+        const { error } = await supabase
+          .from('ingredients')
+          .update({
+            name: data.name,
+            category_id: categoryId,
+            unit: data.unit
+          })
+          .eq('id', data.id);
+        
+        if (error) {
+          console.error('Error updating ingredient:', error);
+          handleDatabaseError(error);
+        }
       }
       
       return {
@@ -48,6 +106,7 @@ export const saveIngredient = async (
           name: data.name,
           category_id: categoryId,
           unit: data.unit,
+          cost_per_unit: data.costPerUnit,
           created_by: userId // Add the user ID to satisfy RLS
         }]);
       

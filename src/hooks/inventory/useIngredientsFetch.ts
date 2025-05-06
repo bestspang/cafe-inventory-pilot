@@ -21,6 +21,7 @@ export const useIngredientsFetch = () => {
           id, 
           name, 
           unit, 
+          cost_per_unit,
           categoryId:category_id, 
           categories(id, name)
         `)
@@ -37,6 +38,7 @@ export const useIngredientsFetch = () => {
         id: item.id,
         name: item.name,
         unit: item.unit,
+        costPerUnit: item.cost_per_unit,
         categoryId: item.categoryId,
         categoryName: item.categories?.name || 'Uncategorized'
       }));

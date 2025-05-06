@@ -6,6 +6,7 @@ import IngredientCard from '@/components/inventory/IngredientCard';
 import IngredientList from '@/components/inventory/IngredientList';
 import IngredientFormDialog from '@/components/inventory/IngredientFormDialog';
 import DeleteIngredientDialog from '@/components/inventory/DeleteIngredientDialog';
+import CostHistoryDialog from '@/components/inventory/CostHistoryDialog';
 import InventoryEmptyState from '@/components/inventory/InventoryEmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInventoryFilters } from '@/hooks/inventory/useInventoryFilters';
@@ -44,6 +45,8 @@ const Inventory = () => {
     setFormDialogOpen,
     deleteDialogOpen,
     setDeleteDialogOpen,
+    costHistoryDialogOpen,
+    setCostHistoryDialogOpen,
     currentIngredient,
     setCurrentIngredient,
     canModify,
@@ -52,6 +55,7 @@ const Inventory = () => {
     handleEdit,
     handleDelete,
     confirmDelete,
+    handleViewCostHistory,
     isLoading
   } = useInventory();
 
@@ -109,6 +113,7 @@ const Inventory = () => {
                     ingredient={ingredient}
                     onEdit={() => handleEdit(ingredient)}
                     onDelete={() => handleDelete(ingredient)}
+                    onViewCostHistory={() => handleViewCostHistory(ingredient)}
                   />
                 ))}
               </div>
@@ -117,6 +122,7 @@ const Inventory = () => {
                 ingredients={filteredAndSortedItems}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onViewCostHistory={handleViewCostHistory}
                 sortState={sortState}
                 onSort={handleSort}
               />
@@ -149,6 +155,13 @@ const Inventory = () => {
         onOpenChange={setDeleteDialogOpen}
         ingredient={currentIngredient}
         onConfirmDelete={confirmDelete}
+      />
+
+      {/* Cost History Dialog */}
+      <CostHistoryDialog
+        open={costHistoryDialogOpen}
+        onOpenChange={setCostHistoryDialogOpen}
+        ingredient={currentIngredient}
       />
     </div>
   );

@@ -90,9 +90,52 @@ export type Database = {
         }
         Relationships: []
       }
+      ingredient_cost_history: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          id: string
+          ingredient_id: string
+          new_cost: number
+          previous_cost: number | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          id?: string
+          ingredient_id: string
+          new_cost: number
+          previous_cost?: number | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          id?: string
+          ingredient_id?: string
+          new_cost?: number
+          previous_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingredient_cost_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingredient_cost_history_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredients: {
         Row: {
           category_id: string | null
+          cost_per_unit: number | null
           created_at: string | null
           created_by: string | null
           id: string
@@ -101,6 +144,7 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          cost_per_unit?: number | null
           created_at?: string | null
           created_by?: string | null
           id?: string
@@ -109,6 +153,7 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          cost_per_unit?: number | null
           created_at?: string | null
           created_by?: string | null
           id?: string
@@ -378,7 +423,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_ingredient_cost: {
+        Args: { p_ingr_id: string; p_new_cost: number; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

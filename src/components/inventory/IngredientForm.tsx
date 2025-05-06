@@ -27,7 +27,11 @@ const formSchema = z.object({
   }),
   unit: z.string().min(1, {
     message: 'Unit is required.'
-  })
+  }),
+  costPerUnit: z.preprocess(
+    (val) => (val === '' ? null : Number(val)),
+    z.number().nullable().optional()
+  )
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -52,11 +56,13 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
     defaultValues: ingredient ? {
       name: ingredient.name,
       categoryId: ingredient.categoryId,
-      unit: ingredient.unit
+      unit: ingredient.unit,
+      costPerUnit: ingredient.costPerUnit || null
     } : {
       name: '',
       categoryId: categories.length > 0 ? categories[0].id : '',
-      unit: ''
+      unit: '',
+      costPerUnit: null
     }
   });
 
@@ -105,6 +111,29 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
               <FormLabel>Unit</FormLabel>
               <FormControl>
                 <Input placeholder="kg, lbs, pcs" {...field} aria-label="Ingredient unit" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="costPerUnit"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cost per unit ($)</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number" 
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00" 
+                  {...field} 
+                  value={field.value === null ? '' : field.value}
+                  onChange={(e) => field.onChange(e.target.value === '' ? null : parseFloat(e.target.value))}
+                  aria-label="Cost per unit" 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

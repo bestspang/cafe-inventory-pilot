@@ -21,6 +21,7 @@ export interface Ingredient {
   name: string;
   categoryId: string;
   unit: string;
+  costPerUnit?: number | null;
   categoryName?: string; // Make this optional for flexibility
 }
 

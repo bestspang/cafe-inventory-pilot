@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, History } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,12 +11,19 @@ interface IngredientCardProps {
   ingredient: Ingredient;
   onEdit: () => void;
   onDelete: () => void;
+  onViewCostHistory?: () => void;
 }
+
+const formatCost = (cost: number | null | undefined) => {
+  if (cost === null || cost === undefined) return '-';
+  return `$${cost.toFixed(2)}`;
+};
 
 const IngredientCard: React.FC<IngredientCardProps> = ({ 
   ingredient,
   onEdit,
-  onDelete
+  onDelete,
+  onViewCostHistory
 }) => {
   const { user } = useAuth();
   
@@ -32,13 +39,27 @@ const IngredientCard: React.FC<IngredientCardProps> = ({
             <Badge variant="outline">{ingredient.categoryName || 'Uncategorized'}</Badge>
           </div>
         </div>
-        <div className="mt-4 text-sm">
-          <p className="text-muted-foreground">Unit</p>
-          <p>{ingredient.unit}</p>
+        <div className="mt-4 text-sm space-y-3">
+          <div>
+            <p className="text-muted-foreground">Unit</p>
+            <p>{ingredient.unit}</p>
+          </div>
+          {canModify && (
+            <div>
+              <p className="text-muted-foreground">Cost per unit</p>
+              <p>{formatCost(ingredient.costPerUnit)}</p>
+            </div>
+          )}
         </div>
       </CardContent>
       {canModify && (
         <CardFooter className="flex justify-end gap-2 pt-2 pb-4 px-6">
+          {ingredient.costPerUnit !== null && ingredient.costPerUnit !== undefined && onViewCostHistory && (
+            <Button variant="ghost" size="sm" onClick={onViewCostHistory}>
+              <History className="h-4 w-4 mr-1" />
+              History
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={onEdit}>
             <Edit2 className="h-4 w-4 mr-1" />
             Edit
