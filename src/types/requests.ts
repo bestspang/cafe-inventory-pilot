@@ -1,4 +1,3 @@
-
 export interface RequestItemDB {
   id: string;
   ingredient_id: string;
@@ -47,4 +46,16 @@ export interface RequestItem {
     currentQty?: number;
     fulfilled?: boolean;
   }[];
+}
+
+export interface DetailedRequestItem {
+  id: string;
+  ingredientId: string;
+  ingredientName: string;
+  quantity: number;
+  note?: string;
+  recommendedQty?: number;
+  currentQty?: number;
+  fulfilled?: boolean;
+  reorderPoint?: number;
 }
