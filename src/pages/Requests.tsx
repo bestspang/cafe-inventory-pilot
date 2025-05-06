@@ -5,10 +5,12 @@ import RequestsFilters from '@/components/requests/RequestsFilters';
 import RequestsTable from '@/components/requests/RequestsTable';
 import RequestsHeader from '@/components/requests/RequestsHeader';
 import RequestsLoadingSkeleton from '@/components/requests/RequestsLoadingSkeleton';
+import RequestsPagination from '@/components/requests/RequestsPagination';
 import { useRequestsFetch } from '@/hooks/requests/useRequestsFetch';
 import { useRequestStatusToggle } from '@/hooks/requests/useRequestStatusToggle';
 import { useRequestsFilters } from '@/hooks/requests/useRequestsFilters';
 import { useRequestsRealtime } from '@/hooks/requests/useRequestsRealtime';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const Requests = () => {
   const { user } = useAuth();
@@ -28,7 +30,8 @@ const Requests = () => {
     handleSort,
     resetFilters,
     activeFilterCount,
-    filteredAndSortedItems
+    paginatedItems,
+    pagination
   } = useRequestsFilters(requests);
 
   // Get available branches based on user role
@@ -56,12 +59,21 @@ const Requests = () => {
         showBranchSelector={showBranchSelector}
       />
       
-      <RequestsTable 
-        requests={filteredAndSortedItems} 
-        onToggleStatus={handleToggleStatus} 
-        showBranch={user?.role === 'owner'}
-        sortState={sortState}
-        onSort={handleSort}
+      <ScrollArea className="w-full overflow-auto">
+        <RequestsTable 
+          requests={paginatedItems} 
+          onToggleStatus={handleToggleStatus} 
+          showBranch={user?.role === 'owner'}
+          sortState={sortState}
+          onSort={handleSort}
+        />
+      </ScrollArea>
+      
+      <RequestsPagination
+        currentPage={pagination.page}
+        totalPages={pagination.totalPages}
+        totalItems={pagination.totalItems}
+        onPageChange={pagination.handlePageChange}
       />
     </div>
   );

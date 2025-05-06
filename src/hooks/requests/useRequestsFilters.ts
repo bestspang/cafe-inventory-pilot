@@ -17,10 +17,15 @@ export const useRequestsFilters = (requests: RequestItem[]) => {
     branchId: 'all',
     status: 'pending',
   });
+  
   const [sortState, setSortState] = useState<SortState>({
     column: 'requestedAt',
     direction: 'desc',
   });
+  
+  // Add pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Handle sort change
   const handleSort = (column: string) => {
@@ -39,6 +44,7 @@ export const useRequestsFilters = (requests: RequestItem[]) => {
       status: 'pending',
       dateRange: undefined,
     });
+    setPage(1); // Reset to first page when filters change
   };
 
   // Count active filters (excluding search which is handled separately)
@@ -50,7 +56,7 @@ export const useRequestsFilters = (requests: RequestItem[]) => {
   }, [filters]);
 
   // Filter and sort items
-  const filteredAndSortedItems = useMemo(() => {
+  const filteredItems = useMemo(() => {
     // First, filter the items
     let result = [...requests];
     
@@ -128,6 +134,20 @@ export const useRequestsFilters = (requests: RequestItem[]) => {
     return result;
   }, [requests, filters, sortState]);
   
+  // Apply pagination to filtered and sorted items
+  const paginatedItems = useMemo(() => {
+    const startIndex = (page - 1) * pageSize;
+    return filteredItems.slice(startIndex, startIndex + pageSize);
+  }, [filteredItems, page, pageSize]);
+  
+  // Calculate total pages
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
   return {
     filters,
     setFilters,
@@ -135,6 +155,15 @@ export const useRequestsFilters = (requests: RequestItem[]) => {
     handleSort,
     resetFilters,
     activeFilterCount,
-    filteredAndSortedItems,
+    filteredItems,
+    paginatedItems,
+    pagination: {
+      page,
+      pageSize,
+      totalPages,
+      totalItems: filteredItems.length,
+      handlePageChange,
+      setPageSize
+    }
   };
 };
