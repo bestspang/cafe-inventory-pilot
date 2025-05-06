@@ -1,4 +1,3 @@
-
 import { 
   Dialog,
   DialogContent,
@@ -31,56 +30,60 @@ export default function BranchFormDialog({
   useEffect(() => {
     // Debug logging to track props and state
     if (open) {
-      console.group('BranchFormDialog opened');
-      console.log('Is editing:', isEditing);
-      console.log('Branch data:', branch);
+      console.group('[BranchFormDialog] Dialog opened/props changed');
+      console.log('[BranchFormDialog] Is editing:', isEditing);
+      console.log('[BranchFormDialog] Branch data prop:', branch);
       console.groupEnd();
     }
   }, [open, branch, isEditing]);
   
   async function onSubmit(data: BranchFormValues) {
-    console.group('Branch form submitted');
-    console.log('Form values:', data);
-    console.log('Is editing:', isEditing);
-    console.log('Branch ID:', branch?.id);
+    console.group('[BranchFormDialog] onSubmit triggered');
+    console.log('[BranchFormDialog] Form values (data):', data);
+    console.log('[BranchFormDialog] Current isEditing state:', isEditing);
+    console.log('[BranchFormDialog] Current branch state (for ID):', branch);
     
     let success = false;
     
     try {
-      if (isEditing && branch) {
-        console.log(`Attempting to update branch ${branch.id} with name: ${data.name}`);
-        // Pass the refetch function to ensure data refreshes after update
+      if (isEditing && branch && branch.id) {
+        console.log(`[BranchFormDialog] Attempting to update branch ${branch.id} with name: ${data.name}`);
+        console.log('[BranchFormDialog] Calling updateBranch from useBranchManager...');
         success = await updateBranch({
           id: branch.id,
           name: data.name,
           address: data.address,
           timezone: data.timezone
         }, refetch);
-        console.log('Update result:', success ? 'Success' : 'Failed');
-      } else {
-        console.log('Attempting to create new branch');
+        console.log('[BranchFormDialog] updateBranch call result (success):', success);
+      } else if (!isEditing) {
+        console.log('[BranchFormDialog] Attempting to create new branch');
+        console.log('[BranchFormDialog] Calling createBranch from useBranchManager...');
         const newBranch = await createBranch(data);
         success = !!newBranch;
-        console.log('Create result:', success ? 'Success' : 'Failed');
+        console.log('[BranchFormDialog] createBranch call result (newBranch):', newBranch);
+        console.log('[BranchFormDialog] createBranch success state:', success);
+      } else {
+        console.warn('[BranchFormDialog] onSubmit was called, but conditions for create or update not met.', { isEditing, branch });
       }
       
       if (success) {
-        console.log('Operation successful, closing dialog and refreshing data');
+        console.log('[BranchFormDialog] Operation successful, calling refetch() and onOpenChange(false)');
         await refetch(); // Ensure we refresh the branch list
         onOpenChange(false);
       } else {
-        console.log('Operation failed, keeping dialog open');
+        console.log('[BranchFormDialog] Operation reported as failed, keeping dialog open.');
       }
     } catch (error) {
-      console.error('Error in form submit handler:', error);
+      console.error('[BranchFormDialog] Error in onSubmit handler:', error);
     } finally {
-      console.groupEnd();
+      console.groupEnd(); // End [BranchFormDialog] onSubmit triggered
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
-      console.log(`Dialog ${isOpen ? 'opening' : 'closing'}`);
+      console.log(`[BranchFormDialog] Dialog onOpenChange called. New state: ${isOpen ? 'opening' : 'closing'}`);
       onOpenChange(isOpen);
     }}>
       <DialogContent className="sm:max-w-[500px]">
@@ -99,7 +102,10 @@ export default function BranchFormDialog({
           branch={branch} 
           isLoading={isLoading}
           onSubmit={onSubmit}
-          onCancel={() => onOpenChange(false)}
+          onCancel={() => {
+            console.log('[BranchFormDialog] Cancel button clicked, calling onOpenChange(false)');
+            onOpenChange(false);
+          }}
         />
       </DialogContent>
     </Dialog>
