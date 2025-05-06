@@ -25,6 +25,9 @@ const RequestItemsTable: React.FC<RequestItemsTableProps> = ({
     return <p className="text-center py-4">Loading details...</p>;
   }
 
+  // Check if all items are marked as fulfilled
+  const allItemsMarked = items.length > 0 && items.every(item => item.fulfilled);
+
   return (
     <div className="bg-background border rounded-md overflow-hidden">
       <Table>
@@ -77,7 +80,12 @@ const RequestItemsTable: React.FC<RequestItemsTableProps> = ({
         </TableBody>
       </Table>
       <div className="flex justify-end p-2 bg-muted/20">
-        <Button onClick={onSaveFulfillment} variant="success">
+        <Button 
+          onClick={onSaveFulfillment} 
+          variant="success" 
+          disabled={!allItemsMarked}
+          title={!allItemsMarked ? "All items must be marked to fulfill request" : "Save fulfillment"}
+        >
           Save Fulfillment
         </Button>
       </div>
