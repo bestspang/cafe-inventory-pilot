@@ -51,6 +51,7 @@ const StockCheckActivity: React.FC = () => {
       if (stockCheckError) throw stockCheckError;
       
       // Next, get request info for fulfilled requests
+      // Note the change here: we fetch store_staff instead of profiles since that's what requests.user_id references
       const { data: requestData, error: requestError } = await supabase
         .from('requests')
         .select(`
@@ -58,7 +59,7 @@ const StockCheckActivity: React.FC = () => {
           requested_at,
           status,
           user_id,
-          profiles(name, email),
+          store_staff(staff_name),
           branch_id,
           branches(name),
           request_items(
@@ -109,10 +110,10 @@ const StockCheckActivity: React.FC = () => {
       // Process fulfilled requests
       if (requestData) {
         requestData.forEach(request => {
-          // Get the name of who made the request
+          // Get the name of who made the request using store_staff instead of profiles
           let requesterName = 'Unknown';
-          if (request.profiles) {
-            requesterName = request.profiles.name || request.profiles.email || 'Unknown';
+          if (request.store_staff) {
+            requesterName = request.store_staff.staff_name || 'Unknown';
           }
           
           if (request.request_items && request.request_items.length > 0) {
