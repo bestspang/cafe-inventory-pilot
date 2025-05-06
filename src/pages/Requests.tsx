@@ -297,7 +297,7 @@ const Requests = () => {
         
         <div className="flex flex-col sm:flex-row gap-2">
           <Button variant="outline" asChild>
-            <Link to="/quick-request" target="_blank">
+            <Link to="/quick-request">
               <Plus className="h-4 w-4 mr-2" />
               Quick Request
             </Link>

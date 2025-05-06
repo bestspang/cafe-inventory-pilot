@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -38,6 +37,7 @@ const QuickRequestForm: React.FC = () => {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
+        setIsLoading(true);
         const { data, error } = await supabase
           .from('branches')
           .select('id, name');
@@ -45,7 +45,15 @@ const QuickRequestForm: React.FC = () => {
         if (error) throw error;
         
         if (data) {
+          console.log('Branches loaded:', data);
           setBranches(data);
+          // If there's at least one branch, select it by default
+          if (data.length > 0) {
+            setFormState(prev => ({
+              ...prev,
+              branchId: data[0].id
+            }));
+          }
         }
       } catch (error) {
         console.error('Error fetching branches:', error);
@@ -54,6 +62,8 @@ const QuickRequestForm: React.FC = () => {
           description: 'Failed to fetch store locations',
           variant: 'destructive'
         });
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -64,6 +74,7 @@ const QuickRequestForm: React.FC = () => {
   useEffect(() => {
     const fetchIngredients = async () => {
       try {
+        setIsLoading(true);
         const { data, error } = await supabase
           .from('ingredients')
           .select('id, name, unit');
@@ -71,6 +82,7 @@ const QuickRequestForm: React.FC = () => {
         if (error) throw error;
         
         if (data) {
+          console.log('Ingredients loaded:', data.length);
           const ingredientsWithQuantity = data.map(ingredient => ({
             ...ingredient,
             quantity: 0
@@ -89,6 +101,8 @@ const QuickRequestForm: React.FC = () => {
           description: 'Failed to fetch ingredients',
           variant: 'destructive'
         });
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -101,6 +115,7 @@ const QuickRequestForm: React.FC = () => {
       if (!formState.branchId) return;
       
       try {
+        setIsLoading(true);
         const { data, error } = await supabase
           .from('store_staff')
           .select('id, branch_id, staff_name, created_at')
@@ -109,6 +124,7 @@ const QuickRequestForm: React.FC = () => {
         if (error) throw error;
         
         if (data) {
+          console.log('Staff members loaded:', data.length, 'for branch:', formState.branchId);
           const staff = data.map(item => ({
             id: item.id,
             branchId: item.branch_id,
@@ -128,6 +144,8 @@ const QuickRequestForm: React.FC = () => {
           description: 'Failed to fetch staff members',
           variant: 'destructive'
         });
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -318,14 +336,18 @@ const QuickRequestForm: React.FC = () => {
               disabled={isLoading}
             >
               <SelectTrigger id="branch">
-                <SelectValue placeholder="Select store" />
+                <SelectValue placeholder={isLoading ? "Loading stores..." : "Select store"} />
               </SelectTrigger>
               <SelectContent>
-                {branches.map(branch => (
-                  <SelectItem key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </SelectItem>
-                ))}
+                {branches.length === 0 ? (
+                  <SelectItem value="loading" disabled>No stores available</SelectItem>
+                ) : (
+                  branches.map(branch => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
