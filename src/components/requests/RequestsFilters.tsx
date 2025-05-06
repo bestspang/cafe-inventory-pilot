@@ -38,7 +38,6 @@ const RequestsFilters: React.FC<RequestsFilterProps> = ({
           className="w-full md:w-auto"
         >
           <TabsList>
-            <TabsTrigger value="all">All Requests</TabsTrigger>
             <TabsTrigger value="pending">Pending</TabsTrigger>
             <TabsTrigger value="fulfilled">Fulfilled</TabsTrigger>
           </TabsList>

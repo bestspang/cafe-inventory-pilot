@@ -7,7 +7,7 @@ import { RequestItem } from '@/pages/Requests';
 export interface RequestFilters {
   search: string;
   branchId: string;
-  status: 'all' | 'pending' | 'fulfilled';
+  status: 'pending' | 'fulfilled';
   dateRange?: DateRange;
 }
 
@@ -15,7 +15,7 @@ export const useRequestsFilters = (requests: RequestItem[]) => {
   const [filters, setFilters] = useState<RequestFilters>({
     search: '',
     branchId: 'all',
-    status: 'all',
+    status: 'pending',
   });
   const [sortState, setSortState] = useState<SortState>({
     column: 'requestedAt',
@@ -36,7 +36,7 @@ export const useRequestsFilters = (requests: RequestItem[]) => {
     setFilters({
       search: '',
       branchId: 'all',
-      status: 'all',
+      status: 'pending',
       dateRange: undefined,
     });
   };
@@ -45,7 +45,6 @@ export const useRequestsFilters = (requests: RequestItem[]) => {
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filters.branchId !== 'all') count++;
-    if (filters.status !== 'all') count++;
     if (filters.dateRange) count++;
     return count;
   }, [filters]);
@@ -61,9 +60,7 @@ export const useRequestsFilters = (requests: RequestItem[]) => {
     }
     
     // Apply status filter
-    if (filters.status !== 'all') {
-      result = result.filter(item => item.status === filters.status);
-    }
+    result = result.filter(item => item.status === filters.status);
     
     // Apply date range filter
     if (filters.dateRange?.from) {
