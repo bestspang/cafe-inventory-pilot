@@ -2,7 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
+
+// Define the response type for trend data
+interface TrendResponse {
+  day: string;
+  count: number;
+}
 
 interface TrendData {
   branches: number[];
@@ -10,12 +15,6 @@ interface TrendData {
   requests: number[];
   stockChecks: number[];
   isLoading: boolean;
-}
-
-// Define the response type for trend data
-interface TrendResponse {
-  day: string;
-  count: number;
 }
 
 // Initialize with empty arrays for the charts
@@ -34,27 +33,28 @@ export const useDashboardTrends = (): TrendData => {
   useEffect(() => {
     const fetchTrendData = async () => {
       try {
+        // For all RPC calls, we'll do proper type assertions
         // Fetch branch trend data (daily counts for last 14 days)
         const { data: branchTrendData, error: branchError } = await supabase
-          .rpc<any, TrendResponse[]>('get_branch_trend_data');
+          .rpc('get_branch_trend_data') as { data: TrendResponse[] | null; error: any };
           
         if (branchError) throw branchError;
         
         // Fetch low stock trend
         const { data: lowStockTrendData, error: lowStockError } = await supabase
-          .rpc<any, TrendResponse[]>('get_low_stock_trend_data');
+          .rpc('get_low_stock_trend_data') as { data: TrendResponse[] | null; error: any };
           
         if (lowStockError) throw lowStockError;
         
         // Fetch requests trend
         const { data: requestsTrendData, error: requestsError } = await supabase
-          .rpc<any, TrendResponse[]>('get_pending_requests_trend_data');
+          .rpc('get_pending_requests_trend_data') as { data: TrendResponse[] | null; error: any };
           
         if (requestsError) throw requestsError;
         
         // Fetch stock checks trend
         const { data: stockChecksTrendData, error: stockChecksError } = await supabase
-          .rpc<any, TrendResponse[]>('get_missing_checks_trend_data');
+          .rpc('get_missing_checks_trend_data') as { data: TrendResponse[] | null; error: any };
           
         if (stockChecksError) throw stockChecksError;
         

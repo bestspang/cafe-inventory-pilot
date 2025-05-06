@@ -41,7 +41,8 @@ export const useBranchesData = () => {
       .channel('branches_changes')
       .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'branches' },
-          () => {
+          (payload) => {
+            console.log('Branch change detected:', payload);
             fetchBranches();
           }
       )

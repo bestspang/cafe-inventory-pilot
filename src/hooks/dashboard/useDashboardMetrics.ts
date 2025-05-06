@@ -1,17 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/context/AuthContext';
 
-// Define table types for proper typing
-type BranchInventoryRow = Database['public']['Tables']['branch_inventory']['Row'];
-type RequestRow = Database['public']['Tables']['requests']['Row'];
-type StockCheckRow = Database['public']['Tables']['stock_checks']['Row'];
-type BranchRow = Database['public']['Tables']['branches']['Row'];
-
-// Define the correct response type for the missing checks RPC call
+// Interface for the missing checks response
 interface MissingChecksResponse {
   missing: number;
 }
@@ -66,7 +58,7 @@ export const useDashboardMetrics = (): DashboardMetrics => {
         
         // Safely handle the RPC call with proper typing and null coalescing
         const { data: missingChecksData, error: missingChecksError } = await supabase
-          .rpc<any, MissingChecksResponse[]>('count_missing_checks');
+          .rpc('count_missing_checks') as { data: MissingChecksResponse[] | null; error: any };
 
         if (missingChecksError) throw missingChecksError;
         
@@ -80,6 +72,9 @@ export const useDashboardMetrics = (): DashboardMetrics => {
           description: "Please try again later",
           variant: "destructive"
         });
+        
+        // Set fallback values on error
+        setMissingStockChecks(0);
       } finally {
         setIsLoading(false);
       }

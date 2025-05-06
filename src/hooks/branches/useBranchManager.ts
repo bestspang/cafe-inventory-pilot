@@ -54,19 +54,27 @@ export const useBranchManager = () => {
     if (!user || !branch.id) return false;
     
     setIsLoading(true);
+    console.log('Updating branch:', branch); // Debug log
     
     try {
-      // Update branch
-      const { error: branchError } = await supabase
+      // Update branch with explicit fields
+      const { data, error: branchError } = await supabase
         .from('branches')
         .update({
           name: branch.name,
           address: branch.address,
-          timezone: branch.timezone
+          timezone: branch.timezone,
+          updated_at: new Date().toISOString()
         })
-        .eq('id', branch.id);
+        .eq('id', branch.id)
+        .select();
         
-      if (branchError) throw branchError;
+      if (branchError) {
+        console.error('Branch update error:', branchError);
+        throw branchError;
+      }
+      
+      console.log('Branch update result:', data); // Debug log
       
       // Log activity
       await supabase
