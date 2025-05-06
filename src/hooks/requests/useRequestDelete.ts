@@ -30,7 +30,7 @@ export const useRequestDelete = (fetchRequests: () => Promise<void>) => {
       toast({
         title: 'Request deleted',
         description: 'The request has been successfully deleted',
-        variant: 'success',
+        variant: 'default', // Changed from 'success' to 'default'
       });
       
       // Refresh the requests list
