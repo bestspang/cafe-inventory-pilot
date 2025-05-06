@@ -79,7 +79,7 @@ const AppSidebar = () => {
           <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold">GI</div>
           <div>
             <h2 className="font-semibold">Good Inventory</h2>
-            <p className="text-xs text-sidebar-foreground/70">v1.0.0</p>
+            <p className="text-xs text-sidebar-foreground/70">v0.0.1</p>
           </div>
         </div>
         <SidebarTrigger className="ml-2" />
