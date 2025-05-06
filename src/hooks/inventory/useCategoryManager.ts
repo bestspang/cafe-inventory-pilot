@@ -19,6 +19,7 @@ export const useCategoryManager = (): CategoryManagerResult => {
   const fetchCategories = async () => {
     try {
       setIsLoading(true);
+      console.log('Fetching categories from database...');
       const { data, error } = await supabase
         .from('categories')
         .select('id, name')
@@ -27,6 +28,8 @@ export const useCategoryManager = (): CategoryManagerResult => {
       if (error) {
         throw error;
       }
+      
+      console.log('Categories fetched successfully:', data);
       
       // Map the data to match our Category type
       const formattedData = data.map((category: any) => ({
@@ -49,7 +52,7 @@ export const useCategoryManager = (): CategoryManagerResult => {
 
   useEffect(() => {
     fetchCategories();
-  }, [toast]);
+  }, []);
 
   // Handle adding a new category to the database
   const handleNewCategory = async (tempId: string, categoryName: string): Promise<string> => {

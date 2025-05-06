@@ -52,7 +52,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface IngredientFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: FormValues) => void;
+  onSubmit: (data: Partial<Ingredient>) => Promise<void>;
   ingredient?: Ingredient;
   categories: Category[];
 }
@@ -87,6 +87,7 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
   // Reset form when dialog opens/closes or ingredient changes
   React.useEffect(() => {
     if (open) {
+      console.log('Resetting form with categories:', categories);
       form.reset(ingredient ? {
         name: ingredient.name,
         categoryId: ingredient.categoryId,
@@ -138,7 +139,7 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
     // Generate temporary ID for new category (this will be properly set on the server)
     const tempId = `new-${Date.now()}`;
     
-    // Add the new category to the categories array
+    // Add the new category to the categories array temporarily
     const newCategory = { id: tempId, name: newCategoryName };
     
     // Close new category input
@@ -231,7 +232,11 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
                       </Button>
                     </div>
                   ) : (
-                    <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value || undefined}
+                      value={field.value || undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category" />

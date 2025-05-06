@@ -1,65 +1,52 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Ingredient, Category } from '@/types';
+import { Category, Ingredient } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
-
-export interface IngredientManagerResult {
-  ingredients: Array<Ingredient & { categoryName: string }>;
-  currentIngredient: Ingredient | undefined;
-  setCurrentIngredient: (ingredient: Ingredient | undefined) => void;
-  handleAddEdit: (data: Partial<Ingredient>, categories: Category[], handleNewCategory: (tempId: string, name: string) => Promise<string>) => Promise<void>;
-  handleEdit: (ingredient: Ingredient) => void;
-  handleDelete: (ingredient: Ingredient) => void;
-  confirmDelete: () => Promise<void>;
-  isLoading: boolean;
-}
 
 export const useIngredientManager = (
   setFormDialogOpen: (open: boolean) => void,
   setDeleteDialogOpen: (open: boolean) => void
-): IngredientManagerResult => {
-  const [ingredients, setIngredients] = useState<Array<Ingredient & { categoryName: string }>>([]);
-  const [currentIngredient, setCurrentIngredient] = useState<Ingredient>();
+) => {
+  const [ingredients, setIngredients] = useState<(Ingredient & { categoryName: string })[]>([]);
+  const [currentIngredient, setCurrentIngredient] = useState<Ingredient | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { user } = useAuth();
 
-  // Fetch ingredients from the database
-  const fetchIngredients = useCallback(async () => {
+  // Fetch ingredients from database
+  const fetchIngredients = async () => {
     try {
       setIsLoading(true);
-      console.log('Fetching ingredients from database');
+      console.log('Fetching ingredients from database...');
       
       const { data, error } = await supabase
         .from('ingredients')
         .select(`
           id, 
           name, 
-          category_id, 
           unit, 
-          default_reorder_point,
-          categories(name)
-        `)
-        .order('name');
+          categoryId:category_id, 
+          defaultReorderPoint:default_reorder_point,
+          categories(id, name)
+        `);
       
       if (error) {
         throw error;
       }
       
-      // Map the data to match our Ingredient type
+      console.log('Fetched ingredients:', data);
+      
+      // Map and format the response data to match our Ingredient type
       const formattedData = data.map((item: any) => ({
         id: item.id,
         name: item.name,
-        categoryId: item.category_id,
-        categoryName: item.categories?.name || 'Uncategorized',
         unit: item.unit,
-        defaultReorderPoint: item.default_reorder_point
+        categoryId: item.categoryId,
+        categoryName: item.categories?.name || 'Uncategorized',
+        defaultReorderPoint: item.defaultReorderPoint
       }));
       
       setIngredients(formattedData);
-      console.log('Fetched ingredients:', formattedData);
     } catch (error) {
       console.error('Error fetching ingredients:', error);
       toast({
@@ -70,79 +57,84 @@ export const useIngredientManager = (
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  };
 
+  // Initial fetch
   useEffect(() => {
     fetchIngredients();
-  }, [fetchIngredients]);
+  }, []);
 
-  // Handle adding or editing an ingredient
+  // Add or edit an ingredient
   const handleAddEdit = async (
     data: Partial<Ingredient>, 
-    categories: Category[],
-    handleNewCategory: (tempId: string, name: string) => Promise<string>
+    categories: Category[], 
+    handleNewCategory: (tempId: string, categoryName: string) => Promise<string>
   ) => {
     try {
-      console.log('Handling add/edit for ingredient:', data);
-      
-      // Check if the categoryId starts with 'new-', which indicates a new category
+      console.log('Handling add/edit with data:', data);
+      // Check if we need to create a new category
       let categoryId = data.categoryId;
+      
+      // If category ID starts with "new-", it's a new category
       if (categoryId && categoryId.startsWith('new-')) {
-        // Find the category name from our categories array
-        const category = categories.find(c => c.id === categoryId);
-        if (category) {
+        console.log('Creating new category');
+        // Find the category object with this temp ID
+        const newCategory = categories.find(c => c.id === categoryId);
+        
+        if (newCategory) {
           // Create the new category in the database
-          categoryId = await handleNewCategory(categoryId, category.name);
-          console.log('Created new category with ID:', categoryId);
+          const realCategoryId = await handleNewCategory(categoryId, newCategory.name);
+          categoryId = realCategoryId;
         }
       }
       
-      // Prepare the data for the database
-      const ingredientData = {
-        name: data.name,
-        category_id: categoryId,
-        unit: data.unit,
-        default_reorder_point: data.defaultReorderPoint,
-        created_by: user?.id
-      };
-      
-      if (currentIngredient) {
+      // Now handle the ingredient
+      if (data.id) {
         // Update existing ingredient
-        console.log('Updating existing ingredient:', currentIngredient.id);
+        console.log('Updating ingredient:', data.id);
         const { error } = await supabase
           .from('ingredients')
-          .update(ingredientData)
-          .eq('id', currentIngredient.id);
+          .update({
+            name: data.name,
+            category_id: categoryId,
+            unit: data.unit,
+            default_reorder_point: data.defaultReorderPoint
+          })
+          .eq('id', data.id);
         
         if (error) throw error;
         
         toast({
           title: "Ingredient updated",
-          description: `${data.name} has been updated.`
+          description: `${data.name} has been updated successfully.`
         });
       } else {
-        // Create new ingredient
-        console.log('Creating new ingredient');
+        // Add new ingredient
+        console.log('Adding new ingredient');
         const { error } = await supabase
           .from('ingredients')
-          .insert([ingredientData]);
+          .insert([{
+            name: data.name,
+            category_id: categoryId,
+            unit: data.unit,
+            default_reorder_point: data.defaultReorderPoint
+          }]);
         
         if (error) throw error;
         
         toast({
           title: "Ingredient added",
-          description: `${data.name} has been added to your inventory.`
+          description: `${data.name} has been added to inventory.`
         });
       }
       
-      // Refresh the ingredients list
+      // Refresh ingredients list
       await fetchIngredients();
       
-      // Close the dialog
+      // Close the form dialog
       setFormDialogOpen(false);
-      // Clear the current ingredient
-      setCurrentIngredient(undefined);
       
+      return true;
     } catch (error: any) {
       console.error('Error saving ingredient:', error);
       toast({
@@ -150,6 +142,7 @@ export const useIngredientManager = (
         description: error.message || "Please try again later.",
         variant: "destructive"
       });
+      return false;
     }
   };
 
@@ -165,13 +158,11 @@ export const useIngredientManager = (
     setDeleteDialogOpen(true);
   };
 
-  // Confirm and execute the deletion
+  // Delete an ingredient
   const confirmDelete = async () => {
     if (!currentIngredient) return;
     
     try {
-      console.log('Deleting ingredient:', currentIngredient.id);
-      
       const { error } = await supabase
         .from('ingredients')
         .delete()
@@ -179,18 +170,17 @@ export const useIngredientManager = (
       
       if (error) throw error;
       
-      // Update local state by removing the deleted ingredient
+      // Update state
       setIngredients(prev => prev.filter(i => i.id !== currentIngredient.id));
       
       toast({
         title: "Ingredient deleted",
-        description: `${currentIngredient.name} has been removed from your inventory.`
+        description: `${currentIngredient.name} has been removed from inventory.`
       });
       
-      // Close the dialog and clear the current ingredient
+      // Close dialog
       setDeleteDialogOpen(false);
       setCurrentIngredient(undefined);
-      
     } catch (error: any) {
       console.error('Error deleting ingredient:', error);
       toast({
