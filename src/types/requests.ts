@@ -18,8 +18,8 @@ export interface RequestDB {
   branches: {
     name: string;
   };
-  profiles: {
-    name: string | null;
+  store_staff: {
+    staff_name: string;
   };
   request_items: RequestItemDB[];
 }

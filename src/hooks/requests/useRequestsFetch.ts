@@ -24,7 +24,7 @@ export const useRequestsFetch = () => {
         branchId: request.branch_id,
         branchName: request.branches.name,
         userId: request.user_id,
-        userName: request.profiles?.name || 'Unknown User',
+        userName: request.store_staff?.staff_name || 'Unknown User',
         requestedAt: request.requested_at,
         status: request.status,
         itemsCount: request.request_items.length,
@@ -55,8 +55,8 @@ export const useRequestsFetch = () => {
           branches (
             name
           ),
-          profiles (
-            name
+          store_staff (
+            staff_name
           ),
           request_items (
             id,
