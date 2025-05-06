@@ -63,7 +63,7 @@ export const CategoryInput: React.FC<CategoryInputProps> = ({
         setShowNewCategoryInput(true);
         setCategoryError({
           title: "Category creation failed",
-          message: "Unable to create new category"
+          message: "Unable to create new category. Check if you have the necessary permissions."
         });
         return;
       }

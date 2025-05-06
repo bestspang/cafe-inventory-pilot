@@ -97,11 +97,33 @@ export const useCategoryManager = (): CategoryManagerResult => {
       return newCategory.id;
     } catch (error: any) {
       console.error('Error creating category:', error);
+      let errorMessage = "Please try again later.";
+      
+      // Handle specific error cases
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Handle Supabase errors
+      if (error.code) {
+        switch (error.code) {
+          case '42501':
+            errorMessage = "You don't have permission to create categories.";
+            break;
+          case '23505':
+            errorMessage = "A category with this name already exists.";
+            break;
+          default:
+            errorMessage = `Database error: ${error.message || error.details || error.hint || "Unknown error"}`;
+        }
+      }
+      
       toast({
         title: "Category creation failed",
-        description: error.message || "Please try again later.",
+        description: errorMessage,
         variant: "destructive"
       });
+      
       return null;
     }
   };
