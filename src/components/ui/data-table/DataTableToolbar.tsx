@@ -1,14 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Filter, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 export interface FilterState {
   search?: string;
@@ -32,6 +32,8 @@ export const DataTableToolbar = ({
   filterCount = 0,
   onResetFilters,
 }: DataTableToolbarProps) => {
+  const [open, setOpen] = useState(false);
+
   return (
     <div className="flex flex-col space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -58,37 +60,40 @@ export const DataTableToolbar = ({
         </div>
 
         {children && (
-          <Collapsible className="w-full sm:w-auto">
-            <div className="flex items-center justify-between sm:justify-end space-x-2">
-              {filterCount > 0 && (
-                <Badge variant="secondary" className="mr-2">
-                  {filterCount} active {filterCount === 1 ? "filter" : "filters"}
-                </Badge>
-              )}
-              
-              {filterCount > 0 && onResetFilters && (
-                <Button 
-                  variant="ghost" 
-                  onClick={onResetFilters} 
-                  className="h-8 px-2 lg:px-3"
-                >
-                  Reset
-                </Button>
-              )}
-              
-              <CollapsibleTrigger asChild>
+          <div className="flex items-center space-x-2">
+            {filterCount > 0 && (
+              <Badge variant="secondary" className="mr-2">
+                {filterCount} active {filterCount === 1 ? "filter" : "filters"}
+              </Badge>
+            )}
+            
+            {filterCount > 0 && onResetFilters && (
+              <Button 
+                variant="ghost" 
+                onClick={onResetFilters} 
+                className="h-8 px-2 lg:px-3"
+              >
+                Reset
+              </Button>
+            )}
+            
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="h-8 px-2 lg:px-3">
                   <Filter className="h-4 w-4 mr-2" />
                   Filters
+                  {filterCount > 0 && (
+                    <span className="ml-1 rounded-full bg-primary w-2 h-2 block"></span>
+                  )}
                 </Button>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent className="mt-4 border rounded-lg p-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {children}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4" align="end">
+                <div className="grid gap-4">
+                  {children}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         )}
       </div>
     </div>

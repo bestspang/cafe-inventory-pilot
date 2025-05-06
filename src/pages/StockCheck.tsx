@@ -83,6 +83,8 @@ const StockCheck = () => {
             activeFilterCount={activeFilterCount}
             viewMode={viewMode}
             setViewMode={setViewMode}
+            sortState={sortState}
+            onSort={handleSort}
           />
 
           <StockCheckTable 
