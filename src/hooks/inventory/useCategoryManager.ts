@@ -16,38 +16,38 @@ export const useCategoryManager = (): CategoryManagerResult => {
   const { toast } = useToast();
 
   // Fetch categories from the database on component mount
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from('categories')
-          .select('id, name')
-          .order('name');
-        
-        if (error) {
-          throw error;
-        }
-        
-        // Map the data to match our Category type
-        const formattedData = data.map((category: any) => ({
-          id: category.id,
-          name: category.name
-        }));
-        
-        setCategories(formattedData);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        toast({
-          title: "Failed to load categories",
-          description: "Please try again later.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
+  const fetchCategories = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, name')
+        .order('name');
+      
+      if (error) {
+        throw error;
       }
-    };
+      
+      // Map the data to match our Category type
+      const formattedData = data.map((category: any) => ({
+        id: category.id,
+        name: category.name
+      }));
+      
+      setCategories(formattedData);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast({
+        title: "Failed to load categories",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCategories();
   }, [toast]);
 
@@ -56,10 +56,14 @@ export const useCategoryManager = (): CategoryManagerResult => {
     try {
       console.log('Creating new category:', categoryName);
       
+      if (!categoryName || categoryName.trim() === '') {
+        throw new Error('Category name cannot be empty');
+      }
+      
       // Insert the new category into the database
       const { data, error } = await supabase
         .from('categories')
-        .insert([{ name: categoryName }])
+        .insert([{ name: categoryName.trim() }])
         .select('id, name')
         .single();
       
@@ -90,6 +94,9 @@ export const useCategoryManager = (): CategoryManagerResult => {
         title: "Category created",
         description: `${categoryName} has been added as a new category.`
       });
+      
+      // Force a refresh of categories from the database
+      fetchCategories();
       
       return newCategory.id;
     } catch (error: any) {

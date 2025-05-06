@@ -30,6 +30,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { Ingredient, Category } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -65,6 +66,8 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
 }) => {
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -81,16 +84,54 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
     }
   });
 
-  const handleSubmit = (data: FormValues) => {
-    console.log('Submitting form with data:', data);
-    onSubmit(data);
-    form.reset();
-    setShowNewCategoryInput(false);
-    setNewCategoryName('');
+  // Reset form when dialog opens/closes or ingredient changes
+  React.useEffect(() => {
+    if (open) {
+      form.reset(ingredient ? {
+        name: ingredient.name,
+        categoryId: ingredient.categoryId,
+        unit: ingredient.unit,
+        defaultReorderPoint: ingredient.defaultReorderPoint
+      } : {
+        name: '',
+        categoryId: categories.length > 0 ? categories[0].id : '',
+        unit: '',
+        defaultReorderPoint: 10
+      });
+      setShowNewCategoryInput(false);
+      setNewCategoryName('');
+    }
+  }, [open, ingredient, categories, form]);
+
+  const handleSubmit = async (data: FormValues) => {
+    try {
+      setIsSubmitting(true);
+      console.log('Submitting form with data:', data);
+      await onSubmit(data);
+      form.reset();
+      setShowNewCategoryInput(false);
+      setNewCategoryName('');
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save ingredient.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAddCategory = () => {
-    if (newCategoryName.trim().length < 2) return;
+    if (newCategoryName.trim().length < 2) {
+      toast({
+        title: "Invalid category name",
+        description: "Category name must be at least 2 characters.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     console.log('Adding new category:', newCategoryName);
     
@@ -102,7 +143,6 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
     
     // Close new category input
     setShowNewCategoryInput(false);
-    setNewCategoryName('');
     
     // Set the form value to the new category ID
     form.setValue('categoryId', tempId);
@@ -244,11 +284,12 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
                 type="button" 
                 variant="outline" 
                 onClick={handleFormClose}
+                disabled={isSubmitting}
               >
                 Cancel
               </Button>
-              <Button type="submit">
-                {ingredient ? 'Update' : 'Add'} Ingredient
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : ingredient ? 'Update' : 'Add'} Ingredient
               </Button>
             </DialogFooter>
           </form>
