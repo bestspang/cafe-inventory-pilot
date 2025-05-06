@@ -91,52 +91,52 @@ const StockCheck = () => {
               Save Stock Check
             </Button>
           </div>
+          
+          <TabsContent value="stock-check" className="space-y-6 mt-0">
+            {isLoading ? (
+              <StockCheckLoadingState />
+            ) : (
+              <>
+                <StockCheckFilters
+                  filters={filters}
+                  setFilters={setFilters}
+                  categories={categories}
+                  resetFilters={resetFilters}
+                  activeFilterCount={activeFilterCount}
+                  viewMode={viewMode}
+                  setViewMode={setViewMode}
+                  sortState={sortState}
+                  onSort={handleSort}
+                />
+
+                <StockCheckTable 
+                  items={filteredAndSortedItems} 
+                  handleQuantityChange={handleQuantityChange}
+                  handleReorderPointChange={handleReorderPointChange}
+                  handleReorderPointSave={handleReorderPointSave}
+                  updatedItems={updatedItems}
+                  sortState={sortState}
+                  onSort={handleSort}
+                />
+
+                {filteredAndSortedItems.length === 0 && stockItems.length > 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      {filters.search || filters.categoryId !== 'all' ? 
+                        "No ingredients found matching your filters." : 
+                        "No ingredients available for this branch."}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="activity" className="mt-0">
+            <StockCheckActivity />
+          </TabsContent>
         </Tabs>
       </div>
-        
-      <TabsContent value="stock-check" className="space-y-6 mt-0">
-        {isLoading ? (
-          <StockCheckLoadingState />
-        ) : (
-          <>
-            <StockCheckFilters
-              filters={filters}
-              setFilters={setFilters}
-              categories={categories}
-              resetFilters={resetFilters}
-              activeFilterCount={activeFilterCount}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              sortState={sortState}
-              onSort={handleSort}
-            />
-
-            <StockCheckTable 
-              items={filteredAndSortedItems} 
-              handleQuantityChange={handleQuantityChange}
-              handleReorderPointChange={handleReorderPointChange}
-              handleReorderPointSave={handleReorderPointSave}
-              updatedItems={updatedItems}
-              sortState={sortState}
-              onSort={handleSort}
-            />
-
-            {filteredAndSortedItems.length === 0 && stockItems.length > 0 && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">
-                  {filters.search || filters.categoryId !== 'all' ? 
-                    "No ingredients found matching your filters." : 
-                    "No ingredients available for this branch."}
-                </p>
-              </div>
-            )}
-          </>
-        )}
-      </TabsContent>
-      
-      <TabsContent value="activity" className="mt-0">
-        <StockCheckActivity />
-      </TabsContent>
     </div>
   );
 };
