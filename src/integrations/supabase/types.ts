@@ -344,6 +344,35 @@ export type Database = {
           },
         ]
       }
+      store_staff: {
+        Row: {
+          branch_id: string | null
+          created_at: string | null
+          id: string
+          staff_name: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          staff_name: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          staff_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_staff_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

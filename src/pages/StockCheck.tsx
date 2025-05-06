@@ -10,10 +10,13 @@ import StockCheckLoadingState from '@/components/stock-check/StockCheckLoadingSt
 import StockCheckFilters from '@/components/stock-check/StockCheckFilters';
 import { useStockCheckFilters } from '@/hooks/stock-check/useStockCheckFilters';
 import { ViewMode } from '@/components/ui/data-table/DataTableViewOptions';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import StockCheckActivity from '@/components/stock-check/StockCheckActivity';
 
 const StockCheck = () => {
   const { user } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [activeTab, setActiveTab] = useState<'stock-check' | 'activity'>('stock-check');
   
   const {
     selectedBranch,
@@ -60,66 +63,79 @@ const StockCheck = () => {
         <p className="text-muted-foreground">Update your current inventory counts</p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="w-full md:w-auto">
-          <StockCheckBranchSelector 
-            selectedBranch={selectedBranch} 
-            setSelectedBranch={setSelectedBranch}
-            branches={branches}
-            isLoading={isLoading}
-          />
-        </div>
-      </div>
-
-      {isLoading ? (
-        <StockCheckLoadingState />
-      ) : (
-        <>
-          <StockCheckFilters
-            filters={filters}
-            setFilters={setFilters}
-            categories={categories}
-            resetFilters={resetFilters}
-            activeFilterCount={activeFilterCount}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            sortState={sortState}
-            onSort={handleSort}
-          />
-
-          <StockCheckTable 
-            items={filteredAndSortedItems} 
-            handleQuantityChange={handleQuantityChange}
-            handleReorderPointChange={handleReorderPointChange}
-            handleReorderPointSave={handleReorderPointSave}
-            updatedItems={updatedItems}
-            sortState={sortState}
-            onSort={handleSort}
-          />
-
-          {filteredAndSortedItems.length === 0 && stockItems.length > 0 && (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                {filters.search || filters.categoryId !== 'all' ? 
-                  "No ingredients found matching your filters." : 
-                  "No ingredients available for this branch."}
-              </p>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'stock-check' | 'activity')}>
+        <TabsList>
+          <TabsTrigger value="stock-check">Stock Check</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="stock-check" className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="w-full md:w-auto">
+              <StockCheckBranchSelector 
+                selectedBranch={selectedBranch} 
+                setSelectedBranch={setSelectedBranch}
+                branches={branches}
+                isLoading={isLoading}
+              />
             </div>
-          )}
-        </>
-      )}
+          </div>
 
-      <div className="fixed bottom-8 right-8">
-        <Button 
-          onClick={handleSave} 
-          size="lg" 
-          className="shadow-lg"
-          disabled={isLoading || Object.keys(updatedItems).length === 0}
-        >
-          <Save className="mr-2 h-4 w-4" />
-          Save Stock Check
-        </Button>
-      </div>
+          {isLoading ? (
+            <StockCheckLoadingState />
+          ) : (
+            <>
+              <StockCheckFilters
+                filters={filters}
+                setFilters={setFilters}
+                categories={categories}
+                resetFilters={resetFilters}
+                activeFilterCount={activeFilterCount}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                sortState={sortState}
+                onSort={handleSort}
+              />
+
+              <StockCheckTable 
+                items={filteredAndSortedItems} 
+                handleQuantityChange={handleQuantityChange}
+                handleReorderPointChange={handleReorderPointChange}
+                handleReorderPointSave={handleReorderPointSave}
+                updatedItems={updatedItems}
+                sortState={sortState}
+                onSort={handleSort}
+              />
+
+              {filteredAndSortedItems.length === 0 && stockItems.length > 0 && (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    {filters.search || filters.categoryId !== 'all' ? 
+                      "No ingredients found matching your filters." : 
+                      "No ingredients available for this branch."}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="fixed bottom-8 right-8">
+            <Button 
+              onClick={handleSave} 
+              size="lg" 
+              className="shadow-lg"
+              disabled={isLoading || Object.keys(updatedItems).length === 0}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Save Stock Check
+            </Button>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="activity">
+          <StockCheckActivity />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

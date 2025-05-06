@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
@@ -8,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import RequestsFilters from '@/components/requests/RequestsFilters';
 import RequestsTable, { RequestItem } from '@/components/requests/RequestsTable';
 import { useRequestsFilters } from '@/hooks/requests/useRequestsFilters';
+import { Link } from 'react-router-dom';
 
 // Mock data for demo purposes
 const mockRequests: RequestItem[] = [
@@ -129,11 +129,28 @@ const Requests = () => {
           <p className="text-muted-foreground">View and manage requests from your branches</p>
         </div>
         
-        <Button onClick={() => navigate('/requests/new')}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Request
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/quick-request" target="_blank">
+              <Plus className="h-4 w-4 mr-2" />
+              Quick Request
+            </Link>
+          </Button>
+          
+          <Button onClick={() => navigate('/requests/new')}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Request
+          </Button>
+        </div>
       </div>
+
+      {user?.role === 'owner' && (
+        <div className="flex justify-end">
+          <Button variant="link" asChild className="p-0">
+            <Link to="/manage-staff">Manage Staff Names</Link>
+          </Button>
+        </div>
+      )}
 
       <RequestsFilters 
         filters={filters}
