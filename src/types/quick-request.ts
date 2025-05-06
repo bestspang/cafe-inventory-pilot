@@ -7,6 +7,7 @@ export interface StaffMember {
   branchId: string;
   staffName: string;
   createdAt: string;
+  branchName?: string; // Add this property to fix the TypeScript error
 }
 
 export interface QuickRequestIngredient {

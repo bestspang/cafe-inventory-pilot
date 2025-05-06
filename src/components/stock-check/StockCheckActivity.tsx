@@ -32,8 +32,7 @@ const StockCheckActivity: React.FC = () => {
         .from('stock_checks')
         .select(`
           id, 
-          checked_at, 
-          comment,
+          checked_at,
           branches(name),
           stock_check_items(
             id,
@@ -51,12 +50,8 @@ const StockCheckActivity: React.FC = () => {
         const formattedActivities: StockActivity[] = [];
         
         data.forEach(stockCheck => {
-          // Extract staff name from comment if available
+          // Extract staff name from user_id if available (no comment field yet)
           let staffName = 'Unknown';
-          if (stockCheck.comment) {
-            const match = stockCheck.comment.match(/Public stock check by: (.*?)\./) || [];
-            staffName = match[1] || 'Unknown';
-          }
           
           if (stockCheck.stock_check_items && stockCheck.stock_check_items.length > 0) {
             stockCheck.stock_check_items.forEach(item => {
@@ -69,7 +64,7 @@ const StockCheckActivity: React.FC = () => {
                   ingredient: item.ingredients.name,
                   quantity: item.on_hand_qty,
                   unit: item.ingredients.unit,
-                  comment: stockCheck.comment
+                  comment: null // No comment field available yet
                 });
               }
             });
@@ -155,7 +150,7 @@ const StockCheckActivity: React.FC = () => {
                     </Badge>
                   </TableCell>
                   <TableCell className="max-w-xs truncate">
-                    {activity.comment ? activity.comment.replace(/Public stock check by:.*?\./, '').trim() : ''}
+                    {activity.comment || ''}
                   </TableCell>
                 </TableRow>
               ))
