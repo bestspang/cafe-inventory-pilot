@@ -23,7 +23,7 @@ export const useBranchCreate = () => {
         .insert({
           name: branch.name,
           address: branch.address,
-          timezone: branch.timezone || 'UTC',
+          timezone: branch.timezone || 'Asia/Bangkok', // Changed default from UTC to Asia/Bangkok
           is_open: branch.is_open !== undefined ? branch.is_open : true
         })
         .select()

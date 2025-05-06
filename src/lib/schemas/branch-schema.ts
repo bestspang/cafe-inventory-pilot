@@ -3,6 +3,7 @@ import * as z from 'zod';
 
 // List of common timezones
 export const TIMEZONES = [
+  'Asia/Bangkok',  // Added Bangkok and positioned it first as the default
   'UTC',
   'America/New_York',
   'America/Chicago',

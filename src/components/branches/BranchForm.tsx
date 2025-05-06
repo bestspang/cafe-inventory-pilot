@@ -41,7 +41,7 @@ export default function BranchForm({
     defaultValues: {
       name: '',
       address: '',
-      timezone: 'UTC'
+      timezone: 'Asia/Bangkok' // Changed default from UTC to Asia/Bangkok
     }
   });
   
@@ -51,13 +51,13 @@ export default function BranchForm({
       form.reset({
         name: branch.name || '',
         address: branch.address || '',
-        timezone: branch.timezone || 'UTC'
+        timezone: branch.timezone || 'Asia/Bangkok' // Changed fallback from UTC to Asia/Bangkok
       });
     } else {
       form.reset({
         name: '',
         address: '',
-        timezone: 'UTC'
+        timezone: 'Asia/Bangkok' // Changed default from UTC to Asia/Bangkok
       });
     }
   }, [branch, form]);
