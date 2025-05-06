@@ -64,17 +64,14 @@ export const useDashboardMetrics = (): DashboardMetrics => {
         if (pendingError) throw pendingError;
         setPendingRequests(pendingCount || 0);
         
-        // Use a safer approach for RPC typing with any to bypass type check
+        // Bypass type checking for RPC functions not yet in the types
         const { data: missingChecksData, error: missingChecksError } = await supabase
-          .rpc('count_missing_checks') as { 
-            data: MissingChecksResponse | null; 
-            error: any;
-          };
+          .rpc<any, MissingChecksResponse>('count_missing_checks');
 
         if (missingChecksError) throw missingChecksError;
         
         // Safe access to the result - it's a number according to your schema
-        const missingChecks = missingChecksData ? missingChecksData : 0;
+        const missingChecks = missingChecksData ? missingChecksData.missing : 0;
         setMissingStockChecks(typeof missingChecks === 'number' ? missingChecks : 0);
       } catch (error) {
         console.error('Error fetching dashboard metrics:', error);

@@ -36,37 +36,25 @@ export const useDashboardTrends = (): TrendData => {
       try {
         // Fetch branch trend data (daily counts for last 14 days)
         const { data: branchTrendData, error: branchError } = await supabase
-          .rpc('get_branch_trend_data') as {
-            data: TrendResponse[] | null;
-            error: any;
-          };
+          .rpc<any, TrendResponse[]>('get_branch_trend_data');
           
         if (branchError) throw branchError;
         
         // Fetch low stock trend
         const { data: lowStockTrendData, error: lowStockError } = await supabase
-          .rpc('get_low_stock_trend_data') as {
-            data: TrendResponse[] | null;
-            error: any;
-          };
+          .rpc<any, TrendResponse[]>('get_low_stock_trend_data');
           
         if (lowStockError) throw lowStockError;
         
         // Fetch requests trend
         const { data: requestsTrendData, error: requestsError } = await supabase
-          .rpc('get_pending_requests_trend_data') as {
-            data: TrendResponse[] | null;
-            error: any;
-          };
+          .rpc<any, TrendResponse[]>('get_pending_requests_trend_data');
           
         if (requestsError) throw requestsError;
         
         // Fetch stock checks trend
         const { data: stockChecksTrendData, error: stockChecksError } = await supabase
-          .rpc('get_missing_checks_trend_data') as {
-            data: TrendResponse[] | null;
-            error: any;
-          };
+          .rpc<any, TrendResponse[]>('get_missing_checks_trend_data');
           
         if (stockChecksError) throw stockChecksError;
         

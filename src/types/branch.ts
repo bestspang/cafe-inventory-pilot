@@ -3,7 +3,7 @@ import { Branch as BaseBranch } from '@/types/supabase-types';
 
 export interface Branch extends BaseBranch {
   name: string;
-  address?: string | null;
+  address: string | null; // Made explicitly nullable to match DB schema
   timezone: string | null;
   is_open: boolean;
   created_at: string | null;
