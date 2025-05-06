@@ -1,6 +1,5 @@
 
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { toast } from '@/components/ui/sonner';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +31,8 @@ export const useBranchManager = () => {
         
       if (branchError) {
         console.error('Branch creation error:', branchError);
-        throw branchError;
+        toast.error(`Failed to create branch: ${branchError.message}`);
+        return null;
       }
       
       console.log('Branch created successfully:', branchData);
@@ -58,21 +58,25 @@ export const useBranchManager = () => {
   };
 
   const updateBranch = async (branch: Partial<Branch>) => {
-    if (!user || !branch.id) return false;
+    if (!user || !branch.id) {
+      console.error('Update failed: Missing user or branch ID');
+      return false;
+    }
     
     setIsLoading(true);
-    console.log('Updating branch:', branch); // Debug log
+    console.log('Updating branch with data:', branch);
     
     try {
       // Prepare update payload - only include fields that are provided
-      const updatePayload: Partial<Branch> = {
-        updated_at: new Date().toISOString()
-      };
+      const updatePayload: Record<string, any> = {};
       
       if (branch.name !== undefined) updatePayload.name = branch.name;
       if (branch.address !== undefined) updatePayload.address = branch.address;
       if (branch.timezone !== undefined) updatePayload.timezone = branch.timezone;
       if (branch.is_open !== undefined) updatePayload.is_open = branch.is_open;
+      
+      // Always include updated_at timestamp
+      updatePayload.updated_at = new Date().toISOString();
       
       console.group('Supabase Update Request');
       console.log('Branch ID:', branch.id);
@@ -93,7 +97,12 @@ export const useBranchManager = () => {
       
       if (branchError) {
         console.error('Branch update error:', branchError);
-        throw branchError;
+        toast.error(`Failed to update branch: ${branchError.message}`);
+        return false;
+      }
+      
+      if (!data || data.length === 0) {
+        console.warn('Update succeeded but no data returned - possible RLS issue');
       }
       
       // Log activity

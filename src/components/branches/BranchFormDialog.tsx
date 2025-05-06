@@ -10,6 +10,7 @@ import { useBranchManager } from '@/hooks/branches/useBranchManager';
 import { Branch } from '@/types/branch';
 import BranchForm from './BranchForm';
 import { BranchFormValues } from '@/lib/schemas/branch-schema';
+import { useEffect } from 'react';
 
 interface BranchFormDialogProps {
   branch: Branch | null;
@@ -25,26 +26,46 @@ export default function BranchFormDialog({
   const isEditing = !!branch;
   const { createBranch, updateBranch, isLoading } = useBranchManager();
   
+  useEffect(() => {
+    // Debug logging to track props
+    if (open) {
+      console.log('BranchFormDialog opened with branch:', branch);
+    }
+  }, [open, branch]);
+  
   async function onSubmit(data: BranchFormValues) {
+    console.log('Form submitted with values:', data);
     let success = false;
     
     if (isEditing && branch) {
+      console.log(`Attempting to update branch ${branch.id} with name: ${data.name}`);
       success = await updateBranch({
         id: branch.id,
-        ...data
+        name: data.name,
+        address: data.address,
+        timezone: data.timezone
       });
+      console.log('Update result:', success ? 'Success' : 'Failed');
     } else {
+      console.log('Attempting to create new branch');
       const newBranch = await createBranch(data);
       success = !!newBranch;
+      console.log('Create result:', success ? 'Success' : 'Failed');
     }
     
     if (success) {
+      console.log('Operation successful, closing dialog');
       onOpenChange(false);
+    } else {
+      console.log('Operation failed, keeping dialog open');
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      console.log(`Dialog ${isOpen ? 'opening' : 'closing'}`);
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>

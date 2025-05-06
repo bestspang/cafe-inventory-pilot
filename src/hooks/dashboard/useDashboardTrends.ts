@@ -14,6 +14,11 @@ export interface DashboardTrends {
   stockChecksTrend: TrendPoint[];
 }
 
+interface TrendData {
+  day: string;
+  count: number;
+}
+
 const defaultTrends: DashboardTrends = {
   branchTrend: [],
   lowStockTrend: [],
@@ -30,56 +35,32 @@ export const useDashboardTrends = () => {
       setIsLoading(true);
       
       // Fetch branch trend data
-      interface BranchTrendData { 
-        day: string;
-        count: number; 
-      }
-      
       const { data: branchData, error: branchError } = await supabase
-        .rpc<BranchTrendData>('get_branch_trend_data')
-        .returns<BranchTrendData[]>();
+        .rpc<TrendData>('get_branch_trend_data');
         
       if (branchError) {
         console.error('Error fetching branch trends:', branchError);
       }
 
       // Fetch low stock trend data
-      interface LowStockTrendData { 
-        day: string;
-        count: number; 
-      }
-      
       const { data: lowStockData, error: lowStockError } = await supabase
-        .rpc<LowStockTrendData>('get_low_stock_trend_data')
-        .returns<LowStockTrendData[]>();
+        .rpc<TrendData>('get_low_stock_trend_data');
         
       if (lowStockError) {
         console.error('Error fetching low stock trends:', lowStockError);
       }
 
       // Fetch pending requests trend data
-      interface RequestsTrendData { 
-        day: string;
-        count: number; 
-      }
-      
       const { data: requestsData, error: requestsError } = await supabase
-        .rpc<RequestsTrendData>('get_pending_requests_trend_data')
-        .returns<RequestsTrendData[]>();
+        .rpc<TrendData>('get_pending_requests_trend_data');
         
       if (requestsError) {
         console.error('Error fetching requests trends:', requestsError);
       }
 
       // Fetch missing stock checks trend data
-      interface StockChecksTrendData { 
-        day: string;
-        count: number; 
-      }
-      
       const { data: stockChecksData, error: stockChecksError } = await supabase
-        .rpc<StockChecksTrendData>('get_missing_checks_trend_data')
-        .returns<StockChecksTrendData[]>();
+        .rpc<TrendData>('get_missing_checks_trend_data');
         
       if (stockChecksError) {
         console.error('Error fetching stock checks trends:', stockChecksError);

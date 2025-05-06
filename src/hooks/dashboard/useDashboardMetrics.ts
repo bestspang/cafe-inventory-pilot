@@ -34,8 +34,9 @@ export const useDashboardMetrics = () => {
       }
 
       // Fetch low stock items count
+      interface LowStockResult { count: number }
       const { data: lowStockData, error: lowStockError } = await supabase
-        .rpc('get_low_stock_count');
+        .rpc<LowStockResult>('get_low_stock_count');
         
       if (lowStockError) {
         console.error('Error fetching low stock count:', lowStockError);
@@ -52,8 +53,9 @@ export const useDashboardMetrics = () => {
       }
 
       // Fetch missing stock checks count
+      interface MissingChecksResult { missing: number }
       const { data: missingChecksData, error: stockChecksError } = await supabase
-        .rpc('count_missing_checks');
+        .rpc<MissingChecksResult>('count_missing_checks');
         
       if (stockChecksError) {
         console.error('Error fetching missing checks count:', stockChecksError);

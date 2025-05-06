@@ -1,38 +1,36 @@
 
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Branch } from '@/types/branch';
 
 export const useBranchesData = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
 
   const fetchBranches = async () => {
     try {
       setIsLoading(true);
       console.log('Fetching branches data...');
       
-      const { data, error } = await supabase
+      const { data, error, status } = await supabase
         .from('branches')
         .select('*')
         .order('name');
         
+      console.log('Branches fetch response:', { status, count: data?.length });
+      
       if (error) {
         console.error('Error fetching branches:', error);
-        throw error;
+        toast.error(`Failed to load branches: ${error.message}`);
+        return;
       }
       
       console.log('Branches fetched successfully:', data);
       setBranches(data as Branch[]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching branches:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load branches',
-        variant: 'destructive'
-      });
+      toast.error(`Failed to load branches: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
