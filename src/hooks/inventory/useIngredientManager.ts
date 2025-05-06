@@ -59,7 +59,33 @@ export const useIngredientManager = (
       return true;
     } catch (error: any) {
       console.error('Error saving ingredient:', error);
-      throw error; // Let the form dialog handle the error display
+      
+      // Format user-friendly error message
+      let errorMessage = "Please try again later.";
+      
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (error.code) {
+        switch (error.code) {
+          case '42501':
+            errorMessage = "You don't have permission to perform this operation.";
+            break;
+          case '23505':
+            errorMessage = "An ingredient with this name already exists.";
+            break;
+          default:
+            errorMessage = `Database error: ${error.message || error.details || error.hint || "Unknown error"}`;
+        }
+      }
+      
+      throw {
+        code: error.code,
+        message: "Failed to save ingredient",
+        details: errorMessage,
+        hint: error.hint
+      };
     }
   };
 
@@ -95,9 +121,26 @@ export const useIngredientManager = (
       setCurrentIngredient(undefined);
     } catch (error: any) {
       console.error('Error deleting ingredient:', error);
+      
+      let errorMessage = "Please try again later.";
+      
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (error.code) {
+        switch (error.code) {
+          case '42501':
+            errorMessage = "You don't have permission to delete this ingredient.";
+            break;
+          default:
+            errorMessage = error.message || error.details || "Unknown error";
+        }
+      }
+      
       toast({
         title: "Failed to delete ingredient",
-        description: error.message || "Please try again later.",
+        description: errorMessage,
         variant: "destructive"
       });
     }
