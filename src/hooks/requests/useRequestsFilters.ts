@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import { SortState } from '@/components/ui/data-table/SortableColumn';
 import { DateRange } from 'react-day-picker';
-import { RequestItem } from '@/pages/Requests';
+import { RequestItem } from '@/types/requests';
 
 export interface RequestFilters {
   search: string;
