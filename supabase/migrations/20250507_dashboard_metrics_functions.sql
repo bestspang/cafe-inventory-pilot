@@ -1,4 +1,3 @@
-
 -- Function to count missing stock checks for today
 CREATE OR REPLACE FUNCTION public.count_missing_checks()
 RETURNS TABLE (missing bigint) 

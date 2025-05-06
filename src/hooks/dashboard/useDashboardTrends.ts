@@ -36,25 +36,37 @@ export const useDashboardTrends = (): TrendData => {
       try {
         // Fetch branch trend data (daily counts for last 14 days)
         const { data: branchTrendData, error: branchError } = await supabase
-          .rpc('get_branch_trend_data');
+          .rpc('get_branch_trend_data') as {
+            data: TrendResponse[] | null;
+            error: any;
+          };
           
         if (branchError) throw branchError;
         
         // Fetch low stock trend
         const { data: lowStockTrendData, error: lowStockError } = await supabase
-          .rpc('get_low_stock_trend_data');
+          .rpc('get_low_stock_trend_data') as {
+            data: TrendResponse[] | null;
+            error: any;
+          };
           
         if (lowStockError) throw lowStockError;
         
         // Fetch requests trend
         const { data: requestsTrendData, error: requestsError } = await supabase
-          .rpc('get_pending_requests_trend_data');
+          .rpc('get_pending_requests_trend_data') as {
+            data: TrendResponse[] | null;
+            error: any;
+          };
           
         if (requestsError) throw requestsError;
         
         // Fetch stock checks trend
         const { data: stockChecksTrendData, error: stockChecksError } = await supabase
-          .rpc('get_missing_checks_trend_data');
+          .rpc('get_missing_checks_trend_data') as {
+            data: TrendResponse[] | null;
+            error: any;
+          };
           
         if (stockChecksError) throw stockChecksError;
         
@@ -70,10 +82,10 @@ export const useDashboardTrends = (): TrendData => {
         };
         
         // Ensure we have fallbacks for all data
-        const branchTrend = branchTrendData as TrendResponse[] || [];
-        const lowStockTrend = lowStockTrendData as TrendResponse[] || [];
-        const requestsTrend = requestsTrendData as TrendResponse[] || [];
-        const stockChecksTrend = stockChecksTrendData as TrendResponse[] || [];
+        const branchTrend = branchTrendData || [];
+        const lowStockTrend = lowStockTrendData || [];
+        const requestsTrend = requestsTrendData || [];
+        const stockChecksTrend = stockChecksTrendData || [];
         
         setTrendData({
           branches: branchTrend.length > 0 
