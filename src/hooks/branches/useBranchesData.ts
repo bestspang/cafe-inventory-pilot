@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Branch } from '@/types/branch';
@@ -8,10 +8,10 @@ export const useBranchesData = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchBranches = async () => {
+  const fetchBranches = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log('Fetching branches data...');
+      console.group('Fetching branches data');
       
       const { data, error, status } = await supabase
         .from('branches')
@@ -26,17 +26,21 @@ export const useBranchesData = () => {
         return;
       }
       
-      console.log('Branches fetched successfully:', data);
+      console.log('Branches fetched successfully, count:', data?.length);
+      console.log('Branch data sample:', data?.slice(0, 2));
+      
       setBranches(data as Branch[]);
     } catch (error: any) {
       console.error('Error fetching branches:', error);
       toast.error(`Failed to load branches: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
+      console.groupEnd();
     }
-  };
+  }, []);
 
   useEffect(() => {
+    console.log('useBranchesData hook initialized, fetching initial data...');
     fetchBranches();
     
     // Subscribe to changes
@@ -45,16 +49,23 @@ export const useBranchesData = () => {
       .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'branches' },
           (payload) => {
-            console.log('Branch change detected:', payload);
+            console.group('Branch change detected');
+            console.log('Change type:', payload.eventType);
+            console.log('Changed data:', payload.new);
+            console.log('Refreshing branch list...');
+            console.groupEnd();
             fetchBranches();
           }
       )
       .subscribe();
       
+    console.log('Branches realtime subscription activated');
+      
     return () => {
+      console.log('Cleaning up branches subscription');
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchBranches]);
 
   return { branches, isLoading, refetch: fetchBranches };
 };

@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface DashboardMetrics {
@@ -33,10 +34,12 @@ export const useDashboardMetrics = () => {
         console.error('Error fetching branch count:', branchesError);
       }
 
-      // Fetch low stock items count
-      interface LowStockResult { count: number }
-      const { data: lowStockData, error: lowStockError } = await supabase
-        .rpc<LowStockResult>('get_low_stock_count');
+      // Fetch low stock items count - using a temporary direct count instead of RPC
+      // until the database function is created
+      const { count: lowStockCount, error: lowStockError } = await supabase
+        .from('branch_inventory')
+        .select('*', { count: 'exact', head: true })
+        .lt('on_hand_qty', 10); // Simplified low stock check
         
       if (lowStockError) {
         console.error('Error fetching low stock count:', lowStockError);
@@ -52,10 +55,19 @@ export const useDashboardMetrics = () => {
         console.error('Error fetching requests count:', requestsError);
       }
 
-      // Fetch missing stock checks count
-      interface MissingChecksResult { missing: number }
-      const { data: missingChecksData, error: stockChecksError } = await supabase
-        .rpc<MissingChecksResult>('count_missing_checks');
+      // Fetch missing stock checks count - simplified version
+      // until the database function is created
+      const currentDate = new Date();
+      currentDate.setDate(currentDate.getDate() - 7); // Consider checks missing if not done in last 7 days
+      
+      const { count: missingChecksCount, error: stockChecksError } = await supabase
+        .from('branches')
+        .select('id', { count: 'exact', head: true })
+        .not('id', 'in', supabase
+          .from('stock_checks')
+          .select('branch_id')
+          .gte('checked_at', currentDate.toISOString())
+        );
         
       if (stockChecksError) {
         console.error('Error fetching missing checks count:', stockChecksError);
@@ -63,9 +75,9 @@ export const useDashboardMetrics = () => {
 
       setMetrics({
         totalBranches: branchesCount || 0,
-        lowStockItems: lowStockData?.count || 0,
+        lowStockItems: lowStockCount || 0,
         pendingRequests: requestsCount || 0,
-        missingStockChecks: missingChecksData?.missing || 0
+        missingStockChecks: missingChecksCount || 0
       });
     } catch (error) {
       console.error('Error fetching dashboard metrics:', error);
@@ -96,5 +108,5 @@ export const useDashboardMetrics = () => {
     };
   }, []);
 
-  return { ...metrics, isLoading, refetch: fetchMetrics };
+  return { metrics, isLoading, refetch: fetchMetrics };
 };

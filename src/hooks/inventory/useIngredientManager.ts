@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Category, Ingredient } from '@/types';
 import { useIngredientsFetch } from './useIngredientsFetch';
 import { saveIngredient, deleteIngredient } from '@/utils/inventory/ingredientOperations';
+import { handleUpdate } from '@/utils/updateHandler';
 
 export const useIngredientManager = (
   setFormDialogOpen: (open: boolean) => void,
@@ -20,14 +21,16 @@ export const useIngredientManager = (
     handleNewCategory: (tempId: string, categoryName: string) => Promise<string | null>
   ) => {
     try {
-      console.log('Handling add/edit with data:', data);
+      console.group('Handling ingredient add/edit');
+      console.log('Form data:', data);
+      console.log('Is editing:', !!data.id);
       
       // Check if we need to create a new category
       let categoryId = data.categoryId;
       
       // If category ID starts with "new-", it's a new category
       if (categoryId && categoryId.startsWith('new-')) {
-        console.log('Creating new category');
+        console.log('Creating new category:', categoryId);
         // Find the category object with this temp ID
         const newCategory = categories.find(c => c.id === categoryId);
         
@@ -38,27 +41,61 @@ export const useIngredientManager = (
             throw new Error("Failed to create new category");
           }
           categoryId = realCategoryId;
+          console.log('New category created with ID:', realCategoryId);
         }
       }
       
-      // Save the ingredient
-      const result = await saveIngredient(data, categoryId || null);
-      
-      // Show success message
-      toast({
-        title: data.id ? "Ingredient updated" : "Ingredient added",
-        description: result.message
-      });
-      
-      // Refresh ingredients list
-      await fetchIngredients();
+      // For existing ingredients, use our update handler for better debugging
+      if (data.id) {
+        console.log('Updating existing ingredient:', data.id);
+        
+        // Prepare update payload
+        const updatePayload: Record<string, any> = {
+          name: data.name,
+          category_id: categoryId,
+          unit: data.unit
+        };
+        
+        // If cost is provided, handle it separately
+        if (data.costPerUnit !== undefined) {
+          updatePayload.cost_per_unit = data.costPerUnit;
+        }
+        
+        // Use our generic update handler
+        const { success } = await handleUpdate(
+          'ingredients', 
+          data.id,
+          updatePayload,
+          fetchIngredients
+        );
+        
+        console.log('Update result:', success);
+        
+        if (!success) {
+          throw new Error("Failed to update ingredient");
+        }
+      } else {
+        // For new ingredients, use the existing saveIngredient function
+        console.log('Creating new ingredient');
+        const result = await saveIngredient(data, categoryId || null);
+        
+        // Show success message
+        toast({
+          title: "Ingredient added",
+          description: result.message
+        });
+        
+        // Refresh ingredients list
+        await fetchIngredients();
+      }
       
       // Close the form dialog
       setFormDialogOpen(false);
-      
+      console.groupEnd();
       return true;
     } catch (error: any) {
       console.error('Error saving ingredient:', error);
+      console.groupEnd();
       
       // Format user-friendly error message
       let errorMessage = "Please try again later.";

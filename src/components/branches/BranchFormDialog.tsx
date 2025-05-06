@@ -11,6 +11,7 @@ import { Branch } from '@/types/branch';
 import BranchForm from './BranchForm';
 import { BranchFormValues } from '@/lib/schemas/branch-schema';
 import { useEffect } from 'react';
+import { useBranchesData } from '@/hooks/branches/useBranchesData';
 
 interface BranchFormDialogProps {
   branch: Branch | null;
@@ -25,6 +26,7 @@ export default function BranchFormDialog({
 }: BranchFormDialogProps) {
   const isEditing = !!branch;
   const { createBranch, updateBranch, isLoading } = useBranchManager();
+  const { refetch } = useBranchesData(); // Get refetch method to update branch list
   
   useEffect(() => {
     // Debug logging to track props
@@ -34,30 +36,41 @@ export default function BranchFormDialog({
   }, [open, branch]);
   
   async function onSubmit(data: BranchFormValues) {
-    console.log('Form submitted with values:', data);
+    console.group('Branch form submitted');
+    console.log('Form values:', data);
+    console.log('Is editing:', isEditing);
+    console.log('Branch ID:', branch?.id);
+    
     let success = false;
     
-    if (isEditing && branch) {
-      console.log(`Attempting to update branch ${branch.id} with name: ${data.name}`);
-      success = await updateBranch({
-        id: branch.id,
-        name: data.name,
-        address: data.address,
-        timezone: data.timezone
-      });
-      console.log('Update result:', success ? 'Success' : 'Failed');
-    } else {
-      console.log('Attempting to create new branch');
-      const newBranch = await createBranch(data);
-      success = !!newBranch;
-      console.log('Create result:', success ? 'Success' : 'Failed');
-    }
-    
-    if (success) {
-      console.log('Operation successful, closing dialog');
-      onOpenChange(false);
-    } else {
-      console.log('Operation failed, keeping dialog open');
+    try {
+      if (isEditing && branch) {
+        console.log(`Attempting to update branch ${branch.id} with name: ${data.name}`);
+        success = await updateBranch({
+          id: branch.id,
+          name: data.name,
+          address: data.address,
+          timezone: data.timezone
+        });
+        console.log('Update result:', success ? 'Success' : 'Failed');
+      } else {
+        console.log('Attempting to create new branch');
+        const newBranch = await createBranch(data);
+        success = !!newBranch;
+        console.log('Create result:', success ? 'Success' : 'Failed');
+      }
+      
+      if (success) {
+        console.log('Operation successful, closing dialog and refreshing data');
+        await refetch(); // Ensure we refresh the branch list
+        onOpenChange(false);
+      } else {
+        console.log('Operation failed, keeping dialog open');
+      }
+    } catch (error) {
+      console.error('Error in form submit handler:', error);
+    } finally {
+      console.groupEnd();
     }
   }
 

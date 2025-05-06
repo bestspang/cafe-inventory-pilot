@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { toast } from '@/components/ui/sonner';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Branch } from '@/types/branch';
+import { handleUpdate } from '@/utils/updateHandler';
 
 export const useBranchManager = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -75,37 +75,18 @@ export const useBranchManager = () => {
       if (branch.timezone !== undefined) updatePayload.timezone = branch.timezone;
       if (branch.is_open !== undefined) updatePayload.is_open = branch.is_open;
       
-      // Always include updated_at timestamp
-      updatePayload.updated_at = new Date().toISOString();
+      // Use our generic update handler
+      const { success, data, error } = await handleUpdate(
+        'branches', 
+        branch.id,
+        updatePayload
+      );
       
-      console.group('Supabase Update Request');
-      console.log('Branch ID:', branch.id);
-      console.log('Update payload:', updatePayload);
-      
-      // Update branch with explicit fields
-      const { data, error: branchError, status, statusText } = await supabase
-        .from('branches')
-        .update(updatePayload)
-        .eq('id', branch.id)
-        .select();
-        
-      // Log everything about the response
-      console.log('Status:', status, statusText);
-      console.log('Response data:', data);
-      console.log('Error:', branchError);
-      console.groupEnd();
-      
-      if (branchError) {
-        console.error('Branch update error:', branchError);
-        toast.error(`Failed to update branch: ${branchError.message}`);
-        return false;
+      if (!success) {
+        throw error || new Error('Unknown error updating branch');
       }
       
-      if (!data || data.length === 0) {
-        console.warn('Update succeeded but no data returned - possible RLS issue');
-      }
-      
-      // Log activity
+      // Log activity on successful update
       await supabase
         .from('branch_activity')
         .insert({
@@ -114,7 +95,6 @@ export const useBranchManager = () => {
           performed_by: user.id
         });
         
-      toast.success('Branch updated successfully');
       return true;
     } catch (error) {
       console.error('Error updating branch:', error);
