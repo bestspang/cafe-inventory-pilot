@@ -54,11 +54,12 @@ const QuickRequestHeader: React.FC<QuickRequestHeaderProps> = ({
       </div>
       
       <div>
-        <Label htmlFor="branch">Store</Label>
+        <Label htmlFor="branch">Store <span className="text-destructive">*</span></Label>
         <Select
           value={branchId}
           onValueChange={onBranchChange}
           disabled={isLoading}
+          required
         >
           <SelectTrigger id="branch">
             <SelectValue placeholder={isLoading ? "Loading stores..." : "Select store"} />
@@ -78,11 +79,12 @@ const QuickRequestHeader: React.FC<QuickRequestHeaderProps> = ({
       </div>
       
       <div>
-        <Label htmlFor="staff">Staff Name</Label>
+        <Label htmlFor="staff">Staff Name <span className="text-destructive">*</span></Label>
         <Select
           value={staffId}
           onValueChange={onStaffChange}
           disabled={isLoading || !branchId || staffMembers.length === 0}
+          required
         >
           <SelectTrigger id="staff">
             <SelectValue placeholder={

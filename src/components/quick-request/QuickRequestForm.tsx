@@ -34,6 +34,9 @@ const QuickRequestForm: React.FC = () => {
       fetchStaffMembers(formState.branchId).then(staff => {
         if (staff && staff.length > 0) {
           setFormState(prev => ({ ...prev, staffId: staff[0].id }));
+        } else {
+          // Clear staffId if no staff members found
+          setFormState(prev => ({ ...prev, staffId: '' }));
         }
       });
     }

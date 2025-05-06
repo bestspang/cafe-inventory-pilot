@@ -39,11 +39,14 @@ const QuickRequest: React.FC = () => {
             className="flex items-center gap-2"
           >
             <Copy size={16} />
-            Copy Form
+            Copy Form Link
           </Button>
         </div>
         
-        <p className="text-muted-foreground">Request ingredients or submit stock updates</p>
+        <p className="text-muted-foreground">
+          This public form allows staff to request ingredients or submit stock updates without logging in.
+          Simply select your store, staff name, and provide the necessary information.
+        </p>
         
         <div className="bg-card border rounded-lg p-6 shadow-sm">
           <QuickRequestForm />

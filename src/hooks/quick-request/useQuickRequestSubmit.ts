@@ -65,12 +65,23 @@ export const useQuickRequestSubmit = () => {
     itemsWithQuantity: any[],
     currentTime: string
   ) => {
-    // Create a new request
+    // First validate that the staff exists in the database
+    const { data: staffExists, error: staffError } = await supabase
+      .from('store_staff')
+      .select('id')
+      .eq('id', formState.staffId)
+      .single();
+    
+    if (staffError || !staffExists) {
+      throw new Error('Invalid staff selected. Please choose a valid staff member.');
+    }
+    
+    // Create a new request with the staff ID as user_id
     const { data, error: requestError } = await supabase
       .from('requests')
       .insert({
         branch_id: formState.branchId,
-        user_id: null, // null for public requests
+        user_id: formState.staffId, // Using staffId directly as the user_id
         status: 'pending',
         requested_at: currentTime
       })
@@ -84,7 +95,7 @@ export const useQuickRequestSubmit = () => {
       request_id: data.id,
       ingredient_id: item.ingredient_id,
       quantity: item.quantity,
-      note: `Requested by: ${selectedStaff.staffName}${formState.comment ? ' - ' + formState.comment : ''}`
+      note: formState.comment ? formState.comment : null
     }));
     
     const { error: itemsError } = await supabase
@@ -95,7 +106,7 @@ export const useQuickRequestSubmit = () => {
     
     toast({
       title: 'Request Submitted',
-      description: 'Your ingredient request has been submitted successfully'
+      description: `Your ingredient request has been submitted successfully by ${selectedStaff.staffName}`,
     });
     
     // Navigate to requests page after successful submission
@@ -108,12 +119,23 @@ export const useQuickRequestSubmit = () => {
     itemsWithQuantity: any[],
     currentTime: string
   ) => {
-    // Create a new stock check
+    // First validate that the staff exists in the database
+    const { data: staffExists, error: staffError } = await supabase
+      .from('store_staff')
+      .select('id')
+      .eq('id', formState.staffId)
+      .single();
+    
+    if (staffError || !staffExists) {
+      throw new Error('Invalid staff selected. Please choose a valid staff member.');
+    }
+    
+    // Create a new stock check with the staff ID as user_id
     const { data, error: stockCheckError } = await supabase
       .from('stock_checks')
       .insert({
         branch_id: formState.branchId,
-        user_id: null, // null for public stock checks
+        user_id: formState.staffId, // Using staffId directly as the user_id
         checked_at: currentTime,
       })
       .select('id')
@@ -154,7 +176,7 @@ export const useQuickRequestSubmit = () => {
     
     toast({
       title: 'Stock Update Submitted',
-      description: 'Your stock update has been submitted successfully'
+      description: `Your stock update has been submitted successfully by ${selectedStaff.staffName}`,
     });
     
     // Navigate to stock check page after successful submission
