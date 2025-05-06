@@ -29,11 +29,14 @@ export default function BranchFormDialog({
   const { refetch } = useBranchesData(); // Get refetch method to update branch list
   
   useEffect(() => {
-    // Debug logging to track props
+    // Debug logging to track props and state
     if (open) {
-      console.log('BranchFormDialog opened with branch:', branch);
+      console.group('BranchFormDialog opened');
+      console.log('Is editing:', isEditing);
+      console.log('Branch data:', branch);
+      console.groupEnd();
     }
-  }, [open, branch]);
+  }, [open, branch, isEditing]);
   
   async function onSubmit(data: BranchFormValues) {
     console.group('Branch form submitted');

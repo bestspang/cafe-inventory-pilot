@@ -39,7 +39,8 @@ export async function handleUpdate<T extends TableName>(
       .from(table)
       .update(updatePayload)
       .eq('id', id as any) // Type assertion to handle the complex type
-      .select();
+      .select()
+      .single();
       
     // Log detailed response information
     console.log('Response data:', data);
@@ -54,7 +55,7 @@ export async function handleUpdate<T extends TableName>(
     }
     
     // Check if any rows were returned (indicating success)
-    if (!data || data.length === 0) {
+    if (!data) {
       console.warn('Update request succeeded but no data returned - possible RLS issue');
     }
     
@@ -67,11 +68,13 @@ export async function handleUpdate<T extends TableName>(
     // Show success message
     const entityName = table.endsWith('es') 
       ? table.slice(0, -2) // branches -> branch
-      : table.slice(0, -1); // ingredients -> ingredient
+      : table.endsWith('s')
+        ? table.slice(0, -1) // ingredients -> ingredient
+        : table;
       
     toast.success(`${entityName} updated successfully`);
     
-    return { success: true, data: data?.[0] };
+    return { success: true, data };
   } catch (error) {
     console.error(`Unexpected error updating ${table}:`, error);
     toast.error(`Failed to update ${table}: Unexpected error`);

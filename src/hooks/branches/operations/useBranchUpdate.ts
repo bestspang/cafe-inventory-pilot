@@ -20,7 +20,7 @@ export const useBranchUpdate = () => {
     
     try {
       // Prepare update payload - only include fields that are provided
-      const updatePayload: Record<string, any> = {};
+      const updatePayload: Partial<Branch> = {};
       
       if (branch.name !== undefined) updatePayload.name = branch.name;
       if (branch.address !== undefined) updatePayload.address = branch.address;
