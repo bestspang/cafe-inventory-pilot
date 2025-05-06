@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -217,13 +218,13 @@ const QuickRequestForm: React.FC = () => {
       
       if (formState.action === 'request') {
         // 1a) Create a new request
+        // Fix: Instead of using 'comment' column, we'll add the comment to the note field in request_items
         const { data, error: requestError } = await supabase
           .from('requests')
           .insert({
             branch_id: formState.branchId,
             user_id: null, // null for public requests
             status: 'pending',
-            comment: formState.comment,
             requested_at: currentTime
           })
           .select('id')
@@ -236,7 +237,7 @@ const QuickRequestForm: React.FC = () => {
           request_id: data.id,
           ingredient_id: item.ingredient_id,
           quantity: item.quantity,
-          note: `Requested by: ${selectedStaff.staffName}`
+          note: `Requested by: ${selectedStaff.staffName}${formState.comment ? ' - ' + formState.comment : ''}`
         }));
         
         const { error: itemsError } = await supabase
@@ -261,7 +262,7 @@ const QuickRequestForm: React.FC = () => {
             branch_id: formState.branchId,
             user_id: null, // null for public stock checks
             checked_at: currentTime,
-            comment: `Public stock check by: ${selectedStaff.staffName}. ${formState.comment}`
+            // Instead of using comment directly on stock_checks table, we'll adapt to the existing schema
           })
           .select('id')
           .single();
@@ -290,7 +291,7 @@ const QuickRequestForm: React.FC = () => {
           reorder_pt: 10 // Add default reorder_pt as it's required by the table schema
         }));
         
-        // Fix: Use string instead of array for onConflict
+        // Use string instead of array for onConflict
         const { error: inventoryUpdateError } = await supabase
           .from('branch_inventory')
           .upsert(branchInventoryUpdates, { 
