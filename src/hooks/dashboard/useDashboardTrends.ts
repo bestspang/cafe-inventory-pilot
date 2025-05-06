@@ -11,6 +11,11 @@ interface TrendData {
   isLoading: boolean;
 }
 
+interface TrendResponse {
+  day: string;
+  count: number;
+}
+
 // Initialize with empty arrays for the charts
 const initialTrendData = {
   branches: [],
@@ -29,25 +34,25 @@ export const useDashboardTrends = (): TrendData => {
       try {
         // Fetch branch trend data (daily counts for last 14 days)
         const { data: branchTrend, error: branchError } = await supabase
-          .rpc('get_branch_trend_data');
+          .rpc<TrendResponse[]>('get_branch_trend_data');
           
         if (branchError) throw branchError;
         
         // Fetch low stock trend
         const { data: lowStockTrend, error: lowStockError } = await supabase
-          .rpc('get_low_stock_trend_data');
+          .rpc<TrendResponse[]>('get_low_stock_trend_data');
           
         if (lowStockError) throw lowStockError;
         
         // Fetch requests trend
         const { data: requestsTrend, error: requestsError } = await supabase
-          .rpc('get_pending_requests_trend_data');
+          .rpc<TrendResponse[]>('get_pending_requests_trend_data');
           
         if (requestsError) throw requestsError;
         
         // Fetch stock checks trend
         const { data: stockChecksTrend, error: stockChecksError } = await supabase
-          .rpc('get_missing_checks_trend_data');
+          .rpc<TrendResponse[]>('get_missing_checks_trend_data');
           
         if (stockChecksError) throw stockChecksError;
         
@@ -63,10 +68,10 @@ export const useDashboardTrends = (): TrendData => {
         };
         
         setTrendData({
-          branches: branchTrend?.map((item: any) => item.count) || mockDataForDays(4, 1, 14),
-          lowStock: lowStockTrend?.map((item: any) => item.count) || mockDataForDays(12, 4, 14),
-          requests: requestsTrend?.map((item: any) => item.count) || mockDataForDays(10, 5, 14),
-          stockChecks: stockChecksTrend?.map((item: any) => item.count) || mockDataForDays(3, 2, 14),
+          branches: branchTrend?.map((item) => item.count) || mockDataForDays(4, 1, 14),
+          lowStock: lowStockTrend?.map((item) => item.count) || mockDataForDays(12, 4, 14),
+          requests: requestsTrend?.map((item) => item.count) || mockDataForDays(10, 5, 14),
+          stockChecks: stockChecksTrend?.map((item) => item.count) || mockDataForDays(3, 2, 14),
           isLoading: false
         });
       } catch (error) {

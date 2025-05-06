@@ -12,6 +12,10 @@ interface DashboardMetrics {
   isLoading: boolean;
 }
 
+interface MissingChecksResponse {
+  missing: number;
+}
+
 export const useDashboardMetrics = (): DashboardMetrics => {
   const [totalBranches, setTotalBranches] = useState(0);
   const [lowStockItems, setLowStockItems] = useState(0);
@@ -54,11 +58,11 @@ export const useDashboardMetrics = (): DashboardMetrics => {
         
         // Fetch missing stock checks
         const { data: missingChecksData, error: missingChecksError } = await supabase
-          .rpc('count_missing_checks');
+          .rpc<MissingChecksResponse>('count_missing_checks');
 
         if (missingChecksError) throw missingChecksError;
         if (missingChecksData && missingChecksData.length > 0) {
-          setMissingStockChecks(missingChecksData[0].missing || 0);
+          setMissingStockChecks(missingChecksData[0]?.missing || 0);
         }
       } catch (error) {
         console.error('Error fetching dashboard metrics:', error);
