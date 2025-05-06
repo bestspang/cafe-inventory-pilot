@@ -66,12 +66,12 @@ export const useDashboardMetrics = (): DashboardMetrics => {
         
         // Safely handle the RPC call with proper typing and null coalescing
         const { data: missingChecksData, error: missingChecksError } = await supabase
-          .rpc<any, MissingChecksResponse>('count_missing_checks');
+          .rpc<any, MissingChecksResponse[]>('count_missing_checks');
 
         if (missingChecksError) throw missingChecksError;
         
         // Safely unwrap the data with null-coalescing
-        const missingChecks = missingChecksData?.missing ?? 0;
+        const missingChecks = missingChecksData && missingChecksData[0] ? missingChecksData[0].missing : 0;
         setMissingStockChecks(missingChecks);
       } catch (error) {
         console.error('Error fetching dashboard metrics:', error);
