@@ -52,6 +52,15 @@ export const useCategoryManager = (): CategoryManagerResult => {
 
   useEffect(() => {
     fetchCategories();
+    
+    // Set up window.handleNewCategory for cross-component access
+    // This is a temporary solution until a proper context-based approach is implemented
+    window.handleNewCategory = handleNewCategory;
+    
+    return () => {
+      // Clean up when the hook unmounts
+      delete window.handleNewCategory;
+    };
   }, []);
 
   // Handle adding a new category to the database
@@ -150,3 +159,10 @@ export const useCategoryManager = (): CategoryManagerResult => {
     isLoading
   };
 };
+
+// Add TypeScript declaration for global window object
+declare global {
+  interface Window {
+    handleNewCategory?: (tempId: string, categoryName: string) => Promise<string | null>;
+  }
+}
