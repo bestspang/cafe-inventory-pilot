@@ -81,9 +81,8 @@ const RequestItemsTable: React.FC<RequestItemsTableProps> = ({
       <div className="flex justify-end p-2 bg-muted/20">
         <Button 
           onClick={onSaveFulfillment} 
-          variant="success" 
-          disabled={!allChecked || items.length === 0}
-          className={!allChecked ? "opacity-50 cursor-not-allowed" : ""}
+          variant="success"
+          // Always enabled regardless of checkbox state
         >
           Save Fulfillment
         </Button>

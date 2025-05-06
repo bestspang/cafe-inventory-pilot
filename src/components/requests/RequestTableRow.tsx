@@ -15,6 +15,7 @@ interface RequestTableRowProps {
   onToggleStatus: (id: string) => void;
   onDeleteRequest?: (id: string) => void;
   formatDate: (dateString: string) => string;
+  allItemsChecked?: boolean;
 }
 
 const RequestTableRow: React.FC<RequestTableRowProps> = ({
@@ -26,6 +27,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   onToggleStatus,
   onDeleteRequest,
   formatDate,
+  allItemsChecked = true,
 }) => {
   return (
     <TableRow>
@@ -73,6 +75,8 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
               variant={request.status === 'pending' ? 'default' : 'outline'}
               size="sm"
               onClick={() => onToggleStatus(request.id)}
+              // Disable Mark Fulfilled button if not all items are checked
+              disabled={request.status === 'pending' && isExpanded && !allItemsChecked}
             >
               {request.status === 'pending' ? (
                 <>
