@@ -1,0 +1,65 @@
+
+import { Ingredient, Category } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+
+// Add or edit an ingredient
+export const saveIngredient = async (
+  data: Partial<Ingredient>,
+  categoryId: string | null
+) => {
+  console.log('Saving ingredient with data:', data, 'and categoryId:', categoryId);
+  
+  if (data.id) {
+    // Update existing ingredient
+    console.log('Updating ingredient:', data.id);
+    const { error } = await supabase
+      .from('ingredients')
+      .update({
+        name: data.name,
+        category_id: categoryId,
+        unit: data.unit,
+        default_reorder_point: data.defaultReorderPoint
+      })
+      .eq('id', data.id);
+    
+    if (error) throw error;
+    
+    return {
+      success: true,
+      message: `${data.name} has been updated successfully.`
+    };
+  } else {
+    // Add new ingredient
+    console.log('Adding new ingredient');
+    const { error } = await supabase
+      .from('ingredients')
+      .insert([{
+        name: data.name,
+        category_id: categoryId,
+        unit: data.unit,
+        default_reorder_point: data.defaultReorderPoint
+      }]);
+    
+    if (error) throw error;
+    
+    return {
+      success: true,
+      message: `${data.name} has been added to inventory.`
+    };
+  }
+};
+
+// Delete an ingredient
+export const deleteIngredient = async (ingredientId: string) => {
+  console.log('Deleting ingredient:', ingredientId);
+  const { error } = await supabase
+    .from('ingredients')
+    .delete()
+    .eq('id', ingredientId);
+  
+  if (error) throw error;
+  
+  return {
+    success: true
+  };
+};
