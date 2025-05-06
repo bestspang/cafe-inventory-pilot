@@ -25,15 +25,19 @@ export async function handleUpdate<T extends TableName>(
   console.log('Changes:', changes);
   
   try {
-    // Always include updated_at timestamp for tables that have it
+    // Create a copy of the changes object to avoid mutating the original
+    const updatePayload = { ...changes as any };
+    
+    // Only add updated_at timestamp if we're updating the branches table
+    // This fixes the TypeScript error by making the check more specific
     if (table === 'branches') {
-      changes.updated_at = new Date().toISOString();
+      updatePayload.updated_at = new Date().toISOString();
     }
 
     // Execute the update operation
     const { data, error, status, statusText } = await supabase
       .from(table)
-      .update(changes as any) // Type assertion to handle the complex type
+      .update(updatePayload)
       .eq('id', id as any) // Type assertion to handle the complex type
       .select();
       
