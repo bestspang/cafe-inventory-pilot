@@ -28,7 +28,6 @@ interface RequestDB {
   user_id: string;
   requested_at: string;
   status: 'pending' | 'fulfilled';
-  comment?: string;
   branches: {
     name: string;
   };
@@ -55,7 +54,6 @@ export interface RequestItem {
     quantity: number;
     note?: string;
   }[];
-  comment?: string;
 }
 
 const Requests = () => {
@@ -98,7 +96,6 @@ const Requests = () => {
         status: request.status,
         itemsCount: request.request_items.length,
         detailText,
-        comment: request.comment,
         requestItems: request.request_items.map(item => ({
           id: item.id,
           ingredientId: item.ingredient_id,
@@ -121,7 +118,6 @@ const Requests = () => {
           user_id,
           requested_at,
           status,
-          comment,
           branches (
             name
           ),

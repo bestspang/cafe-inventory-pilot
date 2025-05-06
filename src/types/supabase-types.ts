@@ -1,5 +1,4 @@
 
-
 import { Database } from '@/integrations/supabase/types';
 
 // Define table types from the Database type
@@ -27,4 +26,3 @@ export type Request = RequestsTable & {
 
 // Re-export the UserRole type from our main types file
 export type { UserRole } from '@/types';
-

@@ -98,11 +98,7 @@ export const useRequestsFilters = (requests: RequestItem[]) => {
         const itemsMatch = item.requestItems?.some(reqItem => 
           reqItem.ingredientName.toLowerCase().includes(searchLower));
           
-        // Search in comments
-        const commentMatch = item.comment ? 
-          item.comment.toLowerCase().includes(searchLower) : false;
-          
-        return basicMatch || itemsMatch || commentMatch;
+        return basicMatch || itemsMatch;
       });
     }
     

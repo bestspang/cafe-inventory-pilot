@@ -179,11 +179,6 @@ const RequestsTable: React.FC<RequestsTableProps> = ({
                   >
                     <div className="px-4">
                       <h4 className="text-sm font-medium mb-2">Request Details</h4>
-                      {request.comment && (
-                        <p className="text-sm text-muted-foreground mb-4">
-                          <span className="font-medium">Comment:</span> {request.comment}
-                        </p>
-                      )}
                       <div className="bg-background border rounded-md overflow-hidden">
                         <Table>
                           <TableHeader>
