@@ -1,5 +1,5 @@
 
-import { Ingredient, Category } from '@/types';
+import { Ingredient } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
 // Add or edit an ingredient
@@ -26,8 +26,7 @@ export const saveIngredient = async (
         .update({
           name: data.name,
           category_id: categoryId,
-          unit: data.unit,
-          default_reorder_point: data.defaultReorderPoint
+          unit: data.unit
         })
         .eq('id', data.id);
       
@@ -49,7 +48,6 @@ export const saveIngredient = async (
           name: data.name,
           category_id: categoryId,
           unit: data.unit,
-          default_reorder_point: data.defaultReorderPoint,
           created_by: userId // Add the user ID to satisfy RLS
         }]);
       

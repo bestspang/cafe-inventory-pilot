@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,9 +27,6 @@ const formSchema = z.object({
   }),
   unit: z.string().min(1, {
     message: 'Unit is required.'
-  }),
-  defaultReorderPoint: z.coerce.number().min(0, {
-    message: 'Reorder point must be a positive number.'
   })
 });
 
@@ -55,13 +52,11 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
     defaultValues: ingredient ? {
       name: ingredient.name,
       categoryId: ingredient.categoryId,
-      unit: ingredient.unit,
-      defaultReorderPoint: ingredient.defaultReorderPoint
+      unit: ingredient.unit
     } : {
       name: '',
       categoryId: categories.length > 0 ? categories[0].id : '',
-      unit: '',
-      defaultReorderPoint: 10
+      unit: ''
     }
   });
 
@@ -82,7 +77,7 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="Coffee Beans" {...field} />
+                <Input placeholder="Coffee Beans" {...field} aria-label="Ingredient name" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -109,21 +104,7 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
             <FormItem>
               <FormLabel>Unit</FormLabel>
               <FormControl>
-                <Input placeholder="kg, lbs, pcs" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="defaultReorderPoint"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Reorder Point</FormLabel>
-              <FormControl>
-                <Input type="number" min="0" {...field} />
+                <Input placeholder="kg, lbs, pcs" {...field} aria-label="Ingredient unit" />
               </FormControl>
               <FormMessage />
             </FormItem>

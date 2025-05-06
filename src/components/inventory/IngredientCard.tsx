@@ -10,7 +10,6 @@ import { Ingredient } from '@/types';
 interface IngredientCardProps {
   ingredient: Ingredient & { 
     categoryName: string;
-    onHandQty?: number;
   };
   onEdit: () => void;
   onDelete: () => void;
@@ -25,21 +24,6 @@ const IngredientCard: React.FC<IngredientCardProps> = ({
   
   // Check if user can edit/delete (owner or manager)
   const canModify = ['owner', 'manager'].includes(user?.role || '');
-  
-  // Determine stock status
-  const getStockStatus = () => {
-    if (ingredient.onHandQty === undefined) return null;
-    
-    if (ingredient.onHandQty <= ingredient.defaultReorderPoint * 0.5) {
-      return { label: 'Low Stock', variant: 'destructive' as const };
-    }
-    if (ingredient.onHandQty <= ingredient.defaultReorderPoint) {
-      return { label: 'Reorder Soon', variant: 'warning' as const };
-    }
-    return { label: 'In Stock', variant: 'success' as const };
-  };
-  
-  const stockStatus = getStockStatus();
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
@@ -47,29 +31,12 @@ const IngredientCard: React.FC<IngredientCardProps> = ({
         <div className="flex justify-between items-start">
           <div className="space-y-2">
             <h3 className="font-medium">{ingredient.name}</h3>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">{ingredient.categoryName}</Badge>
-              {stockStatus && (
-                <Badge variant={stockStatus.variant}>{stockStatus.label}</Badge>
-              )}
-            </div>
+            <Badge variant="outline">{ingredient.categoryName}</Badge>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 mt-4 text-sm">
-          <div>
-            <p className="text-muted-foreground">Unit</p>
-            <p>{ingredient.unit}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Reorder Point</p>
-            <p>{ingredient.defaultReorderPoint}</p>
-          </div>
-          {ingredient.onHandQty !== undefined && (
-            <div>
-              <p className="text-muted-foreground">On Hand</p>
-              <p>{ingredient.onHandQty}</p>
-            </div>
-          )}
+        <div className="mt-4 text-sm">
+          <p className="text-muted-foreground">Unit</p>
+          <p>{ingredient.unit}</p>
         </div>
       </CardContent>
       {canModify && (

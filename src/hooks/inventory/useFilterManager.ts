@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { StockItem } from '@/types/stock-check';
+import { Ingredient } from '@/types';
 import { ViewMode } from '@/types/inventory';
 
 export interface FilterManagerResult {
@@ -10,7 +10,7 @@ export interface FilterManagerResult {
   setCategoryFilter: (value: string) => void;
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
-  filterIngredients: (ingredients: StockItem[]) => StockItem[];
+  filterIngredients: (ingredients: Ingredient[]) => Ingredient[];
   hasFilters: boolean;
 }
 
@@ -20,7 +20,7 @@ export const useFilterManager = (): FilterManagerResult => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   // Filter ingredients based on search and category
-  const filterIngredients = (ingredients: StockItem[]): StockItem[] => {
+  const filterIngredients = (ingredients: Ingredient[]): Ingredient[] => {
     return ingredients.filter(ingredient => {
       const matchesSearch = ingredient.name.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = categoryFilter === 'all' ? true : ingredient.categoryId === categoryFilter;

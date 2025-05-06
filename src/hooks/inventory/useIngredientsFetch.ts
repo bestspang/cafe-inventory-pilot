@@ -22,9 +22,9 @@ export const useIngredientsFetch = () => {
           name, 
           unit, 
           categoryId:category_id, 
-          defaultReorderPoint:default_reorder_point,
           categories(id, name)
-        `);
+        `)
+        .order('name');
       
       if (error) {
         throw error;
@@ -38,8 +38,7 @@ export const useIngredientsFetch = () => {
         name: item.name,
         unit: item.unit,
         categoryId: item.categoryId,
-        categoryName: item.categories?.name || 'Uncategorized',
-        defaultReorderPoint: item.defaultReorderPoint
+        categoryName: item.categories?.name || 'Uncategorized'
       }));
       
       setIngredients(formattedData);
