@@ -21,6 +21,8 @@ interface StockActivity {
   quantity: number;
   unit: string;
   comment: string | null;
+  source: 'stock-check' | 'fulfilled-request' | null;
+  requestedBy: string | null;
 }
 
 const StockCheckActivity: React.FC = () => {
@@ -29,7 +31,8 @@ const StockCheckActivity: React.FC = () => {
   
   const fetchActivities = async () => {
     try {
-      const { data, error } = await supabase
+      // First, get the regular stock checks
+      const { data: stockCheckData, error: stockCheckError } = await supabase
         .from('stock_checks')
         .select(`
           id, 
@@ -45,12 +48,37 @@ const StockCheckActivity: React.FC = () => {
         .order('checked_at', { ascending: false })
         .limit(100);
         
-      if (error) throw error;
+      if (stockCheckError) throw stockCheckError;
       
-      if (data) {
-        const formattedActivities: StockActivity[] = [];
+      // Next, get request info for fulfilled requests
+      const { data: requestData, error: requestError } = await supabase
+        .from('requests')
+        .select(`
+          id,
+          requested_at,
+          status,
+          user_id,
+          profiles(name, email),
+          branch_id,
+          branches(name),
+          request_items(
+            id,
+            ingredient_id,
+            quantity,
+            ingredients(id, name, unit)
+          )
+        `)
+        .eq('status', 'fulfilled')
+        .order('requested_at', { ascending: false })
+        .limit(50);
         
-        data.forEach(stockCheck => {
+      if (requestError) throw requestError;
+      
+      const formattedActivities: StockActivity[] = [];
+      
+      // Process regular stock checks
+      if (stockCheckData) {
+        stockCheckData.forEach(stockCheck => {
           // Extract staff name from user profile data
           let staffName = 'Unknown';
           if (stockCheck.profiles) {
@@ -68,15 +96,52 @@ const StockCheckActivity: React.FC = () => {
                   ingredient: item.ingredients.name,
                   quantity: item.on_hand_qty,
                   unit: item.ingredients.unit,
-                  comment: null // No comment field available yet
+                  comment: null,
+                  source: 'stock-check',
+                  requestedBy: null
                 });
               }
             });
           }
         });
-        
-        setActivities(formattedActivities);
       }
+      
+      // Process fulfilled requests
+      if (requestData) {
+        requestData.forEach(request => {
+          // Get the name of who made the request
+          let requesterName = 'Unknown';
+          if (request.profiles) {
+            requesterName = request.profiles.name || request.profiles.email || 'Unknown';
+          }
+          
+          if (request.request_items && request.request_items.length > 0) {
+            request.request_items.forEach(item => {
+              if (item.ingredients) {
+                formattedActivities.push({
+                  id: `req-${item.id}`,
+                  checkedAt: request.requested_at,
+                  branchName: request.branches?.name || 'Unknown',
+                  staffName: 'System', // Stock was updated by system
+                  ingredient: item.ingredients.name,
+                  quantity: item.quantity,
+                  unit: item.ingredients.unit,
+                  comment: 'Fulfilled from request',
+                  source: 'fulfilled-request',
+                  requestedBy: requesterName
+                });
+              }
+            });
+          }
+        });
+      }
+      
+      // Sort all activities by date (newest first)
+      formattedActivities.sort((a, b) => 
+        new Date(b.checkedAt).getTime() - new Date(a.checkedAt).getTime()
+      );
+      
+      setActivities(formattedActivities);
     } catch (error) {
       console.error('Error fetching stock activities:', error);
     } finally {
@@ -104,6 +169,16 @@ const StockCheckActivity: React.FC = () => {
           fetchActivities();
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'requests' },
+        (payload) => {
+          // Only refetch if a request status changed to fulfilled
+          if (payload.new && payload.new.status === 'fulfilled') {
+            fetchActivities();
+          }
+        }
+      )
       .subscribe();
     
     return () => {
@@ -129,7 +204,7 @@ const StockCheckActivity: React.FC = () => {
                 <TableHead>Staff</TableHead>
                 <TableHead>Ingredient</TableHead>
                 <TableHead>Quantity</TableHead>
-                <TableHead>Comment</TableHead>
+                <TableHead>Source</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -163,7 +238,7 @@ const StockCheckActivity: React.FC = () => {
               <TableHead>Staff</TableHead>
               <TableHead>Ingredient</TableHead>
               <TableHead>Quantity</TableHead>
-              <TableHead>Comment</TableHead>
+              <TableHead>Source</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -180,15 +255,26 @@ const StockCheckActivity: React.FC = () => {
                     {formatDate(activity.checkedAt)}
                   </TableCell>
                   <TableCell>{activity.branchName}</TableCell>
-                  <TableCell>{activity.staffName}</TableCell>
+                  <TableCell>
+                    {activity.staffName}
+                    {activity.source === 'fulfilled-request' && activity.requestedBy && (
+                      <div className="text-xs text-muted-foreground">
+                        Requested by: {activity.requestedBy}
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell>{activity.ingredient}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">
+                    <Badge variant={activity.source === 'fulfilled-request' ? 'success' : 'outline'}>
                       {activity.quantity} {activity.unit}
                     </Badge>
                   </TableCell>
-                  <TableCell className="max-w-xs truncate">
-                    {activity.comment || ''}
+                  <TableCell>
+                    {activity.source === 'fulfilled-request' ? (
+                      <Badge variant="secondary">Fulfilled Request</Badge>
+                    ) : (
+                      activity.comment || 'Stock Check'
+                    )}
                   </TableCell>
                 </TableRow>
               ))
