@@ -1,21 +1,18 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface DashboardMetrics {
-  lowStockCount: number;
-  pendingRequestsCount: number;
-  missingChecksCount: number;
-  totalBranchesCount: number;
-  closedBranchesCount: number;
+  totalBranches: number;
+  lowStockItems: number;
+  pendingRequests: number;
+  missingStockChecks: number;
 }
 
 const defaultMetrics: DashboardMetrics = {
-  lowStockCount: 0,
-  pendingRequestsCount: 0,
-  missingChecksCount: 0,
-  totalBranchesCount: 0,
-  closedBranchesCount: 0
+  totalBranches: 0,
+  lowStockItems: 0,
+  pendingRequests: 0,
+  missingStockChecks: 0
 };
 
 export const useDashboardMetrics = () => {
@@ -26,61 +23,52 @@ export const useDashboardMetrics = () => {
     try {
       setIsLoading(true);
       
-      // Get low stock count
-      const { data: lowStockData, error: lowStockError } = await supabase
-        .from('branch_inventory')
-        .select('*')
-        .lt('on_hand_qty', 10);
-        
-      if (lowStockError) throw lowStockError;
-
-      // Get pending requests count
-      const { data: requestsData, error: requestsError } = await supabase
-        .from('requests')
-        .select('*')
-        .eq('status', 'pending');
-        
-      if (requestsError) throw requestsError;
-
-      // Get branches count
+      // Fetch total branches count
+      interface BranchCountResult { count: number }
       const { data: branchesData, error: branchesError } = await supabase
         .from('branches')
-        .select('*');
+        .select('*', { count: 'exact', head: true })
+        .returns<BranchCountResult>();
         
-      if (branchesError) throw branchesError;
-
-      // Get closed branches count
-      const { data: closedBranchesData, error: closedBranchesError } = await supabase
-        .from('branches')
-        .select('*')
-        .eq('is_open', false);
-        
-      if (closedBranchesError) throw closedBranchesError;
-
-      // Use RPC for missing checks count
-      type MissingChecksResponse = { count_missing_checks: number };
-      const { data: missingChecksData, error: missingChecksError } = await supabase
-        .rpc<MissingChecksResponse>('count_missing_checks');
-        
-      if (missingChecksError) {
-        console.error('Error fetching missing checks:', missingChecksError);
-        // Fallback: Just set a default value
-        setMetrics({
-          lowStockCount: lowStockData?.length || 0,
-          pendingRequestsCount: requestsData?.length || 0,
-          missingChecksCount: 0,
-          totalBranchesCount: branchesData?.length || 0,
-          closedBranchesCount: closedBranchesData?.length || 0
-        });
-        return;
+      if (branchesError) {
+        console.error('Error fetching branch count:', branchesError);
       }
-      
+
+      // Fetch low stock items count
+      interface LowStockCountResult { count: number }
+      const { data: lowStockData, error: lowStockError } = await supabase
+        .rpc<LowStockCountResult>('get_low_stock_count');
+        
+      if (lowStockError) {
+        console.error('Error fetching low stock count:', lowStockError);
+      }
+
+      // Fetch pending requests count
+      interface RequestCountResult { count: number }
+      const { data: requestsData, error: requestsError } = await supabase
+        .from('requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .returns<RequestCountResult>();
+        
+      if (requestsError) {
+        console.error('Error fetching requests count:', requestsError);
+      }
+
+      // Fetch missing stock checks count
+      interface StockCheckCountResult { count: number }
+      const { data: missingChecksData, error: stockChecksError } = await supabase
+        .rpc<StockCheckCountResult>('get_missing_checks_count');
+        
+      if (stockChecksError) {
+        console.error('Error fetching missing checks count:', stockChecksError);
+      }
+
       setMetrics({
-        lowStockCount: lowStockData?.length || 0,
-        pendingRequestsCount: requestsData?.length || 0,
-        missingChecksCount: missingChecksData?.count_missing_checks || 0,
-        totalBranchesCount: branchesData?.length || 0,
-        closedBranchesCount: closedBranchesData?.length || 0
+        totalBranches: branchesData?.count || 0,
+        lowStockItems: lowStockData?.count || 0,
+        pendingRequests: requestsData?.count || 0,
+        missingStockChecks: missingChecksData?.count || 0
       });
     } catch (error) {
       console.error('Error fetching dashboard metrics:', error);
@@ -92,29 +80,18 @@ export const useDashboardMetrics = () => {
   useEffect(() => {
     fetchMetrics();
     
-    // Subscribe to changes
+    // Subscribe to changes on relevant tables that would affect metrics
     const channel = supabase
-      .channel('dashboard_metrics')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'branch_inventory' 
-      }, () => fetchMetrics())
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'requests' 
-      }, () => fetchMetrics())
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'branches' 
-      }, () => fetchMetrics())
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'stock_checks' 
-      }, () => fetchMetrics())
+      .channel('dashboard-metrics-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'branches' }, () => {
+        fetchMetrics();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_check_items' }, () => {
+        fetchMetrics();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, () => {
+        fetchMetrics();
+      })
       .subscribe();
       
     return () => {
@@ -122,5 +99,5 @@ export const useDashboardMetrics = () => {
     };
   }, []);
 
-  return { metrics, isLoading, refetch: fetchMetrics };
+  return { ...metrics, isLoading, refetch: fetchMetrics };
 };

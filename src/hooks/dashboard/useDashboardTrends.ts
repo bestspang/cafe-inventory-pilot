@@ -81,29 +81,29 @@ export const useDashboardTrends = () => {
         console.error('Error fetching stock checks trends:', stockChecksError);
       }
 
-      // Transform the data for charts
-      const branchTrend = branchData && branchData.length > 0 
+      // Transform the data for charts with null checks
+      const branchTrend = branchData && Array.isArray(branchData) && branchData.length > 0 
         ? branchData.map(item => ({ 
             date: item.date, 
             value: item.count 
           }))
         : [];
       
-      const lowStockTrend = lowStockData && lowStockData.length > 0 
+      const lowStockTrend = lowStockData && Array.isArray(lowStockData) && lowStockData.length > 0 
         ? lowStockData.map(item => ({ 
             date: item.date, 
             value: item.count 
           }))
         : [];
       
-      const requestsTrend = requestsData && requestsData.length > 0 
+      const requestsTrend = requestsData && Array.isArray(requestsData) && requestsData.length > 0 
         ? requestsData.map(item => ({ 
             date: item.date, 
             value: item.count 
           }))
         : [];
       
-      const stockChecksTrend = stockChecksData && stockChecksData.length > 0 
+      const stockChecksTrend = stockChecksData && Array.isArray(stockChecksData) && stockChecksData.length > 0 
         ? stockChecksData.map(item => ({ 
             date: item.date, 
             value: item.count 

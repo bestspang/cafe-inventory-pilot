@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Store, Package, AlertTriangle, ClipboardCheck, Plus } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
@@ -17,16 +16,17 @@ const Dashboard = () => {
   const [branchFilter, setBranchFilter] = useState<'all' | 'healthy' | 'at-risk'>('all');
   
   // Fetch metrics data from Supabase
+  const { metrics, isLoading: metricsLoading } = useDashboardMetrics();
   const { 
-    totalBranches, 
-    lowStockItems, 
-    pendingRequests, 
-    missingStockChecks,
-    isLoading: metricsLoading 
-  } = useDashboardMetrics();
+    totalBranches = 0, 
+    lowStockItems = 0, 
+    pendingRequests = 0, 
+    missingStockChecks = 0 
+  } = metrics;
   
   // Fetch trend data for charts
-  const { branches: branchTrend, lowStock: lowStockTrend, requests: requestsTrend, stockChecks: stockChecksTrend } = useDashboardTrends();
+  const { trends, isLoading: trendsLoading } = useDashboardTrends();
+  const { branchTrend, lowStockTrend, requestsTrend, stockChecksTrend } = trends;
   
   // Fetch branch snapshots
   const { branches: displayedBranches, isLoading: branchesLoading } = useBranchSnapshots({ branchFilter });
@@ -40,7 +40,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">Your inventory at a glance</p>
       </div>
 
