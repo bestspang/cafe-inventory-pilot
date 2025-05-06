@@ -144,14 +144,6 @@ const Requests = () => {
         </div>
       </div>
 
-      {user?.role === 'owner' && (
-        <div className="flex justify-end">
-          <Button variant="link" asChild className="p-0">
-            <Link to="/manage-staff">Manage Staff Names</Link>
-          </Button>
-        </div>
-      )}
-
       <RequestsFilters 
         filters={filters}
         setFilters={setFilters}
