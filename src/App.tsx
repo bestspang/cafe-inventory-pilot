@@ -21,6 +21,7 @@ import StockCheck from "./pages/StockCheck";
 import Requests from "./pages/Requests";
 import NewRequest from "./pages/NewRequest";
 import QuickRequest from "./pages/QuickRequest";
+import Branches from "./pages/Branches";
 import ManageStaff from "./pages/ManageStaff";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import NotFound from "./pages/NotFound";
@@ -52,12 +53,12 @@ const App = () => {
                 <Route path="stock-check" element={<StockCheck />} />
                 <Route path="requests" element={<Requests />} />
                 <Route path="requests/new" element={<NewRequest />} />
+                <Route path="branches" element={<Branches />} />
                 <Route path="manage-staff" element={<ManageStaff />} />
                 
                 {/* Coming Soon Pages */}
                 <Route path="suppliers" element={<ComingSoonPage />} />
                 <Route path="purchase-orders" element={<ComingSoonPage />} />
-                <Route path="branches" element={<ComingSoonPage />} />
                 <Route path="reports" element={<ComingSoonPage />} />
                 <Route path="users" element={<ComingSoonPage />} />
                 <Route path="settings" element={<ComingSoonPage />} />

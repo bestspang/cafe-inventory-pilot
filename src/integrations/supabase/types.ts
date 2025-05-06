@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      branch_activity: {
+        Row: {
+          action: string
+          branch_id: string
+          id: string
+          performed_at: string
+          performed_by: string
+        }
+        Insert: {
+          action: string
+          branch_id: string
+          id?: string
+          performed_at?: string
+          performed_by: string
+        }
+        Update: {
+          action?: string
+          branch_id?: string
+          id?: string
+          performed_at?: string
+          performed_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branch_activity_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branch_activity_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branch_inventory: {
         Row: {
           branch_id: string
@@ -53,22 +92,28 @@ export type Database = {
           address: string | null
           created_at: string | null
           id: string
+          is_open: boolean
           name: string
           timezone: string | null
+          updated_at: string
         }
         Insert: {
           address?: string | null
           created_at?: string | null
           id?: string
+          is_open?: boolean
           name: string
           timezone?: string | null
+          updated_at?: string
         }
         Update: {
           address?: string | null
           created_at?: string | null
           id?: string
+          is_open?: boolean
           name?: string
           timezone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

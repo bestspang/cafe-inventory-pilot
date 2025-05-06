@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -61,6 +60,12 @@ const navItems: NavItem[] = [
     role: ['owner', 'manager']
   },
   { 
+    title: "Branches", 
+    icon: Store, 
+    path: "/branches",
+    role: ['owner', 'manager']
+  },
+  { 
     title: "Suppliers", 
     icon: Store, 
     path: "/suppliers",
@@ -72,13 +77,6 @@ const navItems: NavItem[] = [
     icon: FileText, 
     path: "/purchase-orders",
     role: ['owner', 'manager'],
-    isComing: true
-  },
-  { 
-    title: "Branches", 
-    icon: Store, 
-    path: "/branches",
-    role: ['owner'],
     isComing: true
   },
   { 
