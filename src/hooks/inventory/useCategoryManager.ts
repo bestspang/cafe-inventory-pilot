@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface CategoryManagerResult {
   categories: Category[];
-  handleNewCategory: (tempId: string, categoryName: string) => Promise<string>;
+  handleNewCategory: (tempId: string, categoryName: string) => Promise<string | null>;
   isLoading: boolean;
 }
 
@@ -55,12 +55,33 @@ export const useCategoryManager = (): CategoryManagerResult => {
   }, []);
 
   // Handle adding a new category to the database
-  const handleNewCategory = async (tempId: string, categoryName: string): Promise<string> => {
+  const handleNewCategory = async (tempId: string, categoryName: string): Promise<string | null> => {
     try {
       console.log('Creating new category:', categoryName);
       
       if (!categoryName || categoryName.trim() === '') {
-        throw new Error('Category name cannot be empty');
+        toast({
+          title: "Category creation failed",
+          description: "Category name cannot be empty",
+          variant: "destructive"
+        });
+        return null;
+      }
+      
+      // Check if category with same name already exists
+      const { data: existingCategories } = await supabase
+        .from('categories')
+        .select('id')
+        .ilike('name', categoryName.trim())
+        .limit(1);
+        
+      if (existingCategories && existingCategories.length > 0) {
+        toast({
+          title: "Category already exists",
+          description: `A category named "${categoryName}" already exists.`,
+          variant: "destructive"
+        });
+        return existingCategories[0].id; // Return existing id
       }
       
       // Insert the new category into the database
@@ -72,11 +93,21 @@ export const useCategoryManager = (): CategoryManagerResult => {
       
       if (error) {
         console.error('Supabase error creating category:', error);
-        throw error;
+        toast({
+          title: "Category creation failed",
+          description: error.message || "Please try again later.",
+          variant: "destructive"
+        });
+        return null;
       }
       
       if (!data) {
-        throw new Error('No data returned from category creation');
+        toast({
+          title: "Category creation failed",
+          description: "No data returned from category creation",
+          variant: "destructive"
+        });
+        return null;
       }
       
       console.log('Category created successfully:', data);
@@ -94,23 +125,22 @@ export const useCategoryManager = (): CategoryManagerResult => {
       });
       
       toast({
-        title: "Category created",
-        description: `${categoryName} has been added as a new category.`
+        title: "Category created successfully",
+        description: `"${categoryName}" has been added as a new category.`
       });
       
       // Force a refresh of categories from the database
-      fetchCategories();
+      await fetchCategories();
       
       return newCategory.id;
     } catch (error: any) {
       console.error('Error creating category:', error);
       toast({
-        title: "Failed to create category",
+        title: "Category creation failed",
         description: error.message || "Please try again later.",
         variant: "destructive"
       });
-      // Return the temp ID if we fail - the UI will still work
-      return tempId;
+      return null;
     }
   };
 

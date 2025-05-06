@@ -28,7 +28,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2, Check, AlertCircle } from 'lucide-react';
 import { Ingredient, Category } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -67,6 +67,8 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [categoryStatus, setCategoryStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -101,6 +103,7 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
       });
       setShowNewCategoryInput(false);
       setNewCategoryName('');
+      setCategoryStatus('idle');
     }
   }, [open, ingredient, categories, form]);
 
@@ -112,6 +115,7 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
       form.reset();
       setShowNewCategoryInput(false);
       setNewCategoryName('');
+      setCategoryStatus('idle');
     } catch (error) {
       console.error('Error submitting form:', error);
       toast({
@@ -124,7 +128,7 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
     }
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (newCategoryName.trim().length < 2) {
       toast({
         title: "Invalid category name",
@@ -134,27 +138,63 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
       return;
     }
     
-    console.log('Adding new category:', newCategoryName);
-    
-    // Generate temporary ID for new category (this will be properly set on the server)
-    const tempId = `new-${Date.now()}`;
-    
-    // Add the new category to the categories array temporarily
-    const newCategory = { id: tempId, name: newCategoryName };
-    
-    // Close new category input
-    setShowNewCategoryInput(false);
-    
-    // Set the form value to the new category ID
-    form.setValue('categoryId', tempId);
+    try {
+      setIsAddingCategory(true);
+      setCategoryStatus('loading');
+      console.log('Adding new category:', newCategoryName);
+      
+      // Generate temporary ID for new category
+      const tempId = `new-${Date.now()}`;
+      
+      // Call the function from useCategoryManager to add the category
+      const newCategoryId = await window.handleNewCategory?.(tempId, newCategoryName);
+      
+      if (!newCategoryId) {
+        setCategoryStatus('error');
+        setShowNewCategoryInput(true); // Keep the input open on error
+        return;
+      }
+      
+      // Set the form value to the new category ID
+      form.setValue('categoryId', newCategoryId);
+      setCategoryStatus('success');
+      
+      // Close new category input after a short delay to show success state
+      setTimeout(() => {
+        setShowNewCategoryInput(false);
+        setCategoryStatus('idle');
+        setNewCategoryName('');
+      }, 1500);
+    } catch (error) {
+      console.error('Error adding category:', error);
+      setCategoryStatus('error');
+      toast({
+        title: "Failed to add category",
+        description: "There was an error adding the category. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAddingCategory(false);
+    }
   };
 
   const handleFormClose = () => {
     form.reset();
     setShowNewCategoryInput(false);
     setNewCategoryName('');
+    setCategoryStatus('idle');
     onOpenChange(false);
   };
+
+  // Helper to attach the handler to the window for global access
+  React.useEffect(() => {
+    // @ts-ignore - we're intentionally adding this to the window object
+    window.handleNewCategory = handleAddCategory;
+    return () => {
+      // @ts-ignore
+      delete window.handleNewCategory;
+    };
+  }, [newCategoryName]);
 
   return (
     <Dialog open={open} onOpenChange={handleFormClose}>
@@ -204,32 +244,60 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
                   </div>
                   
                   {showNewCategoryInput ? (
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="New category name"
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button 
-                        type="button" 
-                        size="sm" 
-                        onClick={handleAddCategory}
-                        disabled={newCategoryName.trim().length < 2}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => {
-                          setShowNewCategoryInput(false);
-                          setNewCategoryName('');
-                        }}
-                      >
-                        Cancel
-                      </Button>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="New category name"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          className="flex-1"
+                          disabled={isAddingCategory}
+                        />
+                        <Button 
+                          type="button" 
+                          size="sm"
+                          onClick={handleAddCategory}
+                          disabled={newCategoryName.trim().length < 2 || isAddingCategory}
+                          className="min-w-[40px]"
+                        >
+                          {categoryStatus === 'loading' ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : categoryStatus === 'success' ? (
+                            <Check className="h-4 w-4 text-green-500" />
+                          ) : categoryStatus === 'error' ? (
+                            <AlertCircle className="h-4 w-4 text-red-500" />
+                          ) : (
+                            <Plus className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => {
+                            setShowNewCategoryInput(false);
+                            setNewCategoryName('');
+                            setCategoryStatus('idle');
+                          }}
+                          disabled={isAddingCategory && categoryStatus === 'loading'}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                      
+                      {categoryStatus === 'success' && (
+                        <div className="text-sm text-green-600 flex items-center gap-1.5">
+                          <Check className="h-4 w-4" /> 
+                          Category added successfully
+                        </div>
+                      )}
+                      
+                      {categoryStatus === 'error' && (
+                        <div className="text-sm text-red-600 flex items-center gap-1.5">
+                          <AlertCircle className="h-4 w-4" />
+                          Failed to add category
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <Select 
@@ -294,7 +362,12 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : ingredient ? 'Update' : 'Add'} Ingredient
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : ingredient ? 'Update' : 'Add'} Ingredient
               </Button>
             </DialogFooter>
           </form>
