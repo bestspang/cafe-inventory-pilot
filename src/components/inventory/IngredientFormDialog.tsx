@@ -100,7 +100,7 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
         
         {error && (
           <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4 mr-2" />
+            <AlertCircle className="h-4 w-4" />
             <AlertTitle className="flex items-center justify-between">
               {error.title}
               <Button 

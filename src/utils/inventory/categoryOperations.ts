@@ -41,15 +41,22 @@ export const checkCategoryExists = async (categoryName: string): Promise<string 
 
 // Create a new category in the database
 export const createCategory = async (categoryName: string): Promise<Category> => {
-  // Get current session to include userID if needed for RLS
+  // Get current session to include userID for RLS
   const { data: { session } } = await supabase.auth.getSession();
   const userId = session?.user?.id;
+  
+  if (!userId) {
+    throw new Error("You must be logged in to create categories");
+  }
   
   console.log('Creating category with name:', categoryName, 'User ID:', userId);
   
   const { data, error } = await supabase
     .from('categories')
-    .insert([{ name: categoryName.trim() }])
+    .insert([{ 
+      name: categoryName.trim(),
+      created_by: userId // Add the user ID to satisfy RLS
+    }])
     .select('id, name')
     .single();
   
