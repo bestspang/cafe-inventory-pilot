@@ -1,98 +1,139 @@
 
 import { useState } from 'react';
-import { X, Plus, Trash, UserCircle } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useBranchStaff } from '@/hooks/branches/useBranchStaff';
+import { StaffMember } from '@/types/branch';
+import { toast } from '@/components/ui/sonner';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  Table, 
+  TableBody,
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
 
 interface StaffManagerProps {
   branchId: string;
 }
 
 export default function StaffManager({ branchId }: StaffManagerProps) {
-  const [newStaffName, setNewStaffName] = useState('');
-  const { staff, isLoading, isAdding, addStaffMember, deleteStaffMember } = useBranchStaff(branchId);
+  const { 
+    staff, 
+    isLoading, 
+    addStaffMember, 
+    deleteStaffMember, 
+    refetch 
+  } = useBranchStaff(branchId);
   
-  const handleAddStaff = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newStaffName.trim()) return;
+  const [newStaffName, setNewStaffName] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [staffBeingDeleted, setStaffBeingDeleted] = useState<string | null>(null);
+  
+  const handleAddStaff = async () => {
+    if (!newStaffName.trim()) {
+      toast.error("Staff member name cannot be empty");
+      return;
+    }
     
-    console.log('Adding staff member:', newStaffName, 'to branch:', branchId);
-    const success = await addStaffMember(newStaffName);
+    setIsAdding(true);
     
-    if (success) {
-      console.log('Staff member added successfully, clearing input');
-      setNewStaffName('');
-    } else {
-      console.warn('Failed to add staff member, keeping input value');
+    try {
+      const success = await addStaffMember({
+        staff_name: newStaffName,
+        branch_id: branchId
+      });
+      
+      if (success) {
+        setNewStaffName('');
+        refetch();
+      }
+    } finally {
+      setIsAdding(false);
     }
   };
   
   const handleDeleteStaff = async (staffId: string) => {
-    console.log('Deleting staff member:', staffId);
-    await deleteStaffMember(staffId);
+    setStaffBeingDeleted(staffId);
+    
+    try {
+      const success = await deleteStaffMember(staffId);
+      if (success) {
+        refetch();
+      }
+    } finally {
+      setStaffBeingDeleted(null);
+    }
   };
-  
-  if (isLoading) {
-    return (
-      <div className="space-y-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div 
-            key={i} 
-            className="h-10 bg-muted/60 animate-pulse rounded-md"
-          />
-        ))}
-      </div>
-    );
-  }
   
   return (
     <div className="space-y-4">
-      <form onSubmit={handleAddStaff} className="flex items-center gap-2">
+      <div className="flex items-center">
+        <h3 className="text-md font-semibold">Staff Members</h3>
+        <Badge variant="outline" className="ml-2">
+          {staff.length}
+        </Badge>
+      </div>
+      
+      <div className="flex gap-2">
         <Input
-          placeholder="Add staff member name"
+          placeholder="Add staff member"
           value={newStaffName}
           onChange={(e) => setNewStaffName(e.target.value)}
-          className="flex-1"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleAddStaff();
+          }}
           disabled={isAdding}
         />
-        <Button type="submit" disabled={!newStaffName.trim() || isAdding} size="sm">
+        <Button 
+          onClick={handleAddStaff} 
+          disabled={!newStaffName.trim() || isAdding}
+          size="sm"
+        >
           <Plus className="h-4 w-4 mr-1" />
-          {isAdding ? 'Adding...' : 'Add'}
+          Add
         </Button>
-      </form>
+      </div>
       
-      <div className="rounded-md border">
-        {staff.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground flex flex-col items-center gap-2">
-            <UserCircle className="h-8 w-8" />
-            <p>No staff members added yet</p>
-          </div>
-        ) : (
-          <ScrollArea className="max-h-[200px]">
-            <ul className="divide-y">
-              {staff.map((member) => (
-                <li key={member.id} className="px-4 py-3 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <UserCircle className="h-5 w-5 text-muted-foreground mr-2" />
-                    <span>{member.staff_name}</span>
-                  </div>
+      {staff.length > 0 ? (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead className="w-16"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {staff.map((member: StaffMember) => (
+              <TableRow key={member.id}>
+                <TableCell>{member.staff_name}</TableCell>
+                <TableCell className="text-right">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDeleteStaff(member.id)}
-                    disabled={isDeleting}
+                    disabled={staffBeingDeleted === member.id}
+                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
-                    <Trash className="h-4 w-4 text-destructive" />
+                    {staffBeingDeleted === member.id ? (
+                      <span className="h-4 w-4 animate-spin">...</span>
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                   </Button>
-                </li>
-              ))}
-            </ul>
-          </ScrollArea>
-        )}
-      </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      ) : (
+        <div className="text-center p-4 border rounded-md text-muted-foreground bg-muted/50">
+          No staff members added yet.
+        </div>
+      )}
     </div>
   );
 }

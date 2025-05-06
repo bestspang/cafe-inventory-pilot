@@ -4,14 +4,22 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Branch } from '@/types/branch';
 import { handleUpdate } from '@/utils/updateHandler';
+import { toast } from '@/components/ui/sonner';
 
 export const useBranchUpdate = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
-  const updateBranch = async (branch: Partial<Branch>, refreshFn?: () => Promise<void>) => {
-    if (!user || !branch.id) {
-      console.error('Update failed: Missing user or branch ID');
+  const updateBranch = async (branch: Partial<Branch> & { id: string }, refreshFn?: () => Promise<void>) => {
+    if (!user) {
+      console.error('Update failed: Missing user');
+      toast.error('Authentication required to update branch');
+      return false;
+    }
+
+    if (!branch.id) {
+      console.error('Update failed: Missing branch ID');
+      toast.error('Branch ID is required for updates');
       return false;
     }
     

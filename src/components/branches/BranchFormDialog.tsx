@@ -1,3 +1,4 @@
+
 import { 
   Dialog,
   DialogContent,
@@ -53,7 +54,7 @@ export default function BranchFormDialog({
           name: data.name,
           address: data.address,
           timezone: data.timezone
-        }, refetch);
+        });
       } else {
         console.log('[BranchFormDialog] Attempting to create new branch');
         const newBranch = await createBranch(data);
@@ -72,6 +73,8 @@ export default function BranchFormDialog({
     } finally {
       console.groupEnd(); // End [BranchFormDialog] onSubmit triggered
     }
+    
+    return success;
   }
 
   return (

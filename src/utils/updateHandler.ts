@@ -1,3 +1,4 @@
+
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
@@ -39,31 +40,30 @@ export async function handleUpdate<T extends TableName>(
 
     // Execute the update operation - don't use .single() on first query
     console.log(`[handleUpdate] Calling supabase.from('${table}').update().eq('id', '${id}') with payload:`, updatePayload);
-    const { data, error, status, statusText } = await supabase
+    const { data: updateData, error: updateError, status, statusText } = await supabase
       .from(table)
       .update(updatePayload)
-      .eq('id' as any, id);
+      .eq('id', id);
       
     // Log detailed response information
-    console.log('[handleUpdate] Supabase update response data:', data);
-    console.log('[handleUpdate] Supabase update response error:', error);
+    console.log('[handleUpdate] Supabase update response data:', updateData);
+    console.log('[handleUpdate] Supabase update response error:', updateError);
     console.log('[handleUpdate] Supabase update response status:', status, statusText);
     
     // Check for errors
-    if (error) {
-      console.error(`Error updating ${table}:`, error);
-      toast.error(`Failed to update ${table}: ${error.message}`);
-      return { success: false, error };
+    if (updateError) {
+      console.error(`Error updating ${table}:`, updateError);
+      toast.error(`Failed to update ${table}: ${updateError.message}`);
+      return { success: false, error: updateError };
     }
     
     // Update likely succeeded, fetch the updated record to return it
-    // No need to check data.length here as 'data' from update is likely null
     console.log('[handleUpdate] Update reported success, fetching updated record...');
     
     const { data: fetchedData, error: fetchError } = await supabase
       .from(table)
       .select('*')
-      .eq('id' as any, id)
+      .eq('id', id)
       .single();
       
     console.log('[handleUpdate] Fetched record data:', fetchedData);
@@ -74,7 +74,6 @@ export async function handleUpdate<T extends TableName>(
       console.error('[handleUpdate] Update succeeded, but failed to fetch updated record:', fetchError);
       toast.warn(`Update successful, but couldn't retrieve the latest data.`);
       // Return success: true, but potentially without data
-      // Or decide if this should be considered a failure
       return { success: true, data: null, error: fetchError }; 
     } else {
       console.log('[handleUpdate] Fetched updated record:', fetchedData);
@@ -95,7 +94,7 @@ export async function handleUpdate<T extends TableName>(
       
     toast.success(`${entityName} updated successfully`);
     
-    // Return the fetched data, not the potentially null data from the update response
+    // Return the fetched data
     return { success: true, data: fetchedData };
   } catch (error) {
     console.error(`[handleUpdate] Unexpected error updating ${table}:`, error);
