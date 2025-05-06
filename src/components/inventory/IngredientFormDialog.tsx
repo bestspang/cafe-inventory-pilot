@@ -10,6 +10,9 @@ import {
 import { IngredientForm } from './IngredientForm';
 import { Ingredient, Category } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Copy, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface IngredientFormDialogProps {
   open: boolean;
@@ -27,6 +30,7 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
   categories
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<{title: string, message: string} | null>(null);
   const { toast } = useToast();
 
   // Helper to attach the handler to the window for global access
@@ -42,13 +46,22 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
   const handleSubmit = async (data: Partial<Ingredient>) => {
     try {
       setIsSubmitting(true);
+      setError(null);
       console.log('Submitting form with data:', data);
       await onSubmit(data);
-    } catch (error) {
-      console.error('Error submitting form:', error);
+    } catch (err: any) {
+      console.error('Error submitting form:', err);
+      const errorMessage = err.message || "An unexpected error occurred.";
+      const errorDetails = err.details || err.hint || JSON.stringify(err);
+      
+      setError({
+        title: "Failed to save ingredient",
+        message: errorMessage + (errorDetails ? `: ${errorDetails}` : "")
+      });
+      
       toast({
         title: "Error",
-        description: "Failed to save ingredient.",
+        description: "Failed to save ingredient. See form for details.",
         variant: "destructive"
       });
     } finally {
@@ -58,7 +71,18 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
 
   const handleFormClose = () => {
     if (!isSubmitting) {
+      setError(null);
       onOpenChange(false);
+    }
+  };
+  
+  const copyErrorToClipboard = () => {
+    if (error) {
+      navigator.clipboard.writeText(`${error.title}: ${error.message}`);
+      toast({
+        title: "Copied to clipboard",
+        description: "Error details have been copied to your clipboard."
+      });
     }
   };
 
@@ -73,6 +97,24 @@ const IngredientFormDialog: React.FC<IngredientFormDialogProps> = ({
               : 'Add a new ingredient to your inventory.'}
           </DialogDescription>
         </DialogHeader>
+        
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4 mr-2" />
+            <AlertTitle className="flex items-center justify-between">
+              {error.title}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="ml-2 h-6 px-2"
+                onClick={copyErrorToClipboard}
+              >
+                <Copy className="h-3 w-3 mr-1" /> Copy
+              </Button>
+            </AlertTitle>
+            <AlertDescription className="break-words">{error.message}</AlertDescription>
+          </Alert>
+        )}
         
         <IngredientForm
           onSubmit={handleSubmit}

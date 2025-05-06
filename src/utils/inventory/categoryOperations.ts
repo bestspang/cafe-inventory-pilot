@@ -41,6 +41,12 @@ export const checkCategoryExists = async (categoryName: string): Promise<string 
 
 // Create a new category in the database
 export const createCategory = async (categoryName: string): Promise<Category> => {
+  // Get current session to include userID if needed for RLS
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  
+  console.log('Creating category with name:', categoryName, 'User ID:', userId);
+  
   const { data, error } = await supabase
     .from('categories')
     .insert([{ name: categoryName.trim() }])

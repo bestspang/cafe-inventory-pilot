@@ -17,7 +17,7 @@ export const useIngredientManager = (
   const handleAddEdit = async (
     data: Partial<Ingredient>, 
     categories: Category[], 
-    handleNewCategory: (tempId: string, categoryName: string) => Promise<string>
+    handleNewCategory: (tempId: string, categoryName: string) => Promise<string | null>
   ) => {
     try {
       console.log('Handling add/edit with data:', data);
@@ -34,6 +34,9 @@ export const useIngredientManager = (
         if (newCategory) {
           // Create the new category in the database
           const realCategoryId = await handleNewCategory(categoryId, newCategory.name);
+          if (!realCategoryId) {
+            throw new Error("Failed to create new category");
+          }
           categoryId = realCategoryId;
         }
       }
@@ -56,12 +59,7 @@ export const useIngredientManager = (
       return true;
     } catch (error: any) {
       console.error('Error saving ingredient:', error);
-      toast({
-        title: "Failed to save ingredient",
-        description: error.message || "Please try again later.",
-        variant: "destructive"
-      });
-      return false;
+      throw error; // Let the form dialog handle the error display
     }
   };
 
@@ -83,9 +81,6 @@ export const useIngredientManager = (
     
     try {
       await deleteIngredient(currentIngredient.id);
-      
-      // Update state by filtering out the deleted ingredient
-      // No need to call fetchIngredients again as we're just removing one item
       
       toast({
         title: "Ingredient deleted",
