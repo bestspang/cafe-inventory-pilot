@@ -14,9 +14,7 @@ import {
 } from "@/components/ui/table";
 
 interface IngredientListProps {
-  ingredients: Array<Ingredient & { 
-    categoryName: string;
-  }>;
+  ingredients: Ingredient[];
   onEdit: (ingredient: Ingredient) => void;
   onDelete: (ingredient: Ingredient) => void;
 }
@@ -44,7 +42,7 @@ const IngredientList: React.FC<IngredientListProps> = ({
           {ingredients.map((ingredient) => (
             <TableRow key={ingredient.id}>
               <TableCell className="px-4 py-2 font-medium">{ingredient.name}</TableCell>
-              <TableCell className="px-4 py-2">{ingredient.categoryName}</TableCell>
+              <TableCell className="px-4 py-2">{ingredient.categoryName || 'Uncategorized'}</TableCell>
               <TableCell className="px-4 py-2">{ingredient.unit}</TableCell>
               {canModify && (
                 <TableCell className="px-4 py-2 text-right">

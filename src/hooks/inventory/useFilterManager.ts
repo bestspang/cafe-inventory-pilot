@@ -1,41 +1,39 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Ingredient } from '@/types';
 import { ViewMode } from '@/types/inventory';
 
-export interface FilterManagerResult {
-  search: string;
-  setSearch: (value: string) => void;
-  categoryFilter: string;
-  setCategoryFilter: (value: string) => void;
-  viewMode: ViewMode;
-  setViewMode: (mode: ViewMode) => void;
-  filterIngredients: (ingredients: Ingredient[]) => Ingredient[];
-  hasFilters: boolean;
-}
-
-export const useFilterManager = (): FilterManagerResult => {
+export const useFilterManager = () => {
   const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-
+  
   // Filter ingredients based on search and category
   const filterIngredients = (ingredients: Ingredient[]): Ingredient[] => {
-    return ingredients.filter(ingredient => {
-      const matchesSearch = ingredient.name.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory = categoryFilter === 'all' ? true : ingredient.categoryId === categoryFilter;
-      return matchesSearch && matchesCategory;
-    });
+    return useMemo(() => {
+      return ingredients.filter(ingredient => {
+        // Search filter
+        const matchesSearch = search === '' || 
+          ingredient.name.toLowerCase().includes(search.toLowerCase());
+        
+        // Category filter
+        const matchesCategory = !categoryFilter || 
+          ingredient.categoryId === categoryFilter;
+        
+        return matchesSearch && matchesCategory;
+      });
+    }, [ingredients, search, categoryFilter]);
   };
-
-  const hasFilters = search !== '' || categoryFilter !== 'all';
-
+  
+  // Check if any filters are applied
+  const hasFilters = search !== '' || categoryFilter !== null;
+  
   return {
     search,
     setSearch,
     categoryFilter,
     setCategoryFilter,
-    viewMode,
+    viewMode, 
     setViewMode,
     filterIngredients,
     hasFilters

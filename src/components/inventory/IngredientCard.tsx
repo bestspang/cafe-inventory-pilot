@@ -8,9 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Ingredient } from '@/types';
 
 interface IngredientCardProps {
-  ingredient: Ingredient & { 
-    categoryName: string;
-  };
+  ingredient: Ingredient;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -31,7 +29,7 @@ const IngredientCard: React.FC<IngredientCardProps> = ({
         <div className="flex justify-between items-start">
           <div className="space-y-2">
             <h3 className="font-medium">{ingredient.name}</h3>
-            <Badge variant="outline">{ingredient.categoryName}</Badge>
+            <Badge variant="outline">{ingredient.categoryName || 'Uncategorized'}</Badge>
           </div>
         </div>
         <div className="mt-4 text-sm">
