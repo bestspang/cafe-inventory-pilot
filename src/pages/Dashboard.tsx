@@ -1,76 +1,87 @@
 
-import React, { useState } from 'react';
+import React, { useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { useDashboardMetrics } from '@/hooks/dashboard/useDashboardMetrics';
 import { useDashboardTrends } from '@/hooks/dashboard/useDashboardTrends';
 import { useBranchSnapshots } from '@/hooks/dashboard/useBranchSnapshots';
-
-// Dashboard Components
+import BranchesSection from '@/components/dashboard/BranchesSection';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardMetrics from '@/components/dashboard/DashboardMetrics';
 import QuickActionsSection from '@/components/dashboard/QuickActionsSection';
-import BranchesSection from '@/components/dashboard/BranchesSection';
 
-const Dashboard = () => {
+export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  
   const isOwner = user?.role === 'owner';
-  const [branchFilter, setBranchFilter] = useState<'all' | 'healthy' | 'at-risk'>('all');
+  const isManager = user?.role === 'manager';
   
-  // Fetch metrics data from Supabase
-  const { metrics, isLoading: metricsLoading } = useDashboardMetrics();
+  const { metrics, isLoading: isLoadingMetrics } = useDashboardMetrics();
+  const { 
+    branchTrendValues, 
+    lowStockTrendValues, 
+    requestsTrendValues, 
+    stockChecksTrendValues 
+  } = useDashboardTrends();
   
-  // Fetch trend data for charts
-  const { trends, isLoading: trendsLoading } = useDashboardTrends();
-  // Safely access trend data with fallbacks
-  const branchTrends = trends?.branchTrends || [];
-  const lowStockTrends = trends?.lowStockTrends || [];
-  const requestsTrends = trends?.requestsTrends || [];
-  const stockChecksTrends = trends?.stockChecksTrends || [];
+  const { branches, isLoading: isLoadingBranches } = useBranchSnapshots();
   
-  // Fetch branch snapshots
-  const { branches: displayedBranches, isLoading: branchesLoading } = useBranchSnapshots({ branchFilter });
+  const handleStatCardClick = useCallback((metric: string) => {
+    switch (metric) {
+      case 'branches':
+        navigate('/branches');
+        break;
+      case 'low-stock':
+        navigate('/inventory?filter=low-stock');
+        break;
+      case 'requests':
+        navigate('/requests?status=pending');
+        break;
+      case 'stock-checks':
+        navigate('/stock-check');
+        break;
+      default:
+        break;
+    }
+  }, [navigate]);
   
-  // Convert TrendPoint[] to number[] for StatCard sparklines
-  const branchTrendValues = branchTrends.map(point => point.value);
-  const lowStockTrendValues = lowStockTrends.map(point => point.value);
-  const requestsTrendValues = requestsTrends.map(point => point.value);
-  const stockChecksTrendValues = stockChecksTrends.map(point => point.value);
-  
-  // Handler for dashboard stat card clicks
-  const handleStatCardClick = (metric: string) => {
-    console.log(`Clicked on ${metric} card`);
-    // In future, this would open a drill-down modal
-  };
+  const isLoading = isLoadingMetrics || isLoadingBranches;
 
   return (
     <div className="space-y-6 animate-fade-in">
       <DashboardHeader 
-        title="Dashboard" 
-        subtitle="Your inventory at a glance" 
+        title={`Welcome, ${user?.name || 'User'}`} 
+        subtitle="Here's an overview of your café operations"
       />
-
-      <DashboardMetrics 
+      
+      <DashboardMetrics
         metrics={metrics}
         branchTrendValues={branchTrendValues}
         lowStockTrendValues={lowStockTrendValues}
         requestsTrendValues={requestsTrendValues}
         stockChecksTrendValues={stockChecksTrendValues}
-        isLoading={metricsLoading}
+        isLoading={isLoading}
         isOwner={isOwner}
         onStatCardClick={handleStatCardClick}
       />
-
-      <QuickActionsSection isLoading={metricsLoading} />
-
-      <BranchesSection 
-        isOwner={isOwner}
-        branchFilter={branchFilter}
-        setBranchFilter={setBranchFilter}
-        displayedBranches={displayedBranches}
-        branchesLoading={branchesLoading}
-      />
+      
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 space-y-6">
+          {(isOwner || isManager) && (
+            <QuickActionsSection isLoading={isLoading} />
+          )}
+        </div>
+        
+        <div className="xl:col-span-3 space-y-6">
+          {isOwner && (
+            <BranchesSection 
+              branches={branches} 
+              isLoading={isLoadingBranches} 
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
-};
-
-export default Dashboard;
+}
