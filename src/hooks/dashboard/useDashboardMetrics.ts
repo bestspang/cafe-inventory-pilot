@@ -12,6 +12,7 @@ interface DashboardMetrics {
   isLoading: boolean;
 }
 
+// Define the correct response type for the missing checks RPC call
 interface MissingChecksResponse {
   missing: number;
 }
@@ -56,9 +57,9 @@ export const useDashboardMetrics = (): DashboardMetrics => {
         if (pendingError) throw pendingError;
         setPendingRequests(pendingCount || 0);
         
-        // Fetch missing stock checks
+        // Fetch missing stock checks - Fix by providing both type parameters
         const { data: missingChecksData, error: missingChecksError } = await supabase
-          .rpc<MissingChecksResponse>('count_missing_checks', {});
+          .rpc<MissingChecksResponse, {}>('count_missing_checks', {});
 
         if (missingChecksError) throw missingChecksError;
         if (missingChecksData) {
