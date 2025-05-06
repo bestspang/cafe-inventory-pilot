@@ -4,8 +4,10 @@ import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/f
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Check, Loader2, AlertCircle, Plus } from 'lucide-react';
+import { Check, Loader2, AlertCircle, Plus, Copy } from 'lucide-react';
 import { Category } from '@/types';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 
 interface CategoryInputProps {
   categories: Category[];
@@ -24,6 +26,8 @@ export const CategoryInput: React.FC<CategoryInputProps> = ({
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [categoryStatus, setCategoryStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [categoryError, setCategoryError] = useState<{title: string, message: string} | null>(null);
+  const { toast } = useToast();
 
   const handleAddCategory = async () => {
     if (newCategoryName.trim().length < 2) {
@@ -33,6 +37,7 @@ export const CategoryInput: React.FC<CategoryInputProps> = ({
     try {
       setIsAddingCategory(true);
       setCategoryStatus('loading');
+      setCategoryError(null);
       
       // Generate temporary ID for new category
       const tempId = `new-${Date.now()}`;
@@ -44,6 +49,10 @@ export const CategoryInput: React.FC<CategoryInputProps> = ({
       if (!handleNewCategoryFn) {
         console.error('handleNewCategory function not available');
         setCategoryStatus('error');
+        setCategoryError({
+          title: "Category creation failed",
+          message: "The handler function is not available"
+        });
         return;
       }
       
@@ -52,6 +61,10 @@ export const CategoryInput: React.FC<CategoryInputProps> = ({
       if (!newCategoryId) {
         setCategoryStatus('error');
         setShowNewCategoryInput(true);
+        setCategoryError({
+          title: "Category creation failed",
+          message: "Unable to create new category"
+        });
         return;
       }
       
@@ -65,11 +78,25 @@ export const CategoryInput: React.FC<CategoryInputProps> = ({
         setCategoryStatus('idle');
         setNewCategoryName('');
       }, 1500);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding category:', error);
       setCategoryStatus('error');
+      setCategoryError({
+        title: "Category creation failed",
+        message: error.message || "An unexpected error occurred"
+      });
     } finally {
       setIsAddingCategory(false);
+    }
+  };
+
+  const copyErrorToClipboard = () => {
+    if (categoryError) {
+      navigator.clipboard.writeText(`${categoryError.title}: ${categoryError.message}`);
+      toast({
+        title: "Copied to clipboard",
+        description: "Error details have been copied to your clipboard."
+      });
     }
   };
 
@@ -124,6 +151,7 @@ export const CategoryInput: React.FC<CategoryInputProps> = ({
                 setShowNewCategoryInput(false);
                 setNewCategoryName('');
                 setCategoryStatus('idle');
+                setCategoryError(null);
               }}
               disabled={isAddingCategory && categoryStatus === 'loading'}
             >
@@ -138,11 +166,20 @@ export const CategoryInput: React.FC<CategoryInputProps> = ({
             </div>
           )}
           
-          {categoryStatus === 'error' && (
-            <div className="text-sm text-red-600 flex items-center gap-1.5">
+          {categoryStatus === 'error' && categoryError && (
+            <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              Failed to add category
-            </div>
+              <AlertTitle>{categoryError.title}</AlertTitle>
+              <AlertDescription className="break-words">{categoryError.message}</AlertDescription>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={copyErrorToClipboard}
+              >
+                <Copy className="h-3 w-3 mr-1" /> Copy Error Details
+              </Button>
+            </Alert>
           )}
         </div>
       ) : (

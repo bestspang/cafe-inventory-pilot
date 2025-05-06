@@ -43,6 +43,14 @@ export const checkCategoryExists = async (categoryName: string): Promise<string 
 export const createCategory = async (categoryName: string): Promise<Category> => {
   console.log('Creating category with name:', categoryName);
   
+  // Get the current user session
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session?.user?.id) {
+    throw new Error('You must be logged in to create a category');
+  }
+  
+  // Insert the new category
   const { data, error } = await supabase
     .from('categories')
     .insert([{ name: categoryName.trim() }])
