@@ -2,7 +2,7 @@
 import React from 'react';
 import { DataTableToolbar } from '@/components/ui/data-table/DataTableToolbar';
 import { DataTableViewOptions } from '@/components/ui/data-table/DataTableViewOptions';
-import { StockCheckFilters } from '@/hooks/stock-check/useStockCheckFilters';
+import type { StockCheckFilters as StockCheckFiltersType } from '@/hooks/stock-check/useStockCheckFilters';
 import {
   Select,
   SelectContent,
@@ -12,8 +12,8 @@ import {
 } from '@/components/ui/select';
 
 interface StockCheckFilterProps {
-  filters: StockCheckFilters;
-  setFilters: (filters: StockCheckFilters) => void;
+  filters: StockCheckFiltersType;
+  setFilters: (filters: StockCheckFiltersType) => void;
   categories: { id: string, name: string }[];
   resetFilters: () => void;
   activeFilterCount: number;

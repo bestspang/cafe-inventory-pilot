@@ -4,7 +4,7 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTableToolbar } from '@/components/ui/data-table/DataTableToolbar';
 import { DataTableViewOptions } from '@/components/ui/data-table/DataTableViewOptions';
-import { InventoryFilters } from '@/hooks/inventory/useInventoryFilters';
+import type { InventoryFilters as InventoryFiltersType } from '@/hooks/inventory/useInventoryFilters';
 import {
   Select,
   SelectContent,
@@ -16,8 +16,8 @@ import { Category } from '@/types';
 import { ViewMode } from '@/components/ui/data-table/DataTableViewOptions';
 
 interface InventoryFiltersProps {
-  filters: InventoryFilters;
-  setFilters: (filters: InventoryFilters) => void;
+  filters: InventoryFiltersType;
+  setFilters: (filters: InventoryFiltersType) => void;
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
   categories: Category[];
