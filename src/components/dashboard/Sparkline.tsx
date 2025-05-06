@@ -59,14 +59,8 @@ export const Sparkline: React.FC<SparklineProps> = ({
   );
 };
 
-// Define a custom tooltip component that works with recharts' expected types
-interface SparklineTooltipProps {
-  active?: boolean;
-  payload?: Array<any>;
-  label?: string;
-}
-
-const SparklineTooltip: React.FC<SparklineTooltipProps> = (props) => {
+// Define a custom tooltip component for recharts
+const SparklineTooltip: React.FC<any> = (props) => {
   const { active, payload } = props;
   
   if (!active || !payload || !payload[0]) {

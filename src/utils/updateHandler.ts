@@ -18,7 +18,7 @@ interface UpdateResponse<T> {
 export async function handleUpdate<T extends TableName>(
   table: T,
   id: string,
-  changes: Record<string, any>,
+  changes: Partial<Database['public']['Tables'][T]['Update']>,
   refreshFn?: () => Promise<void>
 ): Promise<UpdateResponse<any>> {
   console.group(`Updating ${table} ${id}`);
@@ -33,8 +33,8 @@ export async function handleUpdate<T extends TableName>(
     // Execute the update operation
     const { data, error, status, statusText } = await supabase
       .from(table)
-      .update(changes)
-      .eq('id', id)
+      .update(changes as any) // Type assertion to handle the complex type
+      .eq('id', id as any) // Type assertion to handle the complex type
       .select();
       
     // Log detailed response information

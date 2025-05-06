@@ -21,7 +21,9 @@ export default function Dashboard() {
   const { metrics, isLoading: isLoadingMetrics } = useDashboardMetrics();
   const { trends, isLoading: isLoadingTrends } = useDashboardTrends();
   
-  const { branches, isLoading: isLoadingBranches } = useBranchSnapshots({ branchFilter });
+  const { branches, isLoading: isLoadingBranches } = useBranchSnapshots({ 
+    branchFilter 
+  });
   
   const handleStatCardClick = useCallback((metric: string) => {
     switch (metric) {
@@ -44,8 +46,11 @@ export default function Dashboard() {
   
   const isLoading = isLoadingMetrics || isLoadingBranches || isLoadingTrends;
 
-  // Filter branches based on the current filter
-  const displayedBranches = branches;
+  // Extract just the values from trend data for the sparklines
+  const branchTrendValues = trends.branchTrends.map(point => point.value);
+  const lowStockTrendValues = trends.lowStockTrends.map(point => point.value);
+  const requestsTrendValues = trends.requestsTrends.map(point => point.value);
+  const stockChecksTrendValues = trends.stockChecksTrends.map(point => point.value);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -56,10 +61,10 @@ export default function Dashboard() {
       
       <DashboardMetrics
         metrics={metrics}
-        branchTrendValues={trends.branchTrends}
-        lowStockTrendValues={trends.lowStockTrends}
-        requestsTrendValues={trends.requestsTrends}
-        stockChecksTrendValues={trends.stockChecksTrends}
+        branchTrendValues={branchTrendValues}
+        lowStockTrendValues={lowStockTrendValues}
+        requestsTrendValues={requestsTrendValues}
+        stockChecksTrendValues={stockChecksTrendValues}
         isLoading={isLoading}
         isOwner={isOwner}
         onStatCardClick={handleStatCardClick}
@@ -78,7 +83,7 @@ export default function Dashboard() {
               isOwner={isOwner}
               branchFilter={branchFilter}
               setBranchFilter={setBranchFilter}
-              displayedBranches={displayedBranches}
+              displayedBranches={branches}
               branchesLoading={isLoadingBranches}
             />
           )}
