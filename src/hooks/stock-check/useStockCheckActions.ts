@@ -45,12 +45,13 @@ export const useStockCheckActions = (
         return;
       }
       
-      // Fix the onConflict parameter to use the correct format
+      // Fix the type issue by explicitly passing the array and proper onConflict option
       const { error } = await supabase
         .from('branch_inventory')
-        .upsert(itemsToUpdate, { 
-          onConflict: 'branch_id,ingredient_id' 
-        });
+        .upsert(
+          itemsToUpdate, 
+          { onConflict: 'branch_id,ingredient_id' }
+        );
       
       if (error) throw error;
       
@@ -93,7 +94,8 @@ export const useStockCheckActions = (
           ingredient_id: ingredientId,
           reorder_pt: reorderPt,
           // Keep existing on_hand_qty, just update reorder_pt
-          on_hand_qty: stockItems.find(item => item.id === ingredientId)?.onHandQty || 0
+          on_hand_qty: stockItems.find(item => item.id === ingredientId)?.onHandQty || 0,
+          last_checked: new Date().toISOString()
         }, {
           onConflict: 'branch_id,ingredient_id'
         });
