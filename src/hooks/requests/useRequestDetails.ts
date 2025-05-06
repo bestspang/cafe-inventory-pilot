@@ -112,21 +112,9 @@ export const useRequestDetails = (
 
   const handleSaveFulfillment = async () => {
     try {
-      // Check if all items are marked as fulfilled
-      const allFulfilled = detailedItems.every(item => item.fulfilled);
-      if (!allFulfilled) {
-        toast({
-          title: 'Cannot save fulfillment',
-          description: 'All items must be marked as fulfilled',
-          variant: 'destructive'
-        });
-        return;
-      }
-
       // Prepare updates for each item
       const updates = detailedItems.map(item => ({
         id: item.id,
-        ingredient_id: item.ingredientId,
         quantity: item.quantity,
         fulfilled: item.fulfilled
       }));
@@ -144,41 +132,10 @@ export const useRequestDetails = (
         if (error) {
           throw error;
         }
-        
-        // Update branch inventory with the fulfilled quantity
-        if (item.fulfilled && branchId) {
-          // First, get the current quantity
-          const { data: currentInventory, error: fetchError } = await supabase
-            .from('branch_inventory')
-            .select('on_hand_qty')
-            .eq('branch_id', branchId)
-            .eq('ingredient_id', item.ingredient_id)
-            .single();
-          
-          if (fetchError) {
-            console.error('Error fetching current inventory:', fetchError);
-            throw fetchError;
-          }
-          
-          // Calculate new quantity
-          const newQuantity = (currentInventory?.on_hand_qty || 0) + item.quantity;
-          
-          // Update with the new quantity
-          const { error: inventoryError } = await supabase
-            .from('branch_inventory')
-            .update({
-              on_hand_qty: newQuantity,
-              last_checked: new Date().toISOString()
-            })
-            .eq('branch_id', branchId)
-            .eq('ingredient_id', item.ingredient_id);
-
-          if (inventoryError) {
-            console.error('Error updating inventory:', inventoryError);
-            throw inventoryError;
-          }
-        }
       }
+      
+      // Check if all items are fulfilled
+      const allFulfilled = detailedItems.every(item => item.fulfilled);
       
       // If all items are fulfilled, update the request status
       if (allFulfilled && requestId) {
@@ -187,7 +144,7 @@ export const useRequestDetails = (
       
       toast({
         title: 'Fulfillment saved',
-        description: 'The request fulfillment details have been updated and inventory has been adjusted.',
+        description: 'The request fulfillment details have been updated.'
       });
       
       // Refresh the data if callback provided
