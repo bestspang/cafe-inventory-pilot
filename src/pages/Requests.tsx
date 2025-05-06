@@ -1,88 +1,72 @@
-import React, { useState } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import RequestsFilters from '@/components/requests/RequestsFilters';
-import RequestsTable, { RequestItem } from '@/components/requests/RequestsTable';
-import { useRequestsFilters } from '@/hooks/requests/useRequestsFilters';
+import RequestsTable from '@/components/requests/RequestsTable';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useRequestsFilters } from '@/hooks/requests/useRequestsFilters';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Mock data for demo purposes
-const mockRequests: RequestItem[] = [
-  {
-    id: '1',
-    branchId: '1',
-    branchName: 'Downtown Cafe',
-    userId: '3',
-    userName: 'Mike Staff',
-    requestedAt: '2023-05-02T10:30:00Z',
-    status: 'pending',
-    itemsCount: 3,
-    detailText: 'Coffee Beans (5kg), Milk (10L), Sugar (2kg)'
-  },
-  {
-    id: '2',
-    branchId: '2',
-    branchName: 'Uptown Juice Bar',
-    userId: '4',
-    userName: 'Jane Staff',
-    requestedAt: '2023-05-01T14:45:00Z',
-    status: 'fulfilled',
-    itemsCount: 2,
-    detailText: 'Avocados (20pcs), Lemons (30pcs)'
-  },
-  {
-    id: '3',
-    branchId: '1',
-    branchName: 'Downtown Cafe',
-    userId: '3',
-    userName: 'Mike Staff',
-    requestedAt: '2023-04-29T09:15:00Z',
-    status: 'pending',
-    itemsCount: 1,
-    detailText: 'To-Go Cups (3 boxes)'
-  },
-  {
-    id: '4',
-    branchId: '3',
-    branchName: 'Riverside Cafe',
-    userId: '5',
-    userName: 'Alex Staff',
-    requestedAt: '2023-04-28T16:20:00Z',
-    status: 'pending',
-    itemsCount: 4,
-    detailText: 'Napkins (5 packs), Straws (2 boxes), Coffee Filters (3 boxes), Tea bags (10 packs)'
-  },
-  {
-    id: '5',
-    branchId: '4',
-    branchName: 'Airport Kiosk',
-    userId: '6',
-    userName: 'Sam Staff',
-    requestedAt: '2023-04-25T11:05:00Z',
-    status: 'fulfilled',
-    itemsCount: 2,
-    detailText: 'Coffee Beans (2kg), Pastries (20pcs)'
-  }
-];
+interface RequestItemDB {
+  id: string;
+  ingredient_id: string;
+  quantity: number;
+  note?: string;
+  ingredients: {
+    name: string;
+  };
+}
 
-// Mock branch data
-const mockBranches = [
-  { id: '1', name: 'Downtown Cafe' },
-  { id: '2', name: 'Uptown Juice Bar' },
-  { id: '3', name: 'Riverside Cafe' },
-  { id: '4', name: 'Airport Kiosk' },
-];
+interface RequestDB {
+  id: string;
+  branch_id: string;
+  user_id: string;
+  requested_at: string;
+  status: 'pending' | 'fulfilled';
+  comment?: string;
+  branches: {
+    name: string;
+  };
+  store_staff: {
+    staff_name: string;
+  };
+  request_items: RequestItemDB[];
+}
+
+export interface RequestItem {
+  id: string;
+  branchId: string;
+  branchName: string;
+  userId: string;
+  userName: string;
+  requestedAt: string;
+  status: 'pending' | 'fulfilled';
+  itemsCount: number;
+  detailText: string;
+  requestItems?: {
+    id: string;
+    ingredientId: string;
+    ingredientName: string;
+    quantity: number;
+    note?: string;
+  }[];
+  comment?: string;
+}
 
 const Requests = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Initialize request state
-  const [requests, setRequests] = useState(mockRequests);
+  // State for requests data and loading status
+  const [requests, setRequests] = useState<RequestItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [branches, setBranches] = useState<{ id: string, name: string }[]>([]);
   
   // Use our filter hook
   const {
@@ -95,16 +79,118 @@ const Requests = () => {
     filteredAndSortedItems
   } = useRequestsFilters(requests);
 
-  const handleToggleStatus = (requestId: string) => {
+  // Transform database response to our RequestItem format
+  const transformRequests = (data: RequestDB[]): RequestItem[] => {
+    return data.map(request => {
+      // Create detailed text of all items
+      const detailText = request.request_items
+        .map(item => `${item.ingredients.name} (${item.quantity})${item.note ? ` - ${item.note}` : ''}`)
+        .join(', ');
+      
+      // Transform each request to match our expected format
+      return {
+        id: request.id,
+        branchId: request.branch_id,
+        branchName: request.branches.name,
+        userId: request.user_id,
+        userName: request.store_staff?.staff_name || 'Unknown Staff',
+        requestedAt: request.requested_at,
+        status: request.status,
+        itemsCount: request.request_items.length,
+        detailText,
+        comment: request.comment,
+        requestItems: request.request_items.map(item => ({
+          id: item.id,
+          ingredientId: item.ingredient_id,
+          ingredientName: item.ingredients.name,
+          quantity: item.quantity,
+          note: item.note
+        }))
+      };
+    });
+  };
+
+  // Fetch requests from Supabase
+  const fetchRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('requests')
+        .select(`
+          id,
+          branch_id,
+          user_id,
+          requested_at,
+          status,
+          comment,
+          branches (
+            name
+          ),
+          store_staff (
+            staff_name
+          ),
+          request_items (
+            id,
+            ingredient_id,
+            quantity,
+            note,
+            ingredients (
+              name
+            )
+          )
+        `)
+        .order('requested_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        setRequests(transformRequests(data as RequestDB[]));
+      }
+    } catch (error: any) {
+      console.error('Error fetching requests:', error);
+      toast({
+        title: 'Error fetching requests',
+        description: error.message || 'Failed to load requests',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch branches for filter
+  const fetchBranches = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('branches')
+        .select('id, name')
+        .order('name');
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        setBranches(data);
+      }
+    } catch (error: any) {
+      console.error('Error fetching branches:', error);
+    }
+  };
+
+  // Toggle request status (mark as fulfilled or reopen)
+  const handleToggleStatus = async (requestId: string) => {
+    // Find the current request
+    const currentRequest = requests.find(req => req.id === requestId);
+    if (!currentRequest) return;
+
+    // Determine the new status
+    const newStatus = currentRequest.status === 'pending' ? 'fulfilled' : 'pending';
+    
+    // Optimistic update
     setRequests(prev => prev.map(request => {
       if (request.id === requestId) {
-        const newStatus = request.status === 'pending' ? 'fulfilled' : 'pending';
-        
-        toast({
-          title: `Request ${newStatus === 'fulfilled' ? 'fulfilled' : 'reopened'}`,
-          description: `Request #${requestId} has been ${newStatus === 'fulfilled' ? 'marked as fulfilled' : 'reopened'}.`
-        });
-        
         return {
           ...request,
           status: newStatus
@@ -112,14 +198,99 @@ const Requests = () => {
       }
       return request;
     }));
+
+    // Update in Supabase
+    try {
+      const { error } = await supabase
+        .from('requests')
+        .update({ status: newStatus })
+        .eq('id', requestId);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: `Request ${newStatus === 'fulfilled' ? 'fulfilled' : 'reopened'}`,
+        description: `Request has been ${newStatus === 'fulfilled' ? 'marked as fulfilled' : 'reopened'}.`
+      });
+    } catch (error: any) {
+      // Rollback optimistic update on error
+      setRequests(prev => prev.map(request => {
+        if (request.id === requestId) {
+          return {
+            ...request,
+            status: currentRequest.status
+          };
+        }
+        return request;
+      }));
+
+      toast({
+        title: 'Failed to update request',
+        description: error.message || 'The operation failed, please try again.',
+        variant: 'destructive'
+      });
+    }
   };
+
+  // Set up initial data and realtime subscription
+  useEffect(() => {
+    fetchRequests();
+    fetchBranches();
+
+    // Set up realtime subscription to requests updates
+    const channel = supabase
+      .channel('requests-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'requests' 
+        }, 
+        () => {
+          fetchRequests();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // Get available branches based on user role
   const availableBranches = user?.role === 'owner' 
-    ? mockBranches 
-    : mockBranches.filter(branch => branch.id === user?.branchId);
+    ? branches 
+    : branches.filter(branch => branch.id === user?.branchId);
   
   const showBranchSelector = user?.role === 'owner';
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Ingredient Requests</h1>
+            <p className="text-muted-foreground">View and manage requests from your branches</p>
+          </div>
+        </div>
+        
+        <div className="space-y-4 mt-6">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-2/3" />
+          
+          <div className="space-y-2 mt-6">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">

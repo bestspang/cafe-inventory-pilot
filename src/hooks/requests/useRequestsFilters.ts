@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react';
 import { SortState } from '@/components/ui/data-table/SortableColumn';
 import { DateRange } from 'react-day-picker';
+import { RequestItem } from '@/pages/Requests';
 
 export interface RequestFilters {
   search: string;
@@ -10,16 +11,7 @@ export interface RequestFilters {
   dateRange?: DateRange;
 }
 
-export const useRequestsFilters = <T extends {
-  id: string;
-  branchId: string;
-  branchName: string;
-  userId: string;
-  userName: string;
-  requestedAt: string;
-  status: 'pending' | 'fulfilled';
-  detailText: string;
-}>(requests: T[]) => {
+export const useRequestsFilters = (requests: RequestItem[]) => {
   const [filters, setFilters] = useState<RequestFilters>({
     search: '',
     branchId: 'all',
@@ -97,18 +89,28 @@ export const useRequestsFilters = <T extends {
     // Apply search filter (case insensitive search)
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      result = result.filter(item => 
-        item.userName.toLowerCase().includes(searchLower) || 
-        item.branchName.toLowerCase().includes(searchLower) ||
-        item.detailText.toLowerCase().includes(searchLower)
-      );
+      result = result.filter(item => {
+        // Search in username and branch name
+        const basicMatch = item.userName.toLowerCase().includes(searchLower) || 
+                         item.branchName.toLowerCase().includes(searchLower);
+        
+        // Search in items details
+        const itemsMatch = item.requestItems?.some(reqItem => 
+          reqItem.ingredientName.toLowerCase().includes(searchLower));
+          
+        // Search in comments
+        const commentMatch = item.comment ? 
+          item.comment.toLowerCase().includes(searchLower) : false;
+          
+        return basicMatch || itemsMatch || commentMatch;
+      });
     }
     
     // Then sort the filtered items
     if (sortState.column) {
       result = [...result].sort((a, b) => {
-        const aValue = a[sortState.column as keyof T];
-        const bValue = b[sortState.column as keyof T];
+        const aValue = a[sortState.column as keyof RequestItem];
+        const bValue = b[sortState.column as keyof RequestItem];
         
         if (aValue === bValue) return 0;
         
