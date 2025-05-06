@@ -3,6 +3,13 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import type { Database } from '@/integrations/supabase/types';
+
+// Define table types for proper typing
+type BranchInventoryRow = Database['public']['Tables']['branch_inventory']['Row'];
+type RequestRow = Database['public']['Tables']['requests']['Row'];
+type StockCheckRow = Database['public']['Tables']['stock_checks']['Row'];
+type BranchRow = Database['public']['Tables']['branches']['Row'];
 
 interface DashboardMetrics {
   totalBranches: number;
@@ -57,14 +64,14 @@ export const useDashboardMetrics = (): DashboardMetrics => {
         if (pendingError) throw pendingError;
         setPendingRequests(pendingCount || 0);
         
-        // Fetch missing stock checks - Fix by providing both type parameters
+        // Correctly define the RPC call with function name as first parameter and return type as second
         const { data: missingChecksData, error: missingChecksError } = await supabase
-          .rpc<MissingChecksResponse, {}>('count_missing_checks', {});
+          .rpc('count_missing_checks');
 
         if (missingChecksError) throw missingChecksError;
-        if (missingChecksData) {
-          setMissingStockChecks(missingChecksData.missing || 0);
-        }
+        // Safe access to the result - it's an array according to your schema
+        const missingChecks = missingChecksData ? missingChecksData : 0;
+        setMissingStockChecks(missingChecks as number);
       } catch (error) {
         console.error('Error fetching dashboard metrics:', error);
         toast({

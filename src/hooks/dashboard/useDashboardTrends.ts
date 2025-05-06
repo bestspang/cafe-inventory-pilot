@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
 interface TrendData {
   branches: number[];
@@ -11,7 +12,7 @@ interface TrendData {
   isLoading: boolean;
 }
 
-// Define the response type for trend data RPC calls
+// Define the response type for trend data
 interface TrendResponse {
   day: string;
   count: number;
@@ -34,27 +35,26 @@ export const useDashboardTrends = (): TrendData => {
     const fetchTrendData = async () => {
       try {
         // Fetch branch trend data (daily counts for last 14 days)
-        // Fix by providing both type parameters
-        const { data: branchTrend, error: branchError } = await supabase
-          .rpc<TrendResponse[], {}>('get_branch_trend_data', {});
+        const { data: branchTrendData, error: branchError } = await supabase
+          .rpc('get_branch_trend_data');
           
         if (branchError) throw branchError;
         
         // Fetch low stock trend
-        const { data: lowStockTrend, error: lowStockError } = await supabase
-          .rpc<TrendResponse[], {}>('get_low_stock_trend_data', {});
+        const { data: lowStockTrendData, error: lowStockError } = await supabase
+          .rpc('get_low_stock_trend_data');
           
         if (lowStockError) throw lowStockError;
         
         // Fetch requests trend
-        const { data: requestsTrend, error: requestsError } = await supabase
-          .rpc<TrendResponse[], {}>('get_pending_requests_trend_data', {});
+        const { data: requestsTrendData, error: requestsError } = await supabase
+          .rpc('get_pending_requests_trend_data');
           
         if (requestsError) throw requestsError;
         
         // Fetch stock checks trend
-        const { data: stockChecksTrend, error: stockChecksError } = await supabase
-          .rpc<TrendResponse[], {}>('get_missing_checks_trend_data', {});
+        const { data: stockChecksTrendData, error: stockChecksError } = await supabase
+          .rpc('get_missing_checks_trend_data');
           
         if (stockChecksError) throw stockChecksError;
         
@@ -69,12 +69,29 @@ export const useDashboardTrends = (): TrendData => {
           );
         };
         
+        // Ensure we have fallbacks for all data
+        const branchTrend = branchTrendData as TrendResponse[] || [];
+        const lowStockTrend = lowStockTrendData as TrendResponse[] || [];
+        const requestsTrend = requestsTrendData as TrendResponse[] || [];
+        const stockChecksTrend = stockChecksTrendData as TrendResponse[] || [];
+        
         setTrendData({
-          // Add null checks for all trend data
-          branches: branchTrend?.map((item) => item.count) || mockDataForDays(4, 1, 14),
-          lowStock: lowStockTrend?.map((item) => item.count) || mockDataForDays(12, 4, 14),
-          requests: requestsTrend?.map((item) => item.count) || mockDataForDays(10, 5, 14),
-          stockChecks: stockChecksTrend?.map((item) => item.count) || mockDataForDays(3, 2, 14),
+          branches: branchTrend.length > 0 
+            ? branchTrend.map((item) => item.count) 
+            : mockDataForDays(4, 1, 14),
+            
+          lowStock: lowStockTrend.length > 0 
+            ? lowStockTrend.map((item) => item.count) 
+            : mockDataForDays(12, 4, 14),
+            
+          requests: requestsTrend.length > 0 
+            ? requestsTrend.map((item) => item.count) 
+            : mockDataForDays(10, 5, 14),
+            
+          stockChecks: stockChecksTrend.length > 0 
+            ? stockChecksTrend.map((item) => item.count) 
+            : mockDataForDays(3, 2, 14),
+            
           isLoading: false
         });
       } catch (error) {
