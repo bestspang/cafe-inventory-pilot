@@ -1,137 +1,126 @@
 
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
 
-interface MissingChecksResponse {
-  missing: number;
+export interface DashboardMetrics {
+  lowStockCount: number;
+  pendingRequestsCount: number;
+  missingChecksCount: number;
+  totalBranchesCount: number;
+  closedBranchesCount: number;
 }
 
-interface DashboardMetrics {
-  totalBranches: number;
-  lowStockItems: number;
-  pendingRequests: number;
-  missingStockChecks: number;
-  isLoading: boolean;
-}
+const defaultMetrics: DashboardMetrics = {
+  lowStockCount: 0,
+  pendingRequestsCount: 0,
+  missingChecksCount: 0,
+  totalBranchesCount: 0,
+  closedBranchesCount: 0
+};
 
-export const useDashboardMetrics = (): DashboardMetrics => {
-  const [totalBranches, setTotalBranches] = useState(0);
-  const [lowStockItems, setLowStockItems] = useState(0);
-  const [pendingRequests, setPendingRequests] = useState(0);
-  const [missingStockChecks, setMissingStockChecks] = useState(0);
+export const useDashboardMetrics = () => {
+  const [metrics, setMetrics] = useState<DashboardMetrics>(defaultMetrics);
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth();
-  const { toast } = useToast();
+
+  const fetchMetrics = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get low stock count
+      const { data: lowStockData, error: lowStockError } = await supabase
+        .from('branch_inventory')
+        .select('*')
+        .lt('on_hand_qty', 10);
+        
+      if (lowStockError) throw lowStockError;
+
+      // Get pending requests count
+      const { data: requestsData, error: requestsError } = await supabase
+        .from('requests')
+        .select('*')
+        .eq('status', 'pending');
+        
+      if (requestsError) throw requestsError;
+
+      // Get branches count
+      const { data: branchesData, error: branchesError } = await supabase
+        .from('branches')
+        .select('*');
+        
+      if (branchesError) throw branchesError;
+
+      // Get closed branches count
+      const { data: closedBranchesData, error: closedBranchesError } = await supabase
+        .from('branches')
+        .select('*')
+        .eq('is_open', false);
+        
+      if (closedBranchesError) throw closedBranchesError;
+
+      // Use RPC for missing checks count
+      type MissingChecksResponse = { count_missing_checks: number };
+      const { data: missingChecksData, error: missingChecksError } = await supabase
+        .rpc<MissingChecksResponse>('count_missing_checks');
+        
+      if (missingChecksError) {
+        console.error('Error fetching missing checks:', missingChecksError);
+        // Fallback: Just set a default value
+        setMetrics({
+          lowStockCount: lowStockData?.length || 0,
+          pendingRequestsCount: requestsData?.length || 0,
+          missingChecksCount: 0,
+          totalBranchesCount: branchesData?.length || 0,
+          closedBranchesCount: closedBranchesData?.length || 0
+        });
+        return;
+      }
+      
+      setMetrics({
+        lowStockCount: lowStockData?.length || 0,
+        pendingRequestsCount: requestsData?.length || 0,
+        missingChecksCount: missingChecksData?.count_missing_checks || 0,
+        totalBranchesCount: branchesData?.length || 0,
+        closedBranchesCount: closedBranchesData?.length || 0
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard metrics:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchDashboardMetrics = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Fetch total branches
-        const { count: branchCount, error: branchError } = await supabase
-          .from('branches')
-          .select('*', { count: 'exact', head: true });
-
-        if (branchError) throw branchError;
-        setTotalBranches(branchCount || 0);
-        
-        // Fetch low stock items
-        const { count: lowStockCount, error: lowStockError } = await supabase
-          .from('branch_inventory')
-          .select('*', { count: 'exact', head: true })
-          .lt('on_hand_qty', 'reorder_pt');
-
-        if (lowStockError) throw lowStockError;
-        setLowStockItems(lowStockCount || 0);
-        
-        // Fetch pending requests
-        const { count: pendingCount, error: pendingError } = await supabase
-          .from('requests')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'pending');
-
-        if (pendingError) throw pendingError;
-        setPendingRequests(pendingCount || 0);
-        
-        // Safely handle the RPC call with proper typing
-        const { data: missingChecksData, error: missingChecksError } = await supabase
-          .rpc('count_missing_checks');
-
-        if (missingChecksError) throw missingChecksError;
-        
-        // Check data exists and has the expected structure 
-        if (missingChecksData && Array.isArray(missingChecksData) && missingChecksData.length > 0) {
-          const typedData = missingChecksData as MissingChecksResponse[];
-          setMissingStockChecks(typedData[0]?.missing || 0);
-        } else {
-          setMissingStockChecks(0);
-        }
-        
-      } catch (error) {
-        console.error('Error fetching dashboard metrics:', error);
-        toast({
-          title: "Failed to load dashboard metrics",
-          description: "Please try again later",
-          variant: "destructive"
-        });
-        
-        // Set fallback values on error
-        setMissingStockChecks(0);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchDashboardMetrics();
-    }
-
-    // Set up realtime subscriptions for metrics updates
-    const branchInventoryChannel = supabase
-      .channel('branch_inventory_changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'branch_inventory' }, 
-        () => {
-          fetchDashboardMetrics();
-        }
-      )
+    fetchMetrics();
+    
+    // Subscribe to changes
+    const channel = supabase
+      .channel('dashboard_metrics')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'branch_inventory' 
+      }, () => fetchMetrics())
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'requests' 
+      }, () => fetchMetrics())
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'branches' 
+      }, () => fetchMetrics())
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'stock_checks' 
+      }, () => fetchMetrics())
       .subscribe();
       
-    const requestsChannel = supabase
-      .channel('requests_changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'requests' }, 
-        () => {
-          fetchDashboardMetrics();
-        }
-      )
-      .subscribe();
-      
-    const stockChecksChannel = supabase
-      .channel('stock_checks_changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'stock_checks' }, 
-        () => {
-          fetchDashboardMetrics();
-        }
-      )
-      .subscribe();
-
     return () => {
-      supabase.removeChannel(branchInventoryChannel);
-      supabase.removeChannel(requestsChannel);
-      supabase.removeChannel(stockChecksChannel);
+      supabase.removeChannel(channel);
     };
-  }, [user, toast]);
-  
-  return {
-    totalBranches,
-    lowStockItems,
-    pendingRequests,
-    missingStockChecks,
-    isLoading
-  };
+  }, []);
+
+  return { metrics, isLoading, refetch: fetchMetrics };
 };

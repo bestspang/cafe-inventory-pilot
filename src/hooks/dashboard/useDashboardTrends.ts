@@ -1,124 +1,134 @@
 
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-interface TrendItem {
-  day: string;
-  count: number;
+export interface TrendPoint {
+  date: string;
+  value: number;
 }
 
-interface DashboardTrends {
-  branchTrend: TrendItem[];
-  lowStockTrend: TrendItem[];
-  requestsTrend: TrendItem[];
-  stockChecksTrend: TrendItem[];
-  isLoading: boolean;
+export interface DashboardTrends {
+  branchTrend: TrendPoint[];
+  lowStockTrend: TrendPoint[];
+  requestsTrend: TrendPoint[];
+  stockChecksTrend: TrendPoint[];
 }
 
-const createMockTrendData = (days = 7): TrendItem[] => {
-  return Array.from({ length: days }).map((_, index) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (days - index - 1));
-    
-    return {
-      day: date.toISOString().split('T')[0],
-      count: Math.floor(Math.random() * 10)
-    };
-  });
+const defaultTrends: DashboardTrends = {
+  branchTrend: [],
+  lowStockTrend: [],
+  requestsTrend: [],
+  stockChecksTrend: []
 };
 
-export const useDashboardTrends = (): DashboardTrends => {
-  const [branchTrend, setBranchTrend] = useState<TrendItem[]>([]);
-  const [lowStockTrend, setLowStockTrend] = useState<TrendItem[]>([]);
-  const [requestsTrend, setRequestsTrend] = useState<TrendItem[]>([]);
-  const [stockChecksTrend, setStockChecksTrend] = useState<TrendItem[]>([]);
+export const useDashboardTrends = () => {
+  const [trends, setTrends] = useState<DashboardTrends>(defaultTrends);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+
+  const fetchTrends = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch branch trend data
+      interface BranchTrendData { 
+        date: string;
+        count: number; 
+      }
+      
+      const { data: branchData, error: branchError } = await supabase
+        .rpc<BranchTrendData[]>('get_branch_trend_data');
+        
+      if (branchError) {
+        console.error('Error fetching branch trends:', branchError);
+      }
+
+      // Fetch low stock trend data
+      interface LowStockTrendData { 
+        date: string;
+        count: number; 
+      }
+      
+      const { data: lowStockData, error: lowStockError } = await supabase
+        .rpc<LowStockTrendData[]>('get_low_stock_trend_data');
+        
+      if (lowStockError) {
+        console.error('Error fetching low stock trends:', lowStockError);
+      }
+
+      // Fetch pending requests trend data
+      interface RequestsTrendData { 
+        date: string;
+        count: number; 
+      }
+      
+      const { data: requestsData, error: requestsError } = await supabase
+        .rpc<RequestsTrendData[]>('get_pending_requests_trend_data');
+        
+      if (requestsError) {
+        console.error('Error fetching requests trends:', requestsError);
+      }
+
+      // Fetch missing stock checks trend data
+      interface StockChecksTrendData { 
+        date: string;
+        count: number; 
+      }
+      
+      const { data: stockChecksData, error: stockChecksError } = await supabase
+        .rpc<StockChecksTrendData[]>('get_missing_checks_trend_data');
+        
+      if (stockChecksError) {
+        console.error('Error fetching stock checks trends:', stockChecksError);
+      }
+
+      // Transform the data for charts
+      const branchTrend = branchData && branchData.length > 0 
+        ? branchData.map(item => ({ 
+            date: item.date, 
+            value: item.count 
+          }))
+        : [];
+      
+      const lowStockTrend = lowStockData && lowStockData.length > 0 
+        ? lowStockData.map(item => ({ 
+            date: item.date, 
+            value: item.count 
+          }))
+        : [];
+      
+      const requestsTrend = requestsData && requestsData.length > 0 
+        ? requestsData.map(item => ({ 
+            date: item.date, 
+            value: item.count 
+          }))
+        : [];
+      
+      const stockChecksTrend = stockChecksData && stockChecksData.length > 0 
+        ? stockChecksData.map(item => ({ 
+            date: item.date, 
+            value: item.count 
+          }))
+        : [];
+
+      setTrends({
+        branchTrend,
+        lowStockTrend,
+        requestsTrend,
+        stockChecksTrend
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard trends:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTrends = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Branch trend
-        const { data: branchData, error: branchError } = await supabase
-          .rpc('get_branch_trend_data');
-
-        if (branchError) throw branchError;
-        
-        // Low stock trend
-        const { data: lowStockData, error: lowStockError } = await supabase
-          .rpc('get_low_stock_trend_data');
-
-        if (lowStockError) throw lowStockError;
-        
-        // Requests trend
-        const { data: requestsData, error: requestsError } = await supabase
-          .rpc('get_pending_requests_trend_data');
-          
-        if (requestsError) throw requestsError;
-        
-        // Stock checks trend
-        const { data: stockChecksData, error: stockChecksError } = await supabase
-          .rpc('get_missing_checks_trend_data');
-          
-        if (stockChecksError) throw stockChecksError;
-        
-        // Set data with type assertions, since we know the structure
-        setBranchTrend(branchData as TrendItem[] || []);
-        setLowStockTrend(lowStockData as TrendItem[] || []);
-        setRequestsTrend(requestsData as TrendItem[] || []);
-        setStockChecksTrend(stockChecksData as TrendItem[] || []);
-        
-      } catch (error) {
-        console.error('Error fetching dashboard trends:', error);
-        toast({
-          title: "Failed to load trend data",
-          description: "Using sample data instead",
-          variant: "destructive"
-        });
-        
-        // Use mock data as fallback
-        setBranchTrend(createMockTrendData());
-        setLowStockTrend(createMockTrendData());
-        setRequestsTrend(createMockTrendData());
-        setStockChecksTrend(createMockTrendData());
-        
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchTrends();
     
-    // Set up a realtime subscription for trends updates
-    const trendsChannel = supabase
-      .channel('trends_changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'stock_checks' }, 
-        () => fetchTrends()
-      )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'requests' }, 
-        () => fetchTrends()
-      )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'branch_inventory' }, 
-        () => fetchTrends()
-      )
-      .subscribe();
+    // No need to subscribe to realtime updates for trends
+    // These are typically fetched on demand or on a timer
+  }, []);
 
-    return () => {
-      supabase.removeChannel(trendsChannel);
-    };
-  }, [toast]);
-  
-  return {
-    branchTrend,
-    lowStockTrend,
-    requestsTrend,
-    stockChecksTrend,
-    isLoading
-  };
+  return { trends, isLoading, refetch: fetchTrends };
 };

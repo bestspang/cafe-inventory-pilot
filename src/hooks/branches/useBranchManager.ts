@@ -16,6 +16,8 @@ export const useBranchManager = () => {
     setIsLoading(true);
     
     try {
+      console.log('Creating new branch:', branch);
+      
       // Insert branch
       const { data: branchData, error: branchError } = await supabase
         .from('branches')
@@ -28,7 +30,12 @@ export const useBranchManager = () => {
         .select()
         .single();
         
-      if (branchError) throw branchError;
+      if (branchError) {
+        console.error('Branch creation error:', branchError);
+        throw branchError;
+      }
+      
+      console.log('Branch created successfully:', branchData);
       
       // Log activity
       await supabase
@@ -57,24 +64,37 @@ export const useBranchManager = () => {
     console.log('Updating branch:', branch); // Debug log
     
     try {
+      // Prepare update payload - only include fields that are provided
+      const updatePayload: Partial<Branch> = {
+        updated_at: new Date().toISOString()
+      };
+      
+      if (branch.name !== undefined) updatePayload.name = branch.name;
+      if (branch.address !== undefined) updatePayload.address = branch.address;
+      if (branch.timezone !== undefined) updatePayload.timezone = branch.timezone;
+      if (branch.is_open !== undefined) updatePayload.is_open = branch.is_open;
+      
+      console.group('Supabase Update Request');
+      console.log('Branch ID:', branch.id);
+      console.log('Update payload:', updatePayload);
+      
       // Update branch with explicit fields
-      const { data, error: branchError } = await supabase
+      const { data, error: branchError, status, statusText } = await supabase
         .from('branches')
-        .update({
-          name: branch.name,
-          address: branch.address,
-          timezone: branch.timezone,
-          updated_at: new Date().toISOString()
-        })
+        .update(updatePayload)
         .eq('id', branch.id)
         .select();
         
+      // Log everything about the response
+      console.log('Status:', status, statusText);
+      console.log('Response data:', data);
+      console.log('Error:', branchError);
+      console.groupEnd();
+      
       if (branchError) {
         console.error('Branch update error:', branchError);
         throw branchError;
       }
-      
-      console.log('Branch update result:', data); // Debug log
       
       // Log activity
       await supabase
@@ -100,6 +120,7 @@ export const useBranchManager = () => {
     if (!user) return false;
     
     setIsLoading(true);
+    console.log('Deleting branch:', branchId);
     
     try {
       // Log activity before deletion (otherwise we can't relate to the branch)
@@ -117,8 +138,12 @@ export const useBranchManager = () => {
         .delete()
         .eq('id', branchId);
         
-      if (branchError) throw branchError;
+      if (branchError) {
+        console.error('Branch delete error:', branchError);
+        throw branchError;
+      }
       
+      console.log('Branch deleted successfully');
       toast.success('Branch deleted successfully');
       return true;
     } catch (error) {
@@ -138,13 +163,21 @@ export const useBranchManager = () => {
     const action = newStatus ? 'reopened' : 'closed';
     
     try {
+      console.log(`Toggling branch status to ${newStatus ? 'open' : 'closed'}:`, branch.id);
+      
       // Update status
       const { error: statusError } = await supabase
         .from('branches')
-        .update({ is_open: newStatus })
+        .update({ 
+          is_open: newStatus,
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', branch.id);
         
-      if (statusError) throw statusError;
+      if (statusError) {
+        console.error('Branch status update error:', statusError);
+        throw statusError;
+      }
       
       // Log activity
       await supabase
@@ -155,6 +188,7 @@ export const useBranchManager = () => {
           performed_by: user.id
         });
         
+      console.log(`Branch ${action} successfully`);
       toast.success(`Branch ${action} successfully`);
       return true;
     } catch (error) {

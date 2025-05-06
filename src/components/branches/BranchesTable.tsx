@@ -1,9 +1,11 @@
 
 import React, { useState } from 'react';
-import { Table, TableBody } from '@/components/ui/table';
-import { Branch } from '@/types/branch';
+import { useAuth } from '@/context/AuthContext';
 import BranchTableHeader from './BranchTableHeader';
 import BranchTableRow from './BranchTableRow';
+import BranchSortingLogic from './BranchSortingLogic';
+import { Table, TableBody } from '@/components/ui/table';
+import { Branch } from '@/types/branch';
 import DeleteBranchDialog from './DeleteBranchDialog';
 import BranchFormDialog from './BranchFormDialog';
 
@@ -36,20 +38,8 @@ export default function BranchesTable({
     }
   };
   
-  const sortedBranches = [...branches].sort((a, b) => {
-    if (sortField === 'name') {
-      return sortDirection === 'asc' 
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name);
-    }
-    if (sortField === 'status') {
-      return sortDirection === 'asc'
-        ? Number(a.is_open) - Number(b.is_open)
-        : Number(b.is_open) - Number(a.is_open);
-    }
-    // Default to name sorting
-    return a.name.localeCompare(b.name);
-  });
+  // Use the branch sorting logic component to sort branches
+  const sortedBranches = BranchSortingLogic(branches, sortField, sortDirection);
   
   const handleDeleteConfirm = async () => {
     if (!confirmDelete) return;

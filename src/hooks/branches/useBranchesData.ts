@@ -12,14 +12,19 @@ export const useBranchesData = () => {
   const fetchBranches = async () => {
     try {
       setIsLoading(true);
+      console.log('Fetching branches data...');
       
       const { data, error } = await supabase
         .from('branches')
         .select('*')
         .order('name');
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching branches:', error);
+        throw error;
+      }
       
+      console.log('Branches fetched successfully:', data);
       setBranches(data as Branch[]);
     } catch (error) {
       console.error('Error fetching branches:', error);
