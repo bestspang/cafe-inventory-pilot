@@ -290,11 +290,11 @@ const QuickRequestForm: React.FC = () => {
           last_checked: currentTime
         }));
         
+        // Fix: Pass the proper onConflict format as string array
         const { error: inventoryUpdateError } = await supabase
           .from('branch_inventory')
           .upsert(branchInventoryUpdates, { 
-            onConflict: ['branch_id', 'ingredient_id'],
-            ignoreDuplicates: false
+            onConflict: ['branch_id', 'ingredient_id'] 
           });
         
         if (inventoryUpdateError) throw inventoryUpdateError;
