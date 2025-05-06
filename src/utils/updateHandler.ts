@@ -1,6 +1,10 @@
 
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
+
+// Define TableName as the union of all table names in the Database type
+type TableName = keyof Database['public']['Tables'];
 
 interface UpdateResponse<T> {
   success: boolean;
@@ -11,7 +15,7 @@ interface UpdateResponse<T> {
 /**
  * Generic update handler with detailed logging for debugging update operations
  */
-export async function handleUpdate<T extends string>(
+export async function handleUpdate<T extends TableName>(
   table: T,
   id: string,
   changes: Record<string, any>,

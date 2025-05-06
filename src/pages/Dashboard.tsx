@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Store, Package, AlertTriangle, ClipboardCheck, Plus } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
@@ -72,7 +73,7 @@ const Dashboard = () => {
         />
         <StatCard
           title="Pending Requests"
-          value={pendingRequests}
+          value={pendingRequests.toString()}
           icon={<ClipboardCheck className="h-5 w-5" />}
           trend={{ value: 12, isPositive: true }}
           sparklineData={requestsTrendValues}
@@ -81,7 +82,7 @@ const Dashboard = () => {
         />
         <StatCard
           title="Missing Stock Checks"
-          value={isOwner ? missingStockChecks : 0}
+          value={isOwner ? missingStockChecks.toString() : "0"}
           icon={<AlertTriangle className="h-5 w-5" />}
           sparklineData={stockChecksTrendValues}
           isLoading={metricsLoading}
