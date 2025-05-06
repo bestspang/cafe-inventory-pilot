@@ -30,10 +30,10 @@ export async function handleUpdate<T extends TableName>(
       changes.updated_at = new Date().toISOString();
     }
 
-    // Execute the update operation
+    // Execute the update operation using the generic type
     const { data, error, status, statusText } = await supabase
       .from(table)
-      .update(changes)
+      .update(changes as any) // Type assertion to any is needed here due to supabase types
       .eq('id', id)
       .select();
       
