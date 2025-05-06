@@ -75,7 +75,7 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
         return;
       }
 
-      // 2. In parallel, fetch current stock levels for this branch
+      // 2. Fetch branch-specific inventory data with reorder points
       const { data: inventory, error: invError } = await supabase
         .from('branch_inventory')
         .select('ingredient_id, on_hand_qty, reorder_pt')
@@ -84,7 +84,7 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
 
       if (invError) throw invError;
 
-      // Create a map of inventory data
+      // Create a map of inventory data for quick lookups
       const inventoryMap = Object.fromEntries(
         (inventory || []).map(item => [
           item.ingredient_id, 
@@ -100,7 +100,7 @@ const RequestDetailsRow: React.FC<RequestDetailsRowProps> = ({
         quantity: item.quantity,
         note: item.note,
         recommendedQty: item.recommended_qty,
-        currentQty: item.current_qty || inventoryMap[item.ingredient_id]?.onHandQty || 0,
+        currentQty: inventoryMap[item.ingredient_id]?.onHandQty || item.current_qty || 0,
         fulfilled: item.fulfilled || false,
         reorderPoint: inventoryMap[item.ingredient_id]?.reorderPt
       }));
