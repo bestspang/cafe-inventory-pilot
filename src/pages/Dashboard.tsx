@@ -1,81 +1,35 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Store, Package, AlertTriangle, ClipboardCheck, Plus } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
 import QuickActions from '@/components/dashboard/QuickActions';
 import BranchCard from '@/components/dashboard/BranchCard';
 import { useAuth } from '@/context/AuthContext';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { supabase } from '@/integrations/supabase/client';
-
-// Mock data for demo purposes
-const mockBranches = [
-  {
-    id: '1',
-    name: 'Downtown Cafe',
-    stockHealth: 85,
-    pendingRequests: 2,
-    lastCheckDate: new Date().toISOString()
-  },
-  {
-    id: '2',
-    name: 'Uptown Juice Bar',
-    stockHealth: 62,
-    pendingRequests: 5,
-    lastCheckDate: new Date(Date.now() - 86400000).toISOString() // Yesterday
-  },
-  {
-    id: '3',
-    name: 'Riverside Cafe',
-    stockHealth: 34,
-    pendingRequests: 8,
-    lastCheckDate: new Date(Date.now() - 86400000 * 2).toISOString() // 2 days ago
-  },
-  {
-    id: '4',
-    name: 'Airport Kiosk',
-    stockHealth: 91,
-    pendingRequests: 0,
-    lastCheckDate: new Date().toISOString()
-  }
-];
-
-// Mock trend data
-const trendData = {
-  branches: [4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 4, 4, 4],
-  lowStock: [8, 10, 12, 15, 14, 12, 10, 8, 10, 12, 12, 12, 12],
-  requests: [3, 5, 7, 8, 10, 12, 15, 18, 15, 12, 10, 8, 15],
-  stockChecks: [1, 2, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 3]
-};
+import { useDashboardMetrics } from '@/hooks/dashboard/useDashboardMetrics';
+import { useDashboardTrends } from '@/hooks/dashboard/useDashboardTrends';
+import { useBranchSnapshots } from '@/hooks/dashboard/useBranchSnapshots';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const isOwner = user?.role === 'owner';
-  const [isLoading, setIsLoading] = useState(true);
   const [branchFilter, setBranchFilter] = useState<'all' | 'healthy' | 'at-risk'>('all');
   
-  // Simulate loading data
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
+  // Fetch metrics data from Supabase
+  const { 
+    totalBranches, 
+    lowStockItems, 
+    pendingRequests, 
+    missingStockChecks,
+    isLoading: metricsLoading 
+  } = useDashboardMetrics();
   
-  // For managers or staff, filter to show only their branch
-  const filteredBranches = isOwner 
-    ? mockBranches 
-    : mockBranches.filter(branch => branch.id === user?.branchId);
-    
-  // Further filter based on branchFilter
-  const displayedBranches = filteredBranches.filter(branch => {
-    if (branchFilter === 'healthy') return branch.stockHealth >= 70;
-    if (branchFilter === 'at-risk') return branch.stockHealth < 70;
-    return true;
-  });
+  // Fetch trend data for charts
+  const { branches: branchTrend, lowStock: lowStockTrend, requests: requestsTrend, stockChecks: stockChecksTrend } = useDashboardTrends();
+  
+  // Fetch branch snapshots
+  const { branches: displayedBranches, isLoading: branchesLoading } = useBranchSnapshots({ branchFilter });
   
   // Handler for dashboard stat card clicks
   const handleStatCardClick = (metric: string) => {
@@ -93,36 +47,36 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Branches"
-          value={isOwner ? mockBranches.length : 1}
+          value={isOwner ? totalBranches : 1}
           icon={<Store className="h-5 w-5" />}
-          sparklineData={trendData.branches}
-          isLoading={isLoading}
+          sparklineData={branchTrend}
+          isLoading={metricsLoading}
           onClick={() => handleStatCardClick('branches')}
         />
         <StatCard
           title="Low Stock Items"
-          value="12"
+          value={lowStockItems.toString()}
           icon={<Package className="h-5 w-5" />}
           trend={{ value: 8, isPositive: false }}
-          sparklineData={trendData.lowStock}
-          isLoading={isLoading}
+          sparklineData={lowStockTrend}
+          isLoading={metricsLoading}
           onClick={() => handleStatCardClick('low-stock')}
         />
         <StatCard
           title="Pending Requests"
-          value={filteredBranches.reduce((acc, branch) => acc + branch.pendingRequests, 0)}
+          value={pendingRequests}
           icon={<ClipboardCheck className="h-5 w-5" />}
           trend={{ value: 12, isPositive: true }}
-          sparklineData={trendData.requests}
-          isLoading={isLoading}
+          sparklineData={requestsTrend}
+          isLoading={metricsLoading}
           onClick={() => handleStatCardClick('requests')}
         />
         <StatCard
           title="Missing Stock Checks"
-          value={isOwner ? 3 : 0}
+          value={isOwner ? missingStockChecks : 0}
           icon={<AlertTriangle className="h-5 w-5" />}
-          sparklineData={trendData.stockChecks}
-          isLoading={isLoading}
+          sparklineData={stockChecksTrend}
+          isLoading={metricsLoading}
           onClick={() => handleStatCardClick('stock-checks')}
         />
       </div>
@@ -131,7 +85,7 @@ const Dashboard = () => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Quick Actions</h2>
         </div>
-        <QuickActions isLoading={isLoading} />
+        <QuickActions isLoading={metricsLoading} />
       </div>
 
       <div className="pt-2">
@@ -196,7 +150,7 @@ const Dashboard = () => {
           )}
         </div>
         
-        {isLoading ? (
+        {branchesLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(isOwner ? 4 : 1)].map((_, i) => (
               <BranchCard
