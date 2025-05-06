@@ -1,22 +1,23 @@
 
-import { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import LoadingScreen from '@/components/layout/LoadingScreen';
+import { useEffect } from 'react';
 
 const Index = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading } = useAuth();
-
+  
   useEffect(() => {
-    if (loading) return; // Wait for auth to be determined
+    if (loading) return;
     
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } else {
-      navigate('/login');
+      navigate('/login', { replace: true });
     }
-  }, [navigate, isAuthenticated, loading]);
+  }, [isAuthenticated, loading, navigate]);
 
   return <LoadingScreen />;
 };

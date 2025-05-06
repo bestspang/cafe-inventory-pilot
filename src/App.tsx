@@ -8,11 +8,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { seedDemoData } from "@/utils/seedDemoData";
 
+// Auth
+import AuthGuard from "./components/auth/AuthGuard";
+import Login from "./pages/Login";
+
 // Layout
 import AppLayout from "./components/layout/AppLayout";
-
-// Auth
-import Login from "./pages/Login";
 
 // Main Pages
 import Dashboard from "./pages/Dashboard";
@@ -43,11 +44,20 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Index />} />
+              {/* Public routes - these don't require authentication */}
+              <Route path="/login" element={
+                <AuthGuard requireAuth={false} redirectTo="/dashboard">
+                  <Login />
+                </AuthGuard>
+              } />
+              
               <Route path="/quick-request" element={<QuickRequest />} />
               
-              <Route path="/" element={<AppLayout />}>
+              {/* Root route - determines where to go based on auth */}
+              <Route path="/" element={<Index />} />
+              
+              {/* Protected routes - require authentication */}
+              <Route element={<AuthGuard requireAuth={true}><AppLayout /></AuthGuard>}>
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="inventory" element={<Inventory />} />
                 <Route path="stock-check" element={<StockCheck />} />
