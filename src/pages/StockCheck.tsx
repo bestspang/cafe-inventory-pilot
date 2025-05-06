@@ -7,6 +7,7 @@ import { useStockCheck } from '@/hooks/useStockCheck';
 import StockCheckBranchSelector from '@/components/stock-check/StockCheckBranchSelector';
 import StockCheckSearchBar from '@/components/stock-check/StockCheckSearchBar';
 import StockCheckTable from '@/components/stock-check/StockCheckTable';
+import StockCheckLoadingState from '@/components/stock-check/StockCheckLoadingState';
 
 const StockCheck = () => {
   const { user } = useAuth();
@@ -17,6 +18,8 @@ const StockCheck = () => {
     setSelectedBranch,
     filteredItems,
     updatedItems,
+    branches,
+    isLoading,
     handleQuantityChange,
     handleSave
   } = useStockCheck();
@@ -33,26 +36,43 @@ const StockCheck = () => {
           <StockCheckBranchSelector 
             selectedBranch={selectedBranch} 
             setSelectedBranch={setSelectedBranch}
+            branches={branches}
+            isLoading={isLoading}
           />
         </div>
         
         <StockCheckSearchBar search={search} setSearch={setSearch} />
       </div>
 
-      <StockCheckTable 
-        items={filteredItems} 
-        handleQuantityChange={handleQuantityChange}
-        updatedItems={updatedItems}
-      />
+      {isLoading ? (
+        <StockCheckLoadingState />
+      ) : (
+        <>
+          <StockCheckTable 
+            items={filteredItems} 
+            handleQuantityChange={handleQuantityChange}
+            updatedItems={updatedItems}
+          />
 
-      {filteredItems.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">No ingredients found matching your search.</p>
-        </div>
+          {filteredItems.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">
+                {search ? 
+                  "No ingredients found matching your search." : 
+                  "No ingredients available for this branch."}
+              </p>
+            </div>
+          )}
+        </>
       )}
 
       <div className="fixed bottom-8 right-8">
-        <Button onClick={handleSave} size="lg" className="shadow-lg">
+        <Button 
+          onClick={handleSave} 
+          size="lg" 
+          className="shadow-lg"
+          disabled={isLoading || Object.keys(updatedItems).length === 0}
+        >
           <Save className="mr-2 h-4 w-4" />
           Save Stock Check
         </Button>

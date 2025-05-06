@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      branch_inventory: {
+        Row: {
+          branch_id: string
+          ingredient_id: string
+          last_checked: string | null
+          on_hand_qty: number
+        }
+        Insert: {
+          branch_id: string
+          ingredient_id: string
+          last_checked?: string | null
+          on_hand_qty?: number
+        }
+        Update: {
+          branch_id?: string
+          ingredient_id?: string
+          last_checked?: string | null
+          on_hand_qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branch_inventory_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branch_inventory_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           address: string | null

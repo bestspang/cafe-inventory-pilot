@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { useAuth } from '@/context/AuthContext';
 import {
   Select,
   SelectContent,
@@ -17,38 +16,30 @@ interface Branch {
 interface StockCheckBranchSelectorProps {
   selectedBranch: string;
   setSelectedBranch: (branchId: string) => void;
+  branches: Branch[];
+  isLoading: boolean;
 }
 
 const StockCheckBranchSelector: React.FC<StockCheckBranchSelectorProps> = ({
   selectedBranch,
-  setSelectedBranch
+  setSelectedBranch,
+  branches,
+  isLoading
 }) => {
-  const { user } = useAuth();
-  
-  // Mock branch data - this would normally come from a database
-  const mockBranches = [
-    { id: '1', name: 'Downtown Cafe' },
-    { id: '2', name: 'Uptown Juice Bar' },
-    { id: '3', name: 'Riverside Cafe' },
-    { id: '4', name: 'Airport Kiosk' },
-  ];
-
-  // Get available branches based on user role
-  const availableBranches = user?.role === 'owner' 
-    ? mockBranches 
-    : mockBranches.filter(branch => branch.id === user?.branchId);
-
   return (
-    <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+    <Select value={selectedBranch} onValueChange={setSelectedBranch} disabled={isLoading}>
       <SelectTrigger className="w-full md:w-[200px]">
-        <SelectValue placeholder="Select branch" />
+        <SelectValue placeholder={isLoading ? "Loading branches..." : "Select branch"} />
       </SelectTrigger>
       <SelectContent>
-        {availableBranches.map(branch => (
+        {branches.map(branch => (
           <SelectItem key={branch.id} value={branch.id}>
             {branch.name}
           </SelectItem>
         ))}
+        {branches.length === 0 && !isLoading && (
+          <SelectItem value="none" disabled>No branches available</SelectItem>
+        )}
       </SelectContent>
     </Select>
   );
