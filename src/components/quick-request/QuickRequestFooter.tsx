@@ -8,7 +8,7 @@ interface QuickRequestFooterProps {
   comment: string;
   onCommentChange: (comment: string) => void;
   onReset: () => void;
-  onSubmit: (e: React.FormEvent) => void; // Updated to accept event
+  onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
 }
 
@@ -45,7 +45,6 @@ const QuickRequestFooter: React.FC<QuickRequestFooterProps> = ({
         <Button 
           type="submit" 
           disabled={isLoading}
-          // Remove the onClick handler as we're using the form's native submit
         >
           {isLoading ? 'Submitting...' : 'Submit'}
         </Button>

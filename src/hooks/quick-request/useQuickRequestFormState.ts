@@ -18,11 +18,17 @@ export const useQuickRequestFormState = (ingredients: QuickRequestIngredient[] =
   });
   
   // This function is called for each keystroke in the quantity inputs
+  // It ensures the value is immediately updated in state
   const handleUpdateQuantity = (id: string, quantity: number) => {
+    // Ensure quantity is a valid number
+    const validQuantity = isNaN(quantity) ? 0 : quantity;
+    
+    console.log(`Updating quantity for ${id} to ${validQuantity}`);
+    
     setFormState(prev => ({
       ...prev,
       ingredients: prev.ingredients.map(ing => 
-        ing.id === id ? { ...ing, quantity } : ing
+        ing.id === id ? { ...ing, quantity: validQuantity } : ing
       )
     }));
   };

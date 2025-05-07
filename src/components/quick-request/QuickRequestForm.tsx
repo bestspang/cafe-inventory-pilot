@@ -99,9 +99,16 @@ const QuickRequestForm: React.FC = () => {
     return true;
   };
   
-  // Handle form submission - now guaranteed to include all quantities
+  // Handle form submission - making sure all current input values are captured
   const onSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent default form submission
+    
+    // No need to manually update from document.activeElement since all inputs are controlled
+    // and already in the formState
+    
+    console.log('Form submission - active ingredients:', 
+      formState.ingredients.filter(ing => ing.quantity > 0).length);
+    
     setIsLoading(true);
     const success = await handleSubmit(formState, staffMembers, validateForm);
     if (success) {

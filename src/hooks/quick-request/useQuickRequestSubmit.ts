@@ -20,8 +20,9 @@ export const useQuickRequestSubmit = () => {
     setIsSubmitting(true);
     
     try {
+      console.log('Form state before submission:', formState);
+      
       // Get items with quantity > 0 directly from state
-      // This ensures even items that are currently focused are included
       const itemsWithQuantity = formState.ingredients
         .filter(ing => ing.quantity > 0)
         .map(ing => ({
@@ -30,6 +31,8 @@ export const useQuickRequestSubmit = () => {
           unit: ing.unit,
           name: ing.name
         }));
+      
+      console.log('Items to be submitted:', itemsWithQuantity);
       
       if (itemsWithQuantity.length === 0) {
         throw new Error('Please add at least one item with a quantity');
@@ -81,6 +84,8 @@ export const useQuickRequestSubmit = () => {
     itemsWithQuantity: any[],
     currentTime: string
   ) => {
+    console.log('Submitting request with items:', itemsWithQuantity.length);
+    
     // Create a new request with the staff ID as user_id
     const { data, error: requestError } = await supabase
       .from('requests')
@@ -103,11 +108,16 @@ export const useQuickRequestSubmit = () => {
       note: formState.comment ? formState.comment : null
     }));
     
-    const { error: itemsError } = await supabase
+    console.log('Request items to insert:', requestItems);
+    
+    const { data: insertedItems, error: itemsError } = await supabase
       .from('request_items')
-      .insert(requestItems);
+      .insert(requestItems)
+      .select('*');
     
     if (itemsError) throw itemsError;
+    
+    console.log('Inserted items:', insertedItems?.length || 0);
     
     toast({
       title: 'Request Submitted',
@@ -124,6 +134,8 @@ export const useQuickRequestSubmit = () => {
     itemsWithQuantity: any[],
     currentTime: string
   ) => {
+    console.log('Submitting stock update with items:', itemsWithQuantity.length);
+    
     // Create a new stock check with the staff ID as user_id
     const { data, error: stockCheckError } = await supabase
       .from('stock_checks')
@@ -144,11 +156,16 @@ export const useQuickRequestSubmit = () => {
       on_hand_qty: item.quantity
     }));
     
-    const { error: stockItemsError } = await supabase
+    console.log('Stock items to insert:', stockItems);
+    
+    const { data: insertedItems, error: stockItemsError } = await supabase
       .from('stock_check_items')
-      .insert(stockItems);
+      .insert(stockItems)
+      .select('*');
     
     if (stockItemsError) throw stockItemsError;
+    
+    console.log('Inserted stock items:', insertedItems?.length || 0);
     
     // Update branch_inventory for immediate reflection
     const branchInventoryUpdates = itemsWithQuantity.map(item => ({
