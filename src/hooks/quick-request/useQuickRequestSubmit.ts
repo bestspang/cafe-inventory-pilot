@@ -20,7 +20,8 @@ export const useQuickRequestSubmit = () => {
     setIsSubmitting(true);
     
     try {
-      // Get items with quantity > 0
+      // Get items with quantity > 0 directly from state
+      // This ensures even items that are currently focused are included
       const itemsWithQuantity = formState.ingredients
         .filter(ing => ing.quantity > 0)
         .map(ing => ({
@@ -29,6 +30,10 @@ export const useQuickRequestSubmit = () => {
           unit: ing.unit,
           name: ing.name
         }));
+      
+      if (itemsWithQuantity.length === 0) {
+        throw new Error('Please add at least one item with a quantity');
+      }
       
       // Find staff details (for display purposes only)
       const selectedStaff = staffMembers.find(s => s.id === formState.staffId);

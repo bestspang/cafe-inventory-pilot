@@ -45,7 +45,16 @@ const QuickRequestForm: React.FC = () => {
   // Update ingredients when they change in the data hook
   useEffect(() => {
     if (ingredients.length > 0) {
-      setFormState(prev => ({ ...prev, ingredients }));
+      // Preserve any quantities the user has already entered when ingredients update
+      const updatedIngredients = ingredients.map(ing => {
+        const existingIng = formState.ingredients.find(i => i.id === ing.id);
+        return {
+          ...ing,
+          quantity: existingIng ? existingIng.quantity : 0
+        };
+      });
+      
+      setFormState(prev => ({ ...prev, ingredients: updatedIngredients }));
     }
   }, [ingredients]);
   
@@ -76,6 +85,7 @@ const QuickRequestForm: React.FC = () => {
       return false;
     }
     
+    // Check if there are any items with quantity > 0
     const hasItems = formState.ingredients.some(ing => ing.quantity > 0);
     if (!hasItems) {
       toast({
@@ -89,8 +99,9 @@ const QuickRequestForm: React.FC = () => {
     return true;
   };
   
-  // Handle form submission
-  const onSubmitForm = async () => {
+  // Handle form submission - now guaranteed to include all quantities
+  const onSubmitForm = async (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent default form submission
     setIsLoading(true);
     const success = await handleSubmit(formState, staffMembers, validateForm);
     if (success) {
@@ -100,7 +111,7 @@ const QuickRequestForm: React.FC = () => {
   };
   
   return (
-    <div className="space-y-6">
+    <form onSubmit={onSubmitForm} className="space-y-6">
       <QuickRequestHeader
         formAction={formState.action}
         branchId={formState.branchId}
@@ -127,7 +138,7 @@ const QuickRequestForm: React.FC = () => {
         onSubmit={onSubmitForm}
         isLoading={isLoading || isSubmitting}
       />
-    </div>
+    </form>
   );
 };
 

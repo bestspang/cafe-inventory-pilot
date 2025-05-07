@@ -15,6 +15,12 @@ const QuickRequestIngredientRow: React.FC<QuickRequestIngredientRowProps> = ({
   onUpdateQuantity,
   disabled = false
 }) => {
+  // Use controlled input to ensure state is always synced
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0;
+    onUpdateQuantity(ingredient.id, value);
+  };
+
   return (
     <TableRow>
       <TableCell className="font-medium">{ingredient.name}</TableCell>
@@ -22,8 +28,9 @@ const QuickRequestIngredientRow: React.FC<QuickRequestIngredientRowProps> = ({
         <Input
           type="number"
           min="0"
+          // Ensure we always have a number for value (controlled input)
           value={ingredient.quantity}
-          onChange={(e) => onUpdateQuantity(ingredient.id, parseInt(e.target.value) || 0)}
+          onChange={handleChange}
           className="w-20"
           disabled={disabled}
         />
