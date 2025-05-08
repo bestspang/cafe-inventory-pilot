@@ -1,8 +1,8 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { StockItem } from '@/types/stock-check';
+import { useAuth } from '@/context/AuthContext';
 
 export const useStockCheckActions = (
   selectedBranch: string,
@@ -12,6 +12,7 @@ export const useStockCheckActions = (
   branches: {id: string, name: string}[]
 ) => {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSave = async () => {
     if (!selectedBranch) {
@@ -49,6 +50,38 @@ export const useStockCheckActions = (
         (currentInventory || []).map(item => [item.ingredient_id, item.on_hand_qty])
       );
       
+      // Create a new stock check record with user information
+      const currentTime = new Date().toISOString();
+      
+      const { data: stockCheck, error: stockCheckError } = await supabase
+        .from('stock_checks')
+        .insert({
+          branch_id: selectedBranch,
+          user_id: user?.id || null,
+          checked_at: currentTime
+        })
+        .select('id')
+        .single();
+        
+      if (stockCheckError) throw stockCheckError;
+      
+      // Prepare stock check items for the new stock check
+      const stockCheckItems = stockItems
+        .filter(item => updatedItems[item.id])
+        .map(item => ({
+          stock_check_id: stockCheck.id,
+          ingredient_id: item.id,
+          on_hand_qty: item.onHandQty
+        }));
+        
+      // Insert the stock check items
+      const { error: itemsError } = await supabase
+        .from('stock_check_items')
+        .insert(stockCheckItems);
+        
+      if (itemsError) throw itemsError;
+      
+      // Update the branch inventory as well
       // Prepare the data for upsert - only include changed items
       const itemsToUpdate = stockItems
         .filter(item => updatedItems[item.id])
@@ -62,7 +95,7 @@ export const useStockCheckActions = (
             on_hand_qty: newQty,
             reorder_pt: item.reorderPt,
             last_change: newQty - oldQty,
-            last_checked: new Date().toISOString()
+            last_checked: currentTime
           };
         });
       

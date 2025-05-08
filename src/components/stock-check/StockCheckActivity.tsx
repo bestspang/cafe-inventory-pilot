@@ -5,7 +5,7 @@ import StockActivityLoading from './StockActivityLoading';
 import StockActivityTable from './StockActivityTable';
 
 const StockCheckActivity: React.FC = () => {
-  const { activities, isLoading } = useStockActivity();
+  const { activities, isLoading, refetchActivities } = useStockActivity();
   
   if (isLoading) {
     return <StockActivityLoading />;
@@ -14,7 +14,10 @@ const StockCheckActivity: React.FC = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">Recent Stock Updates</h2>
-      <StockActivityTable activities={activities} />
+      <StockActivityTable 
+        activities={activities} 
+        onActivityDelete={refetchActivities}
+      />
     </div>
   );
 };

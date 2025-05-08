@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface StockActivity {
@@ -19,7 +19,7 @@ export const useStockActivity = () => {
   const [activities, setActivities] = useState<StockActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
     try {
       // First, get the regular stock checks
       const { data: stockCheckData, error: stockCheckError } = await supabase
@@ -40,11 +40,17 @@ export const useStockActivity = () => {
         
       if (stockCheckError) throw stockCheckError;
       
-      // Separate query to get staff names from store_staff table
+      // Separate query to get staff names from store_staff table and profiles
       const userIds = stockCheckData?.map(sc => sc.user_id) || [];
       const { data: staffData } = await supabase
         .from('store_staff')
         .select('id, staff_name')
+        .in('id', userIds);
+        
+      // Also get profiles data for email usernames
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, email, name')
         .in('id', userIds);
         
       // Create a map of user IDs to staff names
@@ -55,8 +61,21 @@ export const useStockActivity = () => {
         });
       }
       
+      // Create a map for profile emails/names
+      const profileMap = new Map();
+      if (profilesData) {
+        profilesData.forEach(profile => {
+          // Extract local part of email if available
+          let displayName = profile.name;
+          if (profile.email && !displayName) {
+            const emailLocal = profile.email.split('@')[0];
+            displayName = emailLocal;
+          }
+          profileMap.set(profile.id, displayName || 'Unknown User');
+        });
+      }
+      
       // Next, get request info for fulfilled requests
-      // Note the change here: we fetch store_staff instead of profiles since that's what requests.user_id references
       const { data: requestData, error: requestError } = await supabase
         .from('requests')
         .select(`
@@ -85,14 +104,24 @@ export const useStockActivity = () => {
       // Process regular stock checks
       if (stockCheckData) {
         stockCheckData.forEach(stockCheck => {
-          // Get staff name from the staff map or use a default
-          let staffName = staffMap.get(stockCheck.user_id) || 'Unknown Staff';
+          // First check for staff name from staff map
+          let staffName = staffMap.get(stockCheck.user_id);
+          
+          // If not found in staff map, check profiles
+          if (!staffName && profileMap.has(stockCheck.user_id)) {
+            staffName = profileMap.get(stockCheck.user_id);
+          }
+          
+          // Fallback name
+          if (!staffName) {
+            staffName = 'Unknown Staff';
+          }
           
           if (stockCheck.stock_check_items && stockCheck.stock_check_items.length > 0) {
             stockCheck.stock_check_items.forEach(item => {
               if (item.ingredients) {
                 formattedActivities.push({
-                  id: item.id,
+                  id: `sci-${item.id}`, // Add prefix to distinguish stock check items
                   checkedAt: stockCheck.checked_at,
                   branchName: stockCheck.branches?.name || 'Unknown',
                   staffName,
@@ -112,7 +141,7 @@ export const useStockActivity = () => {
       // Process fulfilled requests
       if (requestData) {
         requestData.forEach(request => {
-          // Get the name of who made the request using store_staff instead of profiles
+          // Get the name of who made the request using store_staff
           let requesterName = 'Unknown';
           if (request.store_staff) {
             requesterName = request.store_staff.staff_name || 'Unknown';
@@ -122,7 +151,7 @@ export const useStockActivity = () => {
             request.request_items.forEach(item => {
               if (item.ingredients) {
                 formattedActivities.push({
-                  id: `req-${item.id}`,
+                  id: `req-${item.id}`, // Add prefix for request items
                   checkedAt: request.requested_at,
                   branchName: request.branches?.name || 'Unknown',
                   staffName: 'System', // Stock was updated by system
@@ -150,7 +179,7 @@ export const useStockActivity = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
   
   useEffect(() => {
     fetchActivities();
@@ -182,12 +211,30 @@ export const useStockActivity = () => {
           }
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'stock_check_items' },
+        () => {
+          fetchActivities();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'request_items' },
+        () => {
+          fetchActivities();
+        }
+      )
       .subscribe();
     
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchActivities]);
   
-  return { activities, isLoading };
+  return { 
+    activities, 
+    isLoading,
+    refetchActivities: fetchActivities 
+  };
 };

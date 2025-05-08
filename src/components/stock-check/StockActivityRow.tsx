@@ -3,14 +3,58 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { useDateFormatter } from '@/hooks/requests/useDateFormatter';
+import { Trash2 } from 'lucide-react';
 import type { StockActivity } from '@/hooks/stock-check/useStockActivity';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface StockActivityRowProps {
   activity: StockActivity;
+  onDelete: () => void;
 }
 
-const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity }) => {
+const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity, onDelete }) => {
   const { formatDate } = useDateFormatter();
+  
+  const handleDelete = async () => {
+    try {
+      if (activity.source === 'stock-check') {
+        // Extract the actual ID without any prefix
+        const stockCheckItemId = activity.id.startsWith('sci-') ? activity.id.substring(4) : activity.id;
+        
+        const { error } = await supabase
+          .from('stock_check_items')
+          .delete()
+          .eq('id', stockCheckItemId);
+        
+        if (error) throw error;
+      } else if (activity.source === 'fulfilled-request') {
+        // For request items, extract the ID number
+        const requestItemId = activity.id.startsWith('req-') ? activity.id.substring(4) : activity.id;
+        
+        const { error } = await supabase
+          .from('request_items')
+          .delete()
+          .eq('id', requestItemId);
+        
+        if (error) throw error;
+      }
+      
+      toast({
+        title: "Activity deleted",
+        description: "The activity record has been removed successfully",
+      });
+      
+      onDelete();
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      toast({
+        title: "Delete failed",
+        description: "There was an error deleting the activity",
+        variant: "destructive",
+      });
+    }
+  };
   
   return (
     <TableRow key={activity.id}>
@@ -38,6 +82,15 @@ const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity }) => {
         ) : (
           activity.comment || 'Stock Check'
         )}
+      </TableCell>
+      <TableCell className="text-right">
+        <button
+          onClick={handleDelete}
+          className="text-destructive hover:text-destructive/80 transition-colors"
+          aria-label="Delete activity"
+        >
+          <Trash2 size={16} />
+        </button>
       </TableCell>
     </TableRow>
   );

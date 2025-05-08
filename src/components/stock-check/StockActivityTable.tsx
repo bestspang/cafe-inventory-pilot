@@ -13,9 +13,13 @@ import type { StockActivity } from '@/hooks/stock-check/useStockActivity';
 
 interface StockActivityTableProps {
   activities: StockActivity[];
+  onActivityDelete: () => void;
 }
 
-const StockActivityTable: React.FC<StockActivityTableProps> = ({ activities }) => {
+const StockActivityTable: React.FC<StockActivityTableProps> = ({ 
+  activities,
+  onActivityDelete
+}) => {
   return (
     <div className="border rounded-md">
       <Table>
@@ -27,18 +31,23 @@ const StockActivityTable: React.FC<StockActivityTableProps> = ({ activities }) =
             <TableHead>Ingredient</TableHead>
             <TableHead>Quantity</TableHead>
             <TableHead>Source</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {activities.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-6">
+              <TableCell colSpan={7} className="text-center py-6">
                 No activity recorded yet.
               </TableCell>
             </TableRow>
           ) : (
             activities.map(activity => (
-              <StockActivityRow key={activity.id} activity={activity} />
+              <StockActivityRow 
+                key={activity.id} 
+                activity={activity} 
+                onDelete={onActivityDelete}
+              />
             ))
           )}
         </TableBody>
