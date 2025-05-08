@@ -19,7 +19,7 @@ export const deleteStockActivity = async (activityId: string): Promise<boolean> 
     
     if (prefix === 'sci') {
       // If it's a stock check item
-      const { error, count } = await supabase
+      const { error } = await supabase
         .from('stock_check_items')
         .delete()
         .eq('id', id);
@@ -29,13 +29,13 @@ export const deleteStockActivity = async (activityId: string): Promise<boolean> 
         return false;
       }
       
-      console.log('Stock check items deleted:', count);
-      return count > 0;
+      // Even if count is null or 0, consider it successful as long as there's no error
+      return true;
     } else if (prefix === 'req') {
       // If it's a request item
       // Note: For requests, we don't delete the request_item,
       // we just mark it as not fulfilled
-      const { error, count } = await supabase
+      const { error } = await supabase
         .from('request_items')
         .update({ fulfilled: false })
         .eq('id', id);
@@ -45,8 +45,8 @@ export const deleteStockActivity = async (activityId: string): Promise<boolean> 
         return false;
       }
       
-      console.log('Request items updated:', count);
-      return count > 0;
+      // Even if count is null or 0, consider it successful as long as there's no error
+      return true;
     }
     
     return false;

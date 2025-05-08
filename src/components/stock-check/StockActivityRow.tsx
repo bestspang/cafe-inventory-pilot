@@ -29,7 +29,11 @@ const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity, onDelete 
           description: "The activity record has been removed successfully",
         });
       } else {
-        throw new Error("Failed to delete activity");
+        toast({
+          title: "Delete failed",
+          description: "There was an error deleting the activity",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Error deleting activity:', error);

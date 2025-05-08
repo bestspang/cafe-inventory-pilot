@@ -29,7 +29,7 @@ export const useStockActivity = () => {
     
     // Set up a subscription for real-time updates
     const channel = supabase
-      .channel('stock_check_updates')
+      .channel('stock_activity_updates')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'stock_checks' },
@@ -86,14 +86,10 @@ export const useStockActivity = () => {
       
       if (!success) {
         // If deletion failed, revert the optimistic update
-        console.warn('Delete operation returned false, refreshing data');
         fetchActivities();
-        return false;
       }
       
-      // No need to fetchActivities() here as we've already updated the UI optimistically
-      // and the realtime subscription will catch any sync issues
-      return true;
+      return success;
     } catch (error) {
       console.error('Error in handleDelete:', error);
       // If there was an error, refresh the data to ensure UI consistency
