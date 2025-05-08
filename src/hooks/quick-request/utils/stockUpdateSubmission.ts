@@ -50,21 +50,33 @@ export const submitStockUpdate = async (
     const ingredientIds = itemsWithQuantity.map(item => item.ingredient_id);
     const { data: currentInventory, error: inventoryFetchError } = await supabase
       .from('branch_inventory')
-      .select('ingredient_id, on_hand_qty')
+      .select('ingredient_id, on_hand_qty, reorder_pt')
       .eq('branch_id', formState.branchId)
       .in('ingredient_id', ingredientIds);
     
     if (inventoryFetchError) throw inventoryFetchError;
     
-    // Create a map of current inventory quantities
+    // Create maps of current inventory quantities and reorder points
     const currentQtyMap = Object.fromEntries(
       (currentInventory || []).map(item => [item.ingredient_id, item.on_hand_qty])
     );
+    
+    const reorderPtMap = Object.fromEntries(
+      (currentInventory || []).map(item => [item.ingredient_id, item.reorder_pt])
+    );
+    
+    // Check for low stock items to show warnings
+    const lowStockItems = itemsWithQuantity.filter(item => {
+      const newQty = item.quantity;
+      const reorderPt = reorderPtMap[item.ingredient_id] || 10; // Default reorder point
+      return newQty <= reorderPt;
+    });
     
     // Update branch_inventory with changes for immediate reflection
     const branchInventoryUpdates = itemsWithQuantity.map(item => {
       const oldQty = currentQtyMap[item.ingredient_id] || 0;
       const newQty = item.quantity;
+      const reorderPt = reorderPtMap[item.ingredient_id] || 10; // Preserve existing reorder point
       
       return {
         branch_id: formState.branchId,
@@ -72,7 +84,7 @@ export const submitStockUpdate = async (
         on_hand_qty: newQty,
         last_change: newQty - oldQty,
         last_checked: currentTime,
-        reorder_pt: 10 // Add default reorder_pt as it's required by the table schema
+        reorder_pt: reorderPt
       };
     });
     
@@ -84,6 +96,17 @@ export const submitStockUpdate = async (
       });
     
     if (inventoryUpdateError) throw inventoryUpdateError;
+    
+    // Show warnings for low stock items
+    if (lowStockItems.length > 0) {
+      const lowStockNames = lowStockItems.map(item => item.name).join(', ');
+      
+      toast({
+        title: 'Low Stock Warning',
+        description: `The following items are below reorder point: ${lowStockNames}`,
+        variant: 'warning',
+      });
+    }
     
     toast({
       title: 'Stock Update Submitted',

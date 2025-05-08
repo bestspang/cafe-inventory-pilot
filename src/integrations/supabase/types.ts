@@ -441,7 +441,7 @@ export type Database = {
             foreignKeyName: "stock_checks_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "store_staff"
             referencedColumns: ["id"]
           },
         ]
