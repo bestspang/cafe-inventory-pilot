@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, ShoppingBag, Store, PlusCircle } from 'lucide-react';
+import { CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,9 +15,6 @@ const QuickActions: React.FC<QuickActionsProps> = ({ isLoading = false }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  const isOwner = user?.role === 'owner';
-  const isStaffOrManager = user?.role === 'staff' || user?.role === 'manager';
-
   if (isLoading) {
     return (
       <div className="flex flex-wrap gap-2">
@@ -29,52 +26,13 @@ const QuickActions: React.FC<QuickActionsProps> = ({ isLoading = false }) => {
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {isStaffOrManager && (
-        <Button 
-          variant="outline" 
-          size="sm"
-          className="group transition-all hover:bg-primary hover:text-primary-foreground"
-          onClick={() => navigate('/requests/new')}
-        >
-          <ClipboardList className="h-4 w-4 mr-2 group-hover:text-primary-foreground transition-colors" />
-          <FormattedMessage id="common.new.request" defaultMessage="New Request" />
-        </Button>
-      )}
-      
-      {isStaffOrManager && (
-        <Button 
-          variant="outline" 
-          size="sm"
-          className="group transition-all hover:bg-primary hover:text-primary-foreground"
-          onClick={() => navigate('/stock-check')}
-        >
-          <ShoppingBag className="h-4 w-4 mr-2 group-hover:text-primary-foreground transition-colors" />
-          <FormattedMessage id="stock.check.title" defaultMessage="Stock Check" />
-        </Button>
-      )}
-      
-      <Button 
-        variant="outline" 
-        size="sm"
-        className="group transition-all hover:bg-primary hover:text-primary-foreground"
-        onClick={() => navigate('/quick-request')}
-      >
-        <PlusCircle className="h-4 w-4 mr-2 group-hover:text-primary-foreground transition-colors" />
-        <FormattedMessage id="common.quick.request" defaultMessage="Quick Request" />
-      </Button>
-      
-      {isOwner && (
-        <Button 
-          variant="outline" 
-          size="sm"
-          className="group transition-all hover:bg-primary hover:text-primary-foreground"
-          onClick={() => navigate('/branches/new')}
-        >
-          <Store className="h-4 w-4 mr-2 group-hover:text-primary-foreground transition-colors" />
-          <FormattedMessage id="common.add.branch" defaultMessage="Add Branch" />
-        </Button>
-      )}
+    <div className="flex flex-wrap gap-2 items-center py-2">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <CalendarClock className="h-5 w-5 text-primary/70" />
+        <span className="font-medium">
+          <FormattedMessage id="common.coming.soon" defaultMessage="Coming Soon" />
+        </span>
+      </div>
     </div>
   );
 };
