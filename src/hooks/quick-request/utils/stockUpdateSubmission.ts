@@ -104,7 +104,8 @@ export const submitStockUpdate = async (
       toast({
         title: 'Low Stock Warning',
         description: `The following items are below reorder point: ${lowStockNames}`,
-        variant: 'warning',
+        // Fix the variant to use "destructive" instead of "warning"
+        variant: 'destructive',
       });
     }
     

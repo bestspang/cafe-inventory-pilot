@@ -28,7 +28,7 @@ export const useStockActivity = () => {
           id, 
           checked_at,
           branches(name),
-          profiles(name, email),
+          user_id,
           stock_check_items(
             id,
             on_hand_qty,
@@ -39,6 +39,21 @@ export const useStockActivity = () => {
         .limit(100);
         
       if (stockCheckError) throw stockCheckError;
+      
+      // Separate query to get staff names from store_staff table
+      const userIds = stockCheckData?.map(sc => sc.user_id) || [];
+      const { data: staffData } = await supabase
+        .from('store_staff')
+        .select('id, staff_name')
+        .in('id', userIds);
+        
+      // Create a map of user IDs to staff names
+      const staffMap = new Map();
+      if (staffData) {
+        staffData.forEach(staff => {
+          staffMap.set(staff.id, staff.staff_name);
+        });
+      }
       
       // Next, get request info for fulfilled requests
       // Note the change here: we fetch store_staff instead of profiles since that's what requests.user_id references
@@ -70,11 +85,8 @@ export const useStockActivity = () => {
       // Process regular stock checks
       if (stockCheckData) {
         stockCheckData.forEach(stockCheck => {
-          // Extract staff name from user profile data
-          let staffName = 'Unknown';
-          if (stockCheck.profiles) {
-            staffName = stockCheck.profiles.name || stockCheck.profiles.email || 'Unknown';
-          }
+          // Get staff name from the staff map or use a default
+          let staffName = staffMap.get(stockCheck.user_id) || 'Unknown Staff';
           
           if (stockCheck.stock_check_items && stockCheck.stock_check_items.length > 0) {
             stockCheck.stock_check_items.forEach(item => {
