@@ -1,21 +1,31 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { QuickRequestFormState, QuickRequestIngredient } from '@/types/quick-request';
 
 export const useQuickRequestFormState = (ingredients: QuickRequestIngredient[] = []) => {
-  // Initialize state with ingredients and ensure all quantities start at 0
-  const initialIngredients = ingredients.map(ing => ({
-    ...ing,
-    quantity: 0
-  }));
-
+  // Initialize state with empty ingredients array
   const [formState, setFormState] = useState<QuickRequestFormState>({
     action: 'request',
     branchId: '',
     staffId: '',
-    ingredients: initialIngredients,
+    ingredients: [],
     comment: ''
   });
+  
+  // Initialize ingredients with quantities only once when ingredients array changes
+  useEffect(() => {
+    if (ingredients.length > 0 && formState.ingredients.length === 0) {
+      const initialIngredients = ingredients.map(ing => ({
+        ...ing,
+        quantity: 0
+      }));
+      
+      setFormState(prev => ({
+        ...prev,
+        ingredients: initialIngredients
+      }));
+    }
+  }, [ingredients]);
   
   // This function is called for each keystroke in the quantity inputs
   // It ensures the value is immediately updated in state
@@ -34,13 +44,14 @@ export const useQuickRequestFormState = (ingredients: QuickRequestIngredient[] =
   };
   
   const handleReset = () => {
-    setFormState({
+    setFormState(prev => ({
+      ...prev,
       action: 'request',
       branchId: '',
       staffId: '',
-      ingredients: ingredients.map(ing => ({ ...ing, quantity: 0 })),
+      ingredients: prev.ingredients.map(ing => ({ ...ing, quantity: 0 })),
       comment: ''
-    });
+    }));
   };
   
   return {

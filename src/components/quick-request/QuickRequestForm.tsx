@@ -46,22 +46,6 @@ const QuickRequestForm: React.FC = () => {
     }
   }, [formState.branchId]);
   
-  // Update ingredients when they change in the data hook
-  useEffect(() => {
-    if (ingredients.length > 0) {
-      // Preserve any quantities the user has already entered when ingredients update
-      const updatedIngredients = ingredients.map(ing => {
-        const existingIng = formState.ingredients.find(i => i.id === ing.id);
-        return {
-          ...ing,
-          quantity: existingIng ? existingIng.quantity : 0
-        };
-      });
-      
-      setFormState(prev => ({ ...prev, ingredients: updatedIngredients }));
-    }
-  }, [ingredients]);
-  
   // Set default branch if available
   useEffect(() => {
     if (branches.length > 0 && !formState.branchId) {
@@ -171,7 +155,6 @@ const QuickRequestForm: React.FC = () => {
         disabled={isLoading || isSubmitting}
       />
       
-      {/* Add the summary component here */}
       <QuickRequestSummary 
         ingredients={formState.ingredients} 
         actionType={formState.action}

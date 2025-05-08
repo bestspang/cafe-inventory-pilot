@@ -15,7 +15,7 @@ const QuickRequestIngredientRow: React.FC<QuickRequestIngredientRowProps> = ({
   onUpdateQuantity,
   disabled = false
 }) => {
-  // Handle numeric input changes
+  // Handle numeric input changes with fully controlled input
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value) || 0;
     onUpdateQuantity(ingredient.id, value);
