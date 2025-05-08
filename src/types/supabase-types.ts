@@ -25,4 +25,5 @@ export type Request = RequestsTable & {
 };
 
 // Re-export the UserRole type from our main types file
-export type { UserRole } from '@/types';
+import { UserRole } from '@/types';
+export type { UserRole };

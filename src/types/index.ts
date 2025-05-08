@@ -1,3 +1,4 @@
+
 import { Icons } from "@/components/icons"
 
 export interface NavItem {
@@ -29,7 +30,7 @@ export interface Ingredient {
   costPerUnit?: number;
   categoryId?: string;
   categoryName?: string;
-  branch_id?: string; // Add branch_id to the Ingredient interface
+  branch_id?: string;
 }
 
 export interface Category {
@@ -38,3 +39,21 @@ export interface Category {
 }
 
 export type ViewMode = "list" | "grid"
+
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  role?: UserRole;
+  branchId?: string;
+}
+
+export type UserRole = 'owner' | 'manager' | 'staff';
+
+export interface Branch {
+  id: string;
+  name: string;
+  address?: string | null;
+  timezone?: string | null;
+  is_open?: boolean;
+}

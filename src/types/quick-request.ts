@@ -13,6 +13,7 @@ export interface StaffMember {
   branchId: string;
   staffName: string;
   createdAt: string;
+  branchName?: string;
 }
 
 export interface QuickRequestFormState {
@@ -20,4 +21,5 @@ export interface QuickRequestFormState {
   staffId: string;
   action: 'request' | 'stock-update';
   comment?: string;
+  ingredients: QuickRequestIngredient[];
 }

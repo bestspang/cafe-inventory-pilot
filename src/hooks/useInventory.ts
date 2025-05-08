@@ -54,7 +54,7 @@ export const useInventory = () => {
     await handleAddEdit({
       ...data,
       branch_id: currentStoreId
-    }, categories, handleNewCategory);
+    }, categories, (name) => handleNewCategory(name));
   };
 
   // Handler for viewing cost history
