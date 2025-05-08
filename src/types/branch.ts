@@ -1,31 +1,5 @@
 
-import { Branch as BaseBranch } from '@/types/supabase-types';
-
-export interface Branch extends BaseBranch {
-  name: string;
-  address: string | null; // Made explicitly nullable to match DB schema
-  timezone: string | null;
-  is_open: boolean;
-  created_at: string | null;
-  updated_at: string;
-}
-
-export interface BranchActivity {
-  id: string;
-  branch_id: string;
-  action: string;
-  performed_by: string;
-  performed_at: string;
-  user?: {
-    name: string;
-    email: string;
-  };
-}
-
-export interface StaffMember {
-  id: string;
-  branchId: string;
-  staffName: string;
-  createdAt: string;
-  branchName?: string;
-}
+// This file is kept for import compatibility
+// The actual Branch interface is now in src/types/index.ts
+import { Branch } from '@/types';
+export type { Branch };

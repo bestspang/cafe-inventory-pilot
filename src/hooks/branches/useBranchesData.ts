@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Branch } from '@/types/branch';
+import { Branch } from '@/types';
 
 export const useBranchesData = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -15,7 +15,7 @@ export const useBranchesData = () => {
       
       const { data, error, status } = await supabase
         .from('branches')
-        .select('*')
+        .select('id, name, address, timezone, is_open, created_at, updated_at')
         .order('name');
         
       console.log('Branches fetch response:', { status, count: data?.length });

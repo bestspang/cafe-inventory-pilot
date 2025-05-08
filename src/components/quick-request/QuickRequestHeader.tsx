@@ -8,7 +8,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Branch } from '@/types/branch';
+import { Branch } from '@/types';
 import { StaffMember } from '@/types/quick-request';
 
 interface QuickRequestHeaderProps {

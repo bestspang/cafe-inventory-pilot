@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Branch } from '@/types/branch';
+import { Branch } from '@/types';
 
 interface StockCheckBranchSelectorProps {
   selectedBranch: string;

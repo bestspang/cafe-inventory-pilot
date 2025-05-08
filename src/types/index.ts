@@ -56,4 +56,7 @@ export interface Branch {
   address?: string | null;
   timezone?: string | null;
   is_open?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
+

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { Branch } from '@/types/branch';
+import { Branch } from '@/types';
 
 export const useStockCheckBranches = (storeId?: string | null) => {
   const { toast } = useToast();
@@ -24,13 +24,13 @@ export const useStockCheckBranches = (storeId?: string | null) => {
         // When storeId is provided, just fetch this specific branch
         const { data, error } = await supabase
           .from('branches')
-          .select('id, name')
+          .select('id, name, address, timezone, is_open, created_at, updated_at')
           .eq('id', storeId);
         
         if (error) throw error;
         
         if (data && data.length > 0) {
-          setBranches(data);
+          setBranches(data as Branch[]);
           setSelectedBranch(data[0].id);
         }
       } catch (error) {

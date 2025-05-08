@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/components/ui/sonner';
-import { Branch } from '@/types/branch';
+import { Branch } from '@/types';
 
 interface StoresContextType {
   stores: Branch[];
@@ -42,7 +42,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       // Get branches
       const { data, error } = await supabase
         .from('branches')
-        .select('id, name, address, timezone, is_open')
+        .select('id, name, address, timezone, is_open, created_at, updated_at')
         .order('name');
       
       if (error) throw error;
