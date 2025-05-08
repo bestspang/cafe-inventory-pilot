@@ -27,6 +27,7 @@ export default function Dashboard() {
   const { metrics, isLoading: isLoadingMetrics } = useDashboardMetrics();
   const { trends, isLoading: isLoadingTrends } = useDashboardTrends();
   
+  // Don't pass the branchFilter to useBranchSnapshots
   const { branches, isLoading: isLoadingBranches } = useBranchSnapshots({ 
     branchFilter 
   });

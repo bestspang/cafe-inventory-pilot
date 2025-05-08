@@ -20,6 +20,9 @@ const Header = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
+  // Hide store switcher on Dashboard and Requests pages
+  const hideStoreSwitcher = ['/dashboard', '/requests'].includes(location.pathname);
+
   // Generate breadcrumbs from current path
   const generateBreadcrumbs = () => {
     const pathSegments = location.pathname.split('/').filter(segment => segment);
@@ -68,7 +71,7 @@ const Header = () => {
       </div>
       
       <div className="flex items-center gap-2">
-        <StoreSwitcher />
+        {!hideStoreSwitcher && <StoreSwitcher />}
         
         <div className="hidden md:flex relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />

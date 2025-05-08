@@ -1,45 +1,46 @@
 
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 export const useRequestsRealtime = (
-  refreshFunction: () => Promise<void>,
-  storeId?: string | null
+  refreshFunction: () => Promise<void>
 ) => {
+  const { user } = useAuth();
+  
   useEffect(() => {
-    console.log('Setting up realtime subscription for requests');
+    // Set up realtime subscription
+    // For owners, listen to all changes across all branches
+    // For other roles, only listen to changes in their branch
+    let channelFilter = {};
     
-    // Base channel configuration
+    if (user && user.role !== 'owner' && user.branchId) {
+      channelFilter = {
+        filter: `branch_id=eq.${user.branchId}`
+      };
+    }
+    
     const channel = supabase
       .channel('requests-changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'requests',
-          ...(storeId ? { filter: `branch_id=eq.${storeId}` } : {})
-        }, 
-        () => {
-          console.log('Requests changed, refreshing data...');
-          refreshFunction();
-        }
-      )
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'request_items'
-        }, 
-        () => {
-          console.log('Request items changed, refreshing data...');
-          refreshFunction();
-        }
-      )
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'requests',
+        ...channelFilter
+      }, () => {
+        refreshFunction();
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'request_items' 
+      }, () => {
+        refreshFunction();
+      })
       .subscribe();
-
+      
     return () => {
-      console.log('Removing realtime subscription for requests');
       supabase.removeChannel(channel);
     };
-  }, [refreshFunction, storeId]);
+  }, [refreshFunction, user]);
 };

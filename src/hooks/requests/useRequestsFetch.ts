@@ -3,9 +3,11 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { RequestItem, RequestDB } from '@/types/requests';
+import { useAuth } from '@/context/AuthContext';
 
-export const useRequestsFetch = (storeId?: string | null) => {
+export const useRequestsFetch = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [branches, setBranches] = useState<{ id: string, name: string }[]>([]);
@@ -76,9 +78,9 @@ export const useRequestsFetch = (storeId?: string | null) => {
         `)
         .order('requested_at', { ascending: false });
       
-      // Filter by store if storeId is provided
-      if (storeId) {
-        query = query.eq('branch_id', storeId);
+      // If user is not an owner, filter by their assigned branch
+      if (user && user.role !== 'owner' && user.branchId) {
+        query = query.eq('branch_id', user.branchId);
       }
 
       const { data, error } = await query;
@@ -126,7 +128,7 @@ export const useRequestsFetch = (storeId?: string | null) => {
   useEffect(() => {
     fetchRequests();
     fetchBranches();
-  }, [storeId]);
+  }, [user?.branchId]);
 
   return {
     requests,
