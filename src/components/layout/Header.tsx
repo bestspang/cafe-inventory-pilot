@@ -1,116 +1,71 @@
-
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Search, Menu } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
+import { Link } from 'react-router-dom';
+import { Settings, Bell } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useSidebar } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
-import StoreSwitcher from '@/components/stores/StoreSwitcher';
+import { useLocale } from '@/context/LocaleContext';
+import LanguageIndicator from './LanguageIndicator';
 
 const Header = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { toggleSidebar } = useSidebar();
+  const { user } = useAuth();
+  const { t } = useLocale();
 
-  // Pages where the store switcher should be hidden
-  const hideStoreSwitcher = ['/dashboard', '/requests', '/inventory', '/branches'];
-  const shouldShowStoreSwitcher = !hideStoreSwitcher.includes(location.pathname);
-
-  // Generate breadcrumbs from current path
-  const generateBreadcrumbs = () => {
-    const pathSegments = location.pathname.split('/').filter(segment => segment);
-    
-    const breadcrumbs = [
-      { name: 'Home', path: '/dashboard' },
-      ...pathSegments.map((segment, index) => {
-        const path = `/${pathSegments.slice(0, index + 1).join('/')}`;
-        return {
-          name: segment.charAt(0).toUpperCase() + segment.slice(1).replace('-', ' '),
-          path
-        };
-      })
-    ];
-
-    return breadcrumbs.filter((breadcrumb, index) => {
-      // Remove Home if current page is dashboard
-      if (index === 0 && pathSegments[0] === 'dashboard') return false;
-      return true;
-    });
-  };
-
-  const breadcrumbs = generateBreadcrumbs();
+  const userInitials = user?.name
+    ? user.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : 'U';
 
   return (
-    <header className="bg-background border-b flex items-center justify-between p-4 md:px-6 h-16 sticky top-0 z-10">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger className="md:hidden">
-          <Menu className="h-5 w-5" />
-        </SidebarTrigger>
-        
-        <div className="hidden md:flex items-center gap-1">
-          {breadcrumbs.map((breadcrumb, index) => (
-            <React.Fragment key={breadcrumb.path}>
-              {index > 0 && <span className="mx-1 text-muted-foreground">/</span>}
-              {index === breadcrumbs.length - 1 ? (
-                <span className="text-foreground font-medium">{breadcrumb.name}</span>
-              ) : (
-                <Link to={breadcrumb.path} className="text-muted-foreground hover:text-foreground transition-colors">
-                  {breadcrumb.name}
-                </Link>
-              )}
-            </React.Fragment>
-          ))}
+    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-14 items-center px-4">
+        <button
+          className="mr-2 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground lg:hidden"
+          onClick={toggleSidebar}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-6 w-6"
+          >
+            <line x1="4" x2="20" y1="12" y2="12" />
+            <line x1="4" x2="20" y1="6" y2="6" />
+            <line x1="4" x2="20" y1="18" y2="18" />
+          </svg>
+          <span className="sr-only">Toggle Menu</span>
+        </button>
+        <div className="flex items-center gap-2">
+          <LanguageIndicator />
         </div>
-      </div>
-      
-      <div className="flex items-center gap-2">
-        {shouldShowStoreSwitcher && <StoreSwitcher />}
-        
-        <div className="hidden md:flex relative w-64">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search..." 
-            className="pl-8"
-          />
-        </div>
-        
-        <Button size="icon" variant="ghost" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full"></span>
-        </Button>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-cafe-200 text-cafe-800 flex items-center justify-center font-medium">
-                {user?.name?.charAt(0) || 'U'}
-              </div>
-              <span className="hidden sm:inline-block">{user?.name}</span>
+        <div className="ml-auto flex items-center space-x-2">
+          <Button variant="ghost" size="icon">
+            <Bell className="h-5 w-5" />
+            <span className="sr-only">Notifications</span>
+          </Button>
+          <Link to="/settings">
+            <Button variant="ghost" size="icon">
+              <Settings className="h-5 w-5" />
+              <span className="sr-only">{t('common.settings')}</span>
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <div className="px-2 py-1.5 text-sm font-medium">{user?.email}</div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => navigate('/profile')}>
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => navigate('/settings')}>
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={logout}>
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </Link>
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+              {userInitials}
+            </AvatarFallback>
+          </Avatar>
+        </div>
       </div>
     </header>
   );
