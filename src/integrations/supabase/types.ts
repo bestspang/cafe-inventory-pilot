@@ -407,6 +407,38 @@ export type Database = {
           },
         ]
       }
+      stock_check_settings: {
+        Row: {
+          auto_reorder: boolean
+          branch_id: string
+          id: string
+          show_stock_detail: boolean
+          updated_at: string
+        }
+        Insert: {
+          auto_reorder?: boolean
+          branch_id: string
+          id?: string
+          show_stock_detail?: boolean
+          updated_at?: string
+        }
+        Update: {
+          auto_reorder?: boolean
+          branch_id?: string
+          id?: string
+          show_stock_detail?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_check_settings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: true
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_checks: {
         Row: {
           branch_id: string

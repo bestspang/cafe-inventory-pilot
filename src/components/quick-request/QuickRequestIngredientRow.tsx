@@ -8,12 +8,14 @@ interface QuickRequestIngredientRowProps {
   ingredient: QuickRequestIngredient;
   onUpdateQuantity: (id: string, quantity: number) => void;
   disabled?: boolean;
+  showDetails?: boolean;
 }
 
 const QuickRequestIngredientRow: React.FC<QuickRequestIngredientRowProps> = ({
   ingredient,
   onUpdateQuantity,
-  disabled = false
+  disabled = false,
+  showDetails = false
 }) => {
   // Handle numeric input changes with fully controlled input
   // Using onInput to capture changes immediately (including spinner clicks)
@@ -39,6 +41,17 @@ const QuickRequestIngredientRow: React.FC<QuickRequestIngredientRowProps> = ({
         />
       </TableCell>
       <TableCell>{ingredient.unit}</TableCell>
+
+      {showDetails && (
+        <>
+          <TableCell className="text-right">
+            {ingredient.reorderPt ?? 'N/A'}
+          </TableCell>
+          <TableCell className="text-right">
+            {ingredient.onHandQty ?? 'N/A'}
+          </TableCell>
+        </>
+      )}
     </TableRow>
   );
 };

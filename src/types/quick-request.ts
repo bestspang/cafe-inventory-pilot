@@ -15,6 +15,8 @@ export interface QuickRequestIngredient {
   name: string;
   unit: string;
   quantity: number;
+  reorderPt?: number;  // Added for stock details
+  onHandQty?: number;  // Added for stock details
 }
 
 export interface QuickRequestFormState {

@@ -14,18 +14,16 @@ export const useQuickRequestFormState = (ingredients: QuickRequestIngredient[] =
   
   // Initialize ingredients with quantities only once when ingredients array changes
   useEffect(() => {
-    if (ingredients.length > 0 && formState.ingredients.length === 0) {
-      const initialIngredients = ingredients.map(ing => ({
-        ...ing,
-        quantity: 0
-      }));
-      
+    if (ingredients.length > 0) {
       setFormState(prev => ({
         ...prev,
-        ingredients: initialIngredients
+        ingredients: ingredients.map(ing => ({
+          ...ing,
+          quantity: 0 // Reset quantity when ingredients change
+        }))
       }));
     }
-  }, [ingredients]);
+  }, [ingredients]); // Dependencies include ingredients so it updates when they change
   
   // This function is called for each keystroke in the quantity inputs
   // It ensures the value is immediately updated in state
@@ -47,7 +45,6 @@ export const useQuickRequestFormState = (ingredients: QuickRequestIngredient[] =
     setFormState(prev => ({
       ...prev,
       action: 'request',
-      branchId: '',
       staffId: '',
       ingredients: prev.ingredients.map(ing => ({ ...ing, quantity: 0 })),
       comment: ''

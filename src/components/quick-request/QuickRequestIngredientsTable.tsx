@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/table';
 import { QuickRequestIngredient } from '@/types/quick-request';
 import QuickRequestIngredientRow from './QuickRequestIngredientRow';
+import { useStockCheckSettings } from '@/context/StockCheckSettingsContext';
 
 interface QuickRequestIngredientsTableProps {
   ingredients: QuickRequestIngredient[];
@@ -23,6 +24,12 @@ const QuickRequestIngredientsTable: React.FC<QuickRequestIngredientsTableProps> 
   actionType,
   disabled = false
 }) => {
+  // Get stock settings to determine whether to show stock details
+  const { showStockDetail } = useStockCheckSettings();
+  
+  // Only show stock details for requests (not stock updates) when setting is enabled
+  const showDetails = showStockDetail && actionType === 'request';
+  
   return (
     <div>
       <h3 className="text-lg font-medium mb-2">
@@ -35,6 +42,12 @@ const QuickRequestIngredientsTable: React.FC<QuickRequestIngredientsTableProps> 
               <TableHead>Ingredient</TableHead>
               <TableHead>Quantity</TableHead>
               <TableHead>Unit</TableHead>
+              {showDetails && (
+                <>
+                  <TableHead className="text-right">Reorder Pt</TableHead>
+                  <TableHead className="text-right">On-Hand</TableHead>
+                </>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -44,6 +57,7 @@ const QuickRequestIngredientsTable: React.FC<QuickRequestIngredientsTableProps> 
                 ingredient={ingredient}
                 onUpdateQuantity={onUpdateQuantity}
                 disabled={disabled}
+                showDetails={showDetails}
               />
             ))}
           </TableBody>

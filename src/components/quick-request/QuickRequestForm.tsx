@@ -9,7 +9,11 @@ import QuickRequestIngredientsTable from './QuickRequestIngredientsTable';
 import QuickRequestFooter from './QuickRequestFooter';
 import QuickRequestSummary from './QuickRequestSummary';
 
-const QuickRequestForm: React.FC = () => {
+interface QuickRequestFormProps {
+  onBranchChange?: (branchId: string) => void;
+}
+
+const QuickRequestForm: React.FC<QuickRequestFormProps> = ({ onBranchChange }) => {
   // Create ref for form element
   const formRef = useRef<HTMLFormElement>(null);
   
@@ -43,15 +47,26 @@ const QuickRequestForm: React.FC = () => {
           setFormState(prev => ({ ...prev, staffId: '' }));
         }
       });
+      
+      // Notify parent component about branch change
+      if (onBranchChange) {
+        onBranchChange(formState.branchId);
+      }
     }
-  }, [formState.branchId]);
+  }, [formState.branchId, fetchStaffMembers, onBranchChange]);
   
   // Set default branch if available
   useEffect(() => {
     if (branches.length > 0 && !formState.branchId) {
-      setFormState(prev => ({ ...prev, branchId: branches[0].id }));
+      const defaultBranch = branches[0].id;
+      setFormState(prev => ({ ...prev, branchId: defaultBranch }));
+      
+      // Notify parent component about initial branch selection
+      if (onBranchChange) {
+        onBranchChange(defaultBranch);
+      }
     }
-  }, [branches]);
+  }, [branches, onBranchChange]);
   
   // Form validation
   const validateForm = () => {

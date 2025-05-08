@@ -10,6 +10,7 @@ export const useQuickRequestData = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [ingredients, setIngredients] = useState<QuickRequestIngredient[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState<string>('');
 
   // Fetch branches
   const fetchBranches = async () => {
@@ -39,24 +40,59 @@ export const useQuickRequestData = () => {
     return [];
   };
   
-  // Fetch ingredients
-  const fetchIngredients = async () => {
+  // Fetch ingredients with stock information if a branch is selected
+  const fetchIngredients = async (branchId?: string) => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      
+      // First get all ingredients
+      const { data: ingredientsData, error: ingredientsError } = await supabase
         .from('ingredients')
         .select('id, name, unit');
       
-      if (error) throw error;
+      if (ingredientsError) throw ingredientsError;
       
-      if (data) {
-        console.log('Ingredients loaded:', data.length);
-        const ingredientsWithQuantity = data.map(ingredient => ({
+      if (ingredientsData) {
+        console.log('Ingredients loaded:', ingredientsData.length);
+        
+        let ingredientsWithQuantity: QuickRequestIngredient[] = ingredientsData.map(ingredient => ({
           ...ingredient,
           quantity: 0
         }));
         
+        // If branch is selected, fetch stock levels
+        if (branchId) {
+          const { data: stockData, error: stockError } = await supabase
+            .from('branch_inventory')
+            .select('ingredient_id, on_hand_qty, reorder_pt')
+            .eq('branch_id', branchId);
+          
+          if (stockError) {
+            console.error('Error fetching stock levels:', stockError);
+          } else if (stockData) {
+            // Create map of stock data
+            const stockMap = new Map();
+            stockData.forEach(item => {
+              stockMap.set(item.ingredient_id, {
+                onHandQty: item.on_hand_qty,
+                reorderPt: item.reorder_pt
+              });
+            });
+            
+            // Enrich ingredients with stock data
+            ingredientsWithQuantity = ingredientsWithQuantity.map(ing => {
+              const stockInfo = stockMap.get(ing.id);
+              return {
+                ...ing,
+                onHandQty: stockInfo?.onHandQty,
+                reorderPt: stockInfo?.reorderPt
+              };
+            });
+          }
+        }
+        
         setIngredients(ingredientsWithQuantity);
+        setSelectedBranchId(branchId || '');
         return ingredientsWithQuantity;
       }
     } catch (error) {
@@ -74,7 +110,7 @@ export const useQuickRequestData = () => {
   
   // Fetch staff members for a specific branch
   const fetchStaffMembers = async (branchId: string) => {
-    if (!branchId) return;
+    if (!branchId) return [];
     
     try {
       setIsLoading(true);
@@ -123,6 +159,7 @@ export const useQuickRequestData = () => {
     ingredients,
     fetchBranches,
     fetchIngredients,
-    fetchStaffMembers
+    fetchStaffMembers,
+    selectedBranchId
   };
 };
