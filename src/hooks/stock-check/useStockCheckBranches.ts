@@ -23,32 +23,29 @@ export const useStockCheckBranches = (storeId?: string | null) => {
         // When storeId is provided, fetch this specific branch
         if (storeId) {
           const { data, error } = await supabase
-            .from('branches')
-            .select('id, name, address, timezone, is_open, created_at, updated_at')
+            .from('stores')
+            .select('id, name, address, timezone, is_open, created_at, updated_at, owner_id')
             .eq('id', storeId);
           
           if (error) throw error;
           
           if (data && data.length > 0) {
-            // Create objects that satisfy the Branch interface
-            const typedData = data.map(branch => ({ ...branch, owner_id: undefined } as Branch));
-            setBranches(typedData);
-            setSelectedBranch(typedData[0].id);
+            setBranches(data as Branch[]);
+            setSelectedBranch(data[0].id);
           }
         } else {
-          // Otherwise fetch all branches 
+          // Otherwise fetch all branches for the current user
           const { data, error } = await supabase
-            .from('branches')
-            .select('id, name, address, timezone, is_open, created_at, updated_at')
+            .from('stores')
+            .select('id, name, address, timezone, is_open, created_at, updated_at, owner_id')
+            .eq('owner_id', user.id)
             .order('name');
             
           if (error) throw error;
           
           if (data && data.length > 0) {
-            // Create objects that satisfy the Branch interface
-            const typedData = data.map(branch => ({ ...branch, owner_id: undefined } as Branch));
-            setBranches(typedData);
-            setSelectedBranch(typedData[0].id);
+            setBranches(data as Branch[]);
+            setSelectedBranch(data[0].id);
           }
         }
       } catch (error) {

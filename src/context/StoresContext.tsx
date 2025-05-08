@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -44,49 +45,32 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Try fetching from stores table first (with owner_id)
+      // Only fetch from stores table
       const { data: storesData, error: storesError } = await supabase
         .from('stores')
         .select('id, name, address, timezone, is_open, created_at, updated_at, owner_id')
         .eq('owner_id', user.id)
         .order('name');
       
-      if (!storesError && storesData && storesData.length > 0) {
-        console.log('Fetched stores:', storesData);
-        setStores(storesData as Branch[]);
-      } else {
-        // Fallback to branches table
-        const { data: branchesData, error: branchesError } = await supabase
-          .from('branches')
-          .select('id, name, address, timezone, is_open, created_at, updated_at')
-          .order('name');
-        
-        if (branchesError) {
-          console.error('Error fetching branches:', branchesError);
-          throw branchesError;
-        }
-        
-        // Add owner_id to match Branch type
-        const branchesWithOwnerId = (branchesData || []).map(branch => ({
-          ...branch,
-          owner_id: user.id // Set current user as owner for all branches
-        }));
-        
-        console.log('Fetched branches with added owner_id:', branchesWithOwnerId);
-        setStores(branchesWithOwnerId as Branch[]);
+      if (storesError) {
+        console.error('Error fetching stores:', storesError);
+        throw storesError;
       }
       
+      console.log('Fetched stores:', storesData || []);
+      setStores(storesData || [] as Branch[]);
+      
       // If we have stores but no current selection, try to restore from localStorage or use first
-      if (stores.length > 0 && !currentStoreId) {
+      if (storesData && storesData.length > 0 && !currentStoreId) {
         const savedStoreId = localStorage.getItem('selectedStoreId');
         
         // Check if the saved ID is in the available stores
-        const validSavedId = savedStoreId && stores.some(store => store.id === savedStoreId);
+        const validSavedId = savedStoreId && storesData.some(store => store.id === savedStoreId);
         
-        setCurrentStoreId(validSavedId ? savedStoreId : stores[0].id);
+        setCurrentStoreId(validSavedId ? savedStoreId : storesData[0].id);
       }
     } catch (error) {
-      console.error('Error fetching branches/stores:', error);
+      console.error('Error fetching stores:', error);
       toast.error('Failed to load your branches');
     } finally {
       setIsLoading(false);
@@ -98,22 +82,22 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     fetchStores();
   }, [isAuthenticated, user?.id]);
 
-  // Set up realtime subscription for branches changes
+  // Set up realtime subscription for stores changes
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
     
-    console.log('Setting up realtime subscription for branches');
+    console.log('Setting up realtime subscription for stores');
     
     const channel = supabase
-      .channel('branches_changes')
+      .channel('stores_changes')
       .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'branches' },
+          { event: '*', schema: 'public', table: 'stores' },
           (payload) => {
-            console.group('Branch change detected via StoresContext');
+            console.group('Store change detected via StoresContext');
             console.log('Change type:', payload.eventType);
             console.log('Changed data:', payload.new);
             
-            // Refresh all branches on any change
+            // Refresh all stores on any change
             fetchStores();
             
             console.groupEnd();
@@ -122,12 +106,12 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       .subscribe();
       
     return () => {
-      console.log('Cleaning up branches subscription in StoresContext');
+      console.log('Cleaning up stores subscription in StoresContext');
       supabase.removeChannel(channel);
     };
   }, [isAuthenticated, user?.id]);
 
-  // Function to create a new branch
+  // Function to create a new store
   const createStore = async (name: string, address?: string, timezone: string = 'UTC') => {
     if (!user?.id) {
       toast.error('You must be logged in to create a branch');
@@ -135,9 +119,8 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     }
     
     try {
-      console.log('Creating new branch with owner_id:', user.id);
+      console.log('Creating new store with owner_id:', user.id);
       
-      // Try creating in stores table first
       const { data: storeData, error: storeError } = await supabase
         .from('stores')
         .insert({
@@ -149,45 +132,17 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
         .select()
         .single();
         
-      if (!storeError && storeData) {
-        toast.success('Branch created successfully');
-        console.log('New store created:', storeData);
-        addStore(storeData as Branch);
-        setCurrentStoreId(storeData.id);
-        return storeData as Branch;
-      }
-      
-      console.log('Failed to create in stores table, trying branches table');
-      
-      // Fallback to branches table
-      const { data: branchData, error: branchError } = await supabase
-        .from('branches')
-        .insert({
-          name,
-          address: address || null,
-          timezone
-          // Note: branches table might not have owner_id column
-        })
-        .select()
-        .single();
-        
-      if (branchError) {
-        console.error('Error creating branch:', branchError);
+      if (storeError) {
+        console.error('Error creating store:', storeError);
         toast.error('Failed to create branch');
         return null;
       }
       
-      // Add owner_id to match Branch type
-      const branchWithOwnerId = {
-        ...branchData,
-        owner_id: user.id
-      };
-      
       toast.success('Branch created successfully');
-      console.log('New branch created:', branchWithOwnerId);
-      addStore(branchWithOwnerId as Branch);
-      setCurrentStoreId(branchWithOwnerId.id);
-      return branchWithOwnerId as Branch;
+      console.log('New store created:', storeData);
+      addStore(storeData as Branch);
+      setCurrentStoreId(storeData.id);
+      return storeData as Branch;
     } catch (error) {
       console.error('Error creating branch:', error);
       toast.error('Failed to create branch');
