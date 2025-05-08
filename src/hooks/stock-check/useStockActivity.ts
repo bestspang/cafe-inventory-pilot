@@ -63,7 +63,7 @@ export const useStockActivity = () => {
       )
       .on(
         'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'request_items' },
+        { event: 'UPDATE', schema: 'public', table: 'request_items' },
         () => {
           fetchActivities();
         }
@@ -75,14 +75,29 @@ export const useStockActivity = () => {
     };
   }, [fetchActivities]);
   
-  // Update the StockActivityRow component to use this function
+  // Update the handleDelete function to properly handle the deletion and UI refresh
   const handleDelete = async (activityId: string) => {
     try {
-      await deleteStockActivity(activityId);
-      await fetchActivities(); // Refresh the data after deletion
+      // First, optimistically update the UI
+      setActivities(prev => prev.filter(activity => activity.id !== activityId));
+      
+      // Then perform the actual deletion
+      const success = await deleteStockActivity(activityId);
+      
+      if (!success) {
+        // If deletion failed, revert the optimistic update
+        console.warn('Delete operation returned false, refreshing data');
+        fetchActivities();
+        return false;
+      }
+      
+      // No need to fetchActivities() here as we've already updated the UI optimistically
+      // and the realtime subscription will catch any sync issues
       return true;
     } catch (error) {
       console.error('Error in handleDelete:', error);
+      // If there was an error, refresh the data to ensure UI consistency
+      fetchActivities();
       return false;
     }
   };

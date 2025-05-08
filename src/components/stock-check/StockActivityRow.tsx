@@ -1,9 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { useDateFormatter } from '@/hooks/requests/useDateFormatter';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Loader2 } from 'lucide-react';
 import type { StockActivity } from '@/hooks/stock-check/types';
 import { toast } from '@/hooks/use-toast';
 
@@ -14,8 +14,12 @@ interface StockActivityRowProps {
 
 const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity, onDelete }) => {
   const { formatDate } = useDateFormatter();
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const handleDelete = async () => {
+    if (isDeleting) return; // Prevent double clicks
+    
+    setIsDeleting(true);
     try {
       const success = await onDelete(activity.id);
       
@@ -34,12 +38,18 @@ const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity, onDelete 
         description: "There was an error deleting the activity",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   // Determine the change indicator
   const renderQuantityChange = () => {
-    if (activity.quantityChange === undefined || activity.quantityChange === null || activity.quantityChange === 0) {
+    if (activity.quantityChange === undefined || activity.quantityChange === null) {
+      return <span className="text-muted-foreground">-</span>;
+    }
+    
+    if (activity.quantityChange === 0) {
       return <span className="text-muted-foreground">0</span>;
     }
     
@@ -86,8 +96,13 @@ const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity, onDelete 
           onClick={handleDelete}
           className="text-destructive hover:text-destructive/80 transition-colors"
           aria-label="Delete activity"
+          disabled={isDeleting}
         >
-          <Trash2 size={16} />
+          {isDeleting ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <Trash2 size={16} />
+          )}
         </button>
       </TableCell>
     </TableRow>
