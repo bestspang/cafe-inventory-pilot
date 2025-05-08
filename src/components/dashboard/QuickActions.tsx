@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Store, PlusCircle, Settings } from 'lucide-react';
+import { ClipboardList, ShoppingBag, Store, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -41,15 +41,17 @@ const QuickActions: React.FC<QuickActionsProps> = ({ isLoading = false }) => {
         </Button>
       )}
       
-      <Button 
-        variant="outline" 
-        size="sm"
-        className="group transition-all hover:bg-primary hover:text-primary-foreground"
-        onClick={() => navigate('/settings')}
-      >
-        <Settings className="h-4 w-4 mr-2 group-hover:text-primary-foreground transition-colors" />
-        Settings
-      </Button>
+      {isStaffOrManager && (
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="group transition-all hover:bg-primary hover:text-primary-foreground"
+          onClick={() => navigate('/stock-check')}
+        >
+          <ShoppingBag className="h-4 w-4 mr-2 group-hover:text-primary-foreground transition-colors" />
+          Stock Check
+        </Button>
+      )}
       
       <Button 
         variant="outline" 
