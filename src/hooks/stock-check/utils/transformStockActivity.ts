@@ -76,6 +76,7 @@ export const transformStockCheckData = (
             staffName,
             ingredient: item.ingredients.name,
             quantity: item.on_hand_qty,
+            quantityChange: item.last_change || 0, // Add the quantity change
             unit: item.ingredients.unit,
             comment: null,
             source: 'stock-check',
@@ -109,6 +110,7 @@ export const transformRequestData = (requestData: any[]) => {
             staffName: 'System',
             ingredient: item.ingredients.name,
             quantity: item.quantity,
+            quantityChange: item.quantity, // For fulfilled requests, change is always positive
             unit: item.ingredients.unit,
             comment: 'Fulfilled from request',
             source: 'fulfilled-request',

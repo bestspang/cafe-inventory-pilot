@@ -36,6 +36,20 @@ const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity, onDelete 
       });
     }
   };
+
+  // Determine the change indicator
+  const renderQuantityChange = () => {
+    if (!activity.quantityChange || activity.quantityChange === 0) {
+      return <span className="text-muted-foreground">0</span>;
+    }
+    
+    const isPositive = activity.quantityChange > 0;
+    return (
+      <span className={isPositive ? "text-green-600" : "text-red-600"}>
+        {isPositive ? '+' : ''}{activity.quantityChange}
+      </span>
+    );
+  };
   
   return (
     <TableRow>
@@ -56,6 +70,9 @@ const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity, onDelete 
         <Badge variant={activity.source === 'fulfilled-request' ? 'success' : 'outline'}>
           {activity.quantity} {activity.unit}
         </Badge>
+      </TableCell>
+      <TableCell>
+        {renderQuantityChange()}
       </TableCell>
       <TableCell>
         {activity.source === 'fulfilled-request' ? (

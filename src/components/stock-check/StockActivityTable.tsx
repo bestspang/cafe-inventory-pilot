@@ -30,6 +30,7 @@ const StockActivityTable: React.FC<StockActivityTableProps> = ({
             <TableHead>Staff</TableHead>
             <TableHead>Ingredient</TableHead>
             <TableHead>Quantity</TableHead>
+            <TableHead>Added</TableHead>
             <TableHead>Source</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -37,7 +38,7 @@ const StockActivityTable: React.FC<StockActivityTableProps> = ({
         <TableBody>
           {activities.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-6">
+              <TableCell colSpan={8} className="text-center py-6">
                 No activity recorded yet.
               </TableCell>
             </TableRow>

@@ -21,7 +21,8 @@ export const fetchStockActivity = async (): Promise<StockActivity[]> => {
         stock_check_items(
           id,
           on_hand_qty,
-          ingredients(id, name, unit)
+          ingredients(id, name, unit),
+          last_change
         )
       `)
       .order('checked_at', { ascending: false })
