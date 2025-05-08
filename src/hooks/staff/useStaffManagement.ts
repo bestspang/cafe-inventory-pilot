@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Branch } from '@/types/branch';
-import { StaffMember } from '@/types/branch';
+import { Branch, StaffMember } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
 export function useStaffManagement() {

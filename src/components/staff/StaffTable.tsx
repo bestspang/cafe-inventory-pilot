@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
@@ -10,7 +9,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { StaffMember } from '@/types/branch';
+import { StaffMember } from '@/types';
 
 interface StaffTableProps {
   staffMembers: StaffMember[];

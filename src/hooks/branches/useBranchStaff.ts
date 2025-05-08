@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
-import { StaffMember } from '@/types/branch';
+import { StaffMember } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 
 export const useBranchStaff = (branchId: string) => {

@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { BranchActivity } from '@/types/branch';
+import { BranchActivity } from '@/types';
 
 export const useBranchActivity = (branchId?: string) => {
   const [activities, setActivities] = useState<BranchActivity[]>([]);

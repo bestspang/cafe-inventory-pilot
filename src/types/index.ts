@@ -60,3 +60,22 @@ export interface Branch {
   updated_at?: string;
 }
 
+export interface BranchActivity {
+  id: string;
+  branch_id: string;
+  action: string;
+  performed_by: string;
+  performed_at: string;
+  user?: {
+    name: string;
+    email: string;
+  };
+}
+
+export interface StaffMember {
+  id: string;
+  branchId: string;
+  staffName: string;
+  createdAt?: string;
+  branchName?: string;
+}
