@@ -13,7 +13,7 @@ interface StoresContextType {
   createStore: (name: string, address?: string, timezone?: string) => Promise<Branch | null>;
   currentStore: Branch | null;
   refreshStores: () => Promise<void>;
-  addStore: (store: Branch) => void; // New function to add a store directly to state
+  addStore: (store: Branch) => void; // Function to add a store directly to state
 }
 
 const StoresContext = createContext<StoresContextType | undefined>(undefined);
@@ -54,16 +54,18 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       
       if (error) throw error;
       
-      setStores(data || []);
+      // Fix: Explicitly cast the data to Branch[] to avoid deep type instantiation error
+      const branchData = data as Branch[];
+      setStores(branchData || []);
       
       // If we have stores but no current selection, try to restore from localStorage or use first
-      if (data && data.length > 0 && !currentStoreId) {
+      if (branchData && branchData.length > 0 && !currentStoreId) {
         const savedStoreId = localStorage.getItem('selectedStoreId');
         
         // Check if the saved ID is in the available stores
-        const validSavedId = savedStoreId && data.some(store => store.id === savedStoreId);
+        const validSavedId = savedStoreId && branchData.some(store => store.id === savedStoreId);
         
-        setCurrentStoreId(validSavedId ? savedStoreId : data[0].id);
+        setCurrentStoreId(validSavedId ? savedStoreId : branchData[0].id);
       }
     } catch (error) {
       console.error('Error fetching branches:', error);
@@ -130,13 +132,16 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       
       toast.success('Branch created successfully');
       
+      // Explicitly cast data to Branch to avoid type issues
+      const newBranch = data as Branch;
+      
       // Optimistically update the local state
-      addStore(data);
+      addStore(newBranch);
       
       // Set the new store as current
-      setCurrentStoreId(data.id);
+      setCurrentStoreId(newBranch.id);
       
-      return data;
+      return newBranch;
     } catch (error) {
       console.error('Error creating branch:', error);
       toast.error('Failed to create branch');

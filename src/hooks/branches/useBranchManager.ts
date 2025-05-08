@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Branch } from '@/types/branch';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import { useBranchesData } from './useBranchesData';
 
 interface BranchCreateValues {
   name: string;
@@ -126,10 +127,43 @@ export function useBranchManager() {
     }
   };
 
+  // Add the missing toggleBranchStatus function
+  const toggleBranchStatus = async (branch: Branch): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const newStatus = !branch.is_open;
+      const { error } = await supabase
+        .from('branches')
+        .update({
+          is_open: newStatus
+        })
+        .eq('id', branch.id);
+      
+      if (error) throw error;
+
+      toast({
+        title: branch.is_open ? 'Branch closed' : 'Branch opened',
+        description: `${branch.name} has been ${branch.is_open ? 'closed' : 'opened'} successfully`
+      });
+      return true;
+    } catch (error: any) {
+      console.error('Error updating branch status:', error);
+      toast({
+        title: 'Failed to update branch status',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive'
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     createBranch,
     updateBranch,
     deleteBranch,
+    toggleBranchStatus, // Added the missing function
     isLoading
   };
 }

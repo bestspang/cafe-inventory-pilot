@@ -64,9 +64,11 @@ export default function BranchFormDialog({
         });
       } else if (user) {
         console.log('[BranchFormDialog] Attempting to create new branch');
-        // Make sure to include owner_id when creating branch
+        // Make sure data.name is included as required by BranchCreateValues type
         const newBranch = await createBranch({
-          ...data,
+          name: data.name, // This field is required
+          address: data.address,
+          timezone: data.timezone,
           owner_id: user.id
         });
         success = !!newBranch;

@@ -68,7 +68,11 @@ export default function Branches() {
           branches={branches}
           isLoading={isLoadingBranches}
           onDelete={async (branchId) => {
-            const success = await deleteBranch(branchId);
+            // Fix: Pass both branchId and the branch name to deleteBranch
+            const branch = branches.find(b => b.id === branchId);
+            if (!branch) return false;
+            
+            const success = await deleteBranch(branchId, branch.name);
             if (success) refetch();
             return success;
           }}
