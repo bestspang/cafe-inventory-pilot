@@ -109,12 +109,12 @@ export const useStockActivity = () => {
           let staffName = stockCheck.username;
           
           // If no username in stock check, check staff map
-          if (!staffName && staffMap.has(stockCheck.user_id)) {
+          if (!staffName && stockCheck.user_id && staffMap.has(stockCheck.user_id)) {
             staffName = staffMap.get(stockCheck.user_id);
           }
           
           // If not found in staff map, check profiles
-          if (!staffName && profileMap.has(stockCheck.user_id)) {
+          if (!staffName && stockCheck.user_id && profileMap.has(stockCheck.user_id)) {
             staffName = profileMap.get(stockCheck.user_id);
           }
           
