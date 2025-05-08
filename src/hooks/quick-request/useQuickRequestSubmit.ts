@@ -1,9 +1,11 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { QuickRequestFormState, StaffMember } from '@/types/quick-request';
+import { validateStaff, validateFormData } from './utils/validation';
+import { submitRequest } from './utils/requestSubmission';
+import { submitStockUpdate } from './utils/stockUpdateSubmission';
 
 export const useQuickRequestSubmit = () => {
   const navigate = useNavigate();
@@ -34,34 +36,26 @@ export const useQuickRequestSubmit = () => {
       
       console.log('Items to be submitted:', itemsWithQuantity);
       
-      if (itemsWithQuantity.length === 0) {
-        throw new Error('Please add at least one item with a quantity');
+      // Validate items
+      if (!validateFormData(formState, itemsWithQuantity)) {
+        return false;
       }
       
-      // Find staff details (for display purposes only)
+      // Find staff details
       const selectedStaff = staffMembers.find(s => s.id === formState.staffId);
       
-      if (!selectedStaff) {
-        throw new Error('Selected staff not found');
-      }
-      
-      // Verify the selected staff ID exists in store_staff before proceeding
-      const { data: staffExists, error: staffError } = await supabase
-        .from('store_staff')
-        .select('id')
-        .eq('id', formState.staffId)
-        .single();
-    
-      if (staffError || !staffExists) {
-        throw new Error('Invalid staff selected. Please choose a valid staff member.');
-      }
+      // Validate staff
+      const isStaffValid = await validateStaff(formState.staffId, selectedStaff);
+      if (!isStaffValid) return false;
       
       const currentTime = new Date().toISOString();
       
       if (formState.action === 'request') {
-        await submitRequest(formState, selectedStaff, itemsWithQuantity, currentTime);
+        await submitRequest(formState, selectedStaff!, itemsWithQuantity, currentTime);
+        navigate('/requests');
       } else if (formState.action === 'stock-update') {
-        await submitStockUpdate(formState, selectedStaff, itemsWithQuantity, currentTime);
+        await submitStockUpdate(formState, selectedStaff!, itemsWithQuantity, currentTime);
+        navigate('/stock-check?tab=activity');
       }
       
       return true;
@@ -76,122 +70,6 @@ export const useQuickRequestSubmit = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const submitRequest = async (
-    formState: QuickRequestFormState,
-    selectedStaff: StaffMember,
-    itemsWithQuantity: any[],
-    currentTime: string
-  ) => {
-    console.log('Submitting request with items:', itemsWithQuantity.length);
-    
-    // Create a new request with the staff ID as user_id
-    const { data, error: requestError } = await supabase
-      .from('requests')
-      .insert({
-        branch_id: formState.branchId,
-        user_id: formState.staffId, // Using staffId directly as the user_id
-        status: 'pending',
-        requested_at: currentTime
-      })
-      .select('id')
-      .single();
-    
-    if (requestError) throw requestError;
-    
-    // Insert request items
-    const requestItems = itemsWithQuantity.map(item => ({
-      request_id: data.id,
-      ingredient_id: item.ingredient_id,
-      quantity: item.quantity,
-      note: formState.comment ? formState.comment : null
-    }));
-    
-    console.log('Request items to insert:', requestItems);
-    
-    const { data: insertedItems, error: itemsError } = await supabase
-      .from('request_items')
-      .insert(requestItems)
-      .select('*');
-    
-    if (itemsError) throw itemsError;
-    
-    console.log('Inserted items:', insertedItems?.length || 0);
-    
-    toast({
-      title: 'Request Submitted',
-      description: `Your ingredient request has been submitted successfully by ${selectedStaff.staffName}`,
-    });
-    
-    // Navigate to requests page after successful submission
-    navigate('/requests');
-  };
-
-  const submitStockUpdate = async (
-    formState: QuickRequestFormState,
-    selectedStaff: StaffMember,
-    itemsWithQuantity: any[],
-    currentTime: string
-  ) => {
-    console.log('Submitting stock update with items:', itemsWithQuantity.length);
-    
-    // Create a new stock check with the staff ID as user_id
-    const { data, error: stockCheckError } = await supabase
-      .from('stock_checks')
-      .insert({
-        branch_id: formState.branchId,
-        user_id: formState.staffId, // Using staffId directly as the user_id
-        checked_at: currentTime,
-      })
-      .select('id')
-      .single();
-    
-    if (stockCheckError) throw stockCheckError;
-    
-    // Insert stock check items
-    const stockItems = itemsWithQuantity.map(item => ({
-      stock_check_id: data.id,
-      ingredient_id: item.ingredient_id,
-      on_hand_qty: item.quantity
-    }));
-    
-    console.log('Stock items to insert:', stockItems);
-    
-    const { data: insertedItems, error: stockItemsError } = await supabase
-      .from('stock_check_items')
-      .insert(stockItems)
-      .select('*');
-    
-    if (stockItemsError) throw stockItemsError;
-    
-    console.log('Inserted stock items:', insertedItems?.length || 0);
-    
-    // Update branch_inventory for immediate reflection
-    const branchInventoryUpdates = itemsWithQuantity.map(item => ({
-      branch_id: formState.branchId,
-      ingredient_id: item.ingredient_id,
-      on_hand_qty: item.quantity,
-      last_checked: currentTime,
-      reorder_pt: 10 // Add default reorder_pt as it's required by the table schema
-    }));
-    
-    // Use string instead of array for onConflict
-    const { error: inventoryUpdateError } = await supabase
-      .from('branch_inventory')
-      .upsert(branchInventoryUpdates, { 
-        onConflict: 'branch_id,ingredient_id' 
-      });
-    
-    if (inventoryUpdateError) throw inventoryUpdateError;
-    
-    toast({
-      title: 'Stock Update Submitted',
-      description: `Your stock update has been submitted successfully by ${selectedStaff.staffName}`,
-    });
-    
-    // Navigate to stock check page after successful submission
-    navigate('/stock-check?tab=activity');
   };
 
   return {
