@@ -1,4 +1,3 @@
-
 import { 
   Dialog,
   DialogContent,
@@ -61,13 +60,13 @@ export default function BranchFormDialog({
         });
       } else {
         console.log('[BranchFormDialog] Attempting to create new branch');
+        // createBranch now updates the StoresContext internally
         const newBranch = await createBranch(data);
         success = !!newBranch;
       }
       
       if (success) {
         console.log('[BranchFormDialog] Operation successful, closing dialog and refreshing data');
-        await refetch();
         
         // If onSave prop is provided, call it
         if (onSave) {

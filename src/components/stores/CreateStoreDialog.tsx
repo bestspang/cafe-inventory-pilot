@@ -29,10 +29,15 @@ export default function CreateStoreDialog({ open, onOpenChange }: CreateStoreDia
     setIsSubmitting(true);
     
     try {
-      await createStore(name.trim(), address.trim());
-      setName('');
-      setAddress('');
-      onOpenChange(false);
+      // This will now automatically update the stores list in StoresContext
+      const newStore = await createStore(name.trim(), address.trim());
+      
+      if (newStore) {
+        // Reset form and close dialog on success
+        setName('');
+        setAddress('');
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error('Error creating branch:', error);
     } finally {

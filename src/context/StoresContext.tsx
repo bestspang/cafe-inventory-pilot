@@ -13,6 +13,7 @@ interface StoresContextType {
   createStore: (name: string, address?: string, timezone?: string) => Promise<Branch | null>;
   currentStore: Branch | null;
   refreshStores: () => Promise<void>;
+  addStore: (store: Branch) => void; // New function to add a store directly to state
 }
 
 const StoresContext = createContext<StoresContextType | undefined>(undefined);
@@ -32,6 +33,11 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('selectedStoreId', currentStoreId);
     }
   }, [currentStoreId]);
+
+  // Function to directly add a store to the local state
+  const addStore = (store: Branch) => {
+    setStores(prevStores => [...prevStores, store]);
+  };
 
   const fetchStores = async () => {
     if (!isAuthenticated || !user?.id) return;
@@ -71,6 +77,35 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     fetchStores();
   }, [isAuthenticated, user?.id]);
 
+  // Set up realtime subscription for branches changes
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    console.log('Setting up realtime subscription for branches');
+    
+    const channel = supabase
+      .channel('branches_changes')
+      .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'branches' },
+          (payload) => {
+            console.group('Branch change detected via StoresContext');
+            console.log('Change type:', payload.eventType);
+            console.log('Changed data:', payload.new);
+            
+            // Refresh all branches on any change
+            fetchStores();
+            
+            console.groupEnd();
+          }
+      )
+      .subscribe();
+      
+    return () => {
+      console.log('Cleaning up branches subscription in StoresContext');
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated]);
+
   // Function to create a new branch
   const createStore = async (name: string, address?: string, timezone: string = 'UTC') => {
     if (!user?.id) {
@@ -85,8 +120,6 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
           name,
           address: address || null,
           timezone,
-          // Assuming there's an owner_id column in branches, adjust if needed
-          // owner_id: user.id
         })
         .select()
         .single();
@@ -95,8 +128,8 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       
       toast.success('Branch created successfully');
       
-      // Refresh the stores list
-      await fetchStores();
+      // Optimistically update the local state
+      addStore(data);
       
       // Set the new store as current
       setCurrentStoreId(data.id);
@@ -118,7 +151,8 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         createStore,
         currentStore,
-        refreshStores: fetchStores
+        refreshStores: fetchStores,
+        addStore
       }}
     >
       {children}

@@ -4,10 +4,12 @@ import { toast } from '@/components/ui/sonner';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Branch } from '@/types/branch';
+import { useStores } from '@/context/StoresContext';
 
 export const useBranchCreate = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
+  const { addStore } = useStores(); // Get the addStore function from StoresContext
 
   const createBranch = async (branch: Partial<Branch>) => {
     if (!user) return null;
@@ -45,6 +47,9 @@ export const useBranchCreate = () => {
           action: 'created',
           performed_by: user.id
         });
+      
+      // Add the new branch to the StoresContext
+      addStore(branchData);
         
       toast.success('Branch created successfully');
       return branchData;
