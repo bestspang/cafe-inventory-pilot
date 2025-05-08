@@ -1,118 +1,61 @@
-
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Search, Menu } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useLocation } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import StoreSwitcher from '@/components/stores/StoreSwitcher';
-
+import { useSidebar } from '@/components/ui/sidebar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 const Header = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-
-  // Hide store switcher on Dashboard, Requests, and now Inventory pages
-  const hideStoreSwitcher = ['/dashboard', '/requests', '/inventory'].includes(location.pathname);
-
-  // Generate breadcrumbs from current path
-  const generateBreadcrumbs = () => {
-    const pathSegments = location.pathname.split('/').filter(segment => segment);
-    
-    const breadcrumbs = [
-      { name: 'Home', path: '/dashboard' },
-      ...pathSegments.map((segment, index) => {
-        const path = `/${pathSegments.slice(0, index + 1).join('/')}`;
-        return {
-          name: segment.charAt(0).toUpperCase() + segment.slice(1).replace('-', ' '),
-          path
-        };
-      })
-    ];
-
-    return breadcrumbs.filter((breadcrumb, index) => {
-      // Remove Home if current page is dashboard
-      if (index === 0 && pathSegments[0] === 'dashboard') return false;
-      return true;
-    });
-  };
-
-  const breadcrumbs = generateBreadcrumbs();
-
-  return (
-    <header className="bg-background border-b flex items-center justify-between p-4 md:px-6 h-16 sticky top-0 z-10">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger className="md:hidden">
-          <Menu className="h-5 w-5" />
-        </SidebarTrigger>
-        
-        <div className="hidden md:flex items-center gap-1">
-          {breadcrumbs.map((breadcrumb, index) => (
-            <React.Fragment key={breadcrumb.path}>
-              {index > 0 && <span className="mx-1 text-muted-foreground">/</span>}
-              {index === breadcrumbs.length - 1 ? (
-                <span className="text-foreground font-medium">{breadcrumb.name}</span>
-              ) : (
-                <Link to={breadcrumb.path} className="text-muted-foreground hover:text-foreground transition-colors">
-                  {breadcrumb.name}
-                </Link>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+  const {
+    user,
+    signOut
+  } = useAuth();
+  const {
+    toggleSidebar
+  } = useSidebar();
+  return <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-6 border-b bg-background px-4 shadow-sm">
+      <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
+        <Menu className="h-5 w-5" />
+        <span className="sr-only">Open sidebar</span>
+      </Button>
+      <div className="flex-1">
+        {location.pathname === "/dashboard" && <span className="text-foreground font-medium">Dashboard</span>}
+        {location.pathname === "/requests" && <span className="text-foreground font-medium">Requests</span>}
+        {location.pathname === "/stock-check" && <span className="text-foreground font-medium">Stock Check</span>}
+        {location.pathname === "/inventory" && <span className="text-foreground font-medium">Ingredients</span>}
+        {location.pathname === "/branches" && <span className="text-foreground font-medium">Branches</span>}
+        {location.pathname === "/suppliers" && <span className="text-foreground font-medium">Suppliers</span>}
+        {location.pathname === "/purchase-orders" && <span className="text-foreground font-medium">Purchase Orders</span>}
+        {location.pathname === "/reports" && <span className="text-foreground font-medium">Reports</span>}
+        {location.pathname === "/users" && <span className="text-foreground font-medium">Users</span>}
+        {location.pathname === "/settings" && <span className="text-foreground font-medium">Settings</span>}
       </div>
-      
-      <div className="flex items-center gap-2">
-        {!hideStoreSwitcher && <StoreSwitcher />}
-        
-        <div className="hidden md:flex relative w-64">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search..." 
-            className="pl-8"
-          />
-        </div>
-        
-        <Button size="icon" variant="ghost" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full"></span>
-        </Button>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-cafe-200 text-cafe-800 flex items-center justify-center font-medium">
-                {user?.name?.charAt(0) || 'U'}
-              </div>
-              <span className="hidden sm:inline-block">{user?.name}</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <div className="px-2 py-1.5 text-sm font-medium">{user?.email}</div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => navigate('/profile')}>
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => navigate('/settings')}>
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={logout}>
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </header>
-  );
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={user?.image} alt={user?.name || 'Avatar'} />
+              <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" alignOffset={8} forceMount className="w-56">
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{user?.name}</p>
+              <p className="text-xs leading-none text-muted-foreground">
+                {user?.email}
+              </p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
+            Log out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>;
 };
-
 export default Header;
