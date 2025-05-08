@@ -35,7 +35,7 @@ export default function StoreSwitcher() {
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            aria-label="Select a store"
+            aria-label="Select a branch"
             className={cn("w-[200px] justify-between", isLoading && "opacity-70 cursor-not-allowed")}
             disabled={isLoading}
           >
@@ -46,7 +46,7 @@ export default function StoreSwitcher() {
               </div>
             ) : (
               <span className="text-muted-foreground">
-                {isLoading ? "Loading..." : "Select store"}
+                {isLoading ? "Loading..." : "Select branch"}
               </span>
             )}
             <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
@@ -54,10 +54,10 @@ export default function StoreSwitcher() {
         </PopoverTrigger>
         <PopoverContent className="w-[200px] p-0">
           <Command>
-            <CommandInput placeholder="Search store..." />
+            <CommandInput placeholder="Search branch..." />
             <CommandList>
-              <CommandEmpty>No stores found.</CommandEmpty>
-              <CommandGroup heading="Your Stores">
+              <CommandEmpty>No branches found.</CommandEmpty>
+              <CommandGroup heading="Your Branches">
                 {stores.map((store) => (
                   <CommandItem
                     key={store.id}
@@ -87,7 +87,7 @@ export default function StoreSwitcher() {
                 }}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Create New Store
+                Create New Branch
               </Button>
             </div>
           </Command>

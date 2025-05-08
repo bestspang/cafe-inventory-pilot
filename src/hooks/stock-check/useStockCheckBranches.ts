@@ -3,12 +3,13 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { Branch } from '@/types/branch';
 
 export const useStockCheckBranches = (storeId?: string | null) => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [branches, setBranches] = useState<{id: string, name: string}[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState('');
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch available branches based on user role and current store
@@ -20,10 +21,9 @@ export const useStockCheckBranches = (storeId?: string | null) => {
           return;
         }
         
-        // When storeId is provided, we're using the store context
-        // so just fetch this specific store
+        // When storeId is provided, just fetch this specific branch
         const { data, error } = await supabase
-          .from('stores')
+          .from('branches')
           .select('id, name')
           .eq('id', storeId);
         

@@ -106,7 +106,7 @@ export const useRequestsFetch = (storeId?: string | null) => {
   const fetchBranches = async () => {
     try {
       const { data, error } = await supabase
-        .from('stores')
+        .from('branches')
         .select('id, name')
         .order('name');
 

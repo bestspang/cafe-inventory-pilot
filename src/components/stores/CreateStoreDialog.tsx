@@ -22,7 +22,7 @@ export default function CreateStoreDialog({ open, onOpenChange }: CreateStoreDia
     e.preventDefault();
     
     if (!name.trim()) {
-      toast.error('Store name is required');
+      toast.error('Branch name is required');
       return;
     }
     
@@ -34,7 +34,7 @@ export default function CreateStoreDialog({ open, onOpenChange }: CreateStoreDia
       setAddress('');
       onOpenChange(false);
     } catch (error) {
-      console.error('Error creating store:', error);
+      console.error('Error creating branch:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -45,9 +45,9 @@ export default function CreateStoreDialog({ open, onOpenChange }: CreateStoreDia
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Store</DialogTitle>
+            <DialogTitle>Create New Branch</DialogTitle>
             <DialogDescription>
-              Add a new store to your account. You can manage inventory, staff, and orders for each store separately.
+              Add a new branch to your account. You can manage inventory, staff, and orders for each branch separately.
             </DialogDescription>
           </DialogHeader>
           
@@ -90,7 +90,7 @@ export default function CreateStoreDialog({ open, onOpenChange }: CreateStoreDia
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || !name.trim()}>
-              {isSubmitting ? 'Creating...' : 'Create Store'}
+              {isSubmitting ? 'Creating...' : 'Create Branch'}
             </Button>
           </DialogFooter>
         </form>

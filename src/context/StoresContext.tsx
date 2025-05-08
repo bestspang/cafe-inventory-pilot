@@ -3,22 +3,15 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/components/ui/sonner';
-
-interface Store {
-  id: string;
-  name: string;
-  address?: string | null;
-  timezone?: string | null;
-  is_open: boolean;
-}
+import { Branch } from '@/types/branch';
 
 interface StoresContextType {
-  stores: Store[];
+  stores: Branch[];
   currentStoreId: string | null;
   setCurrentStoreId: (id: string) => void;
   isLoading: boolean;
-  createStore: (name: string, address?: string, timezone?: string) => Promise<Store | null>;
-  currentStore: Store | null;
+  createStore: (name: string, address?: string, timezone?: string) => Promise<Branch | null>;
+  currentStore: Branch | null;
   refreshStores: () => Promise<void>;
 }
 
@@ -26,7 +19,7 @@ const StoresContext = createContext<StoresContextType | undefined>(undefined);
 
 export function StoresProvider({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated } = useAuth();
-  const [stores, setStores] = useState<Store[]>([]);
+  const [stores, setStores] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentStoreId, setCurrentStoreId] = useState<string | null>(null);
 
@@ -46,52 +39,28 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Get stores where user is owner
-      const { data: ownedStores, error: ownedError } = await supabase
-        .from('stores')
+      // Get branches
+      const { data, error } = await supabase
+        .from('branches')
         .select('id, name, address, timezone, is_open')
-        .eq('owner_id', user.id)
         .order('name');
       
-      if (ownedError) throw ownedError;
+      if (error) throw error;
       
-      // Get stores where user is staff or manager (for future use)
-      const { data: staffStores, error: staffError } = await supabase
-        .from('store_staff')
-        .select(`
-          store_id,
-          role,
-          stores(id, name, address, timezone, is_open)
-        `)
-        .eq('user_id', user.id);
-        
-      if (staffError) throw staffError;
-      
-      // Combine stores and remove duplicates
-      const allStores = [
-        ...(ownedStores || []),
-        ...(staffStores?.map(s => s.stores) || [])
-      ].filter(Boolean);
-      
-      // Remove duplicates based on store ID
-      const uniqueStores = Array.from(
-        new Map(allStores.map(store => [store.id, store])).values()
-      );
-      
-      setStores(uniqueStores);
+      setStores(data || []);
       
       // If we have stores but no current selection, try to restore from localStorage or use first
-      if (uniqueStores.length > 0 && !currentStoreId) {
+      if (data && data.length > 0 && !currentStoreId) {
         const savedStoreId = localStorage.getItem('selectedStoreId');
         
         // Check if the saved ID is in the available stores
-        const validSavedId = savedStoreId && uniqueStores.some(store => store.id === savedStoreId);
+        const validSavedId = savedStoreId && data.some(store => store.id === savedStoreId);
         
-        setCurrentStoreId(validSavedId ? savedStoreId : uniqueStores[0].id);
+        setCurrentStoreId(validSavedId ? savedStoreId : data[0].id);
       }
     } catch (error) {
-      console.error('Error fetching stores:', error);
-      toast.error('Failed to load your stores');
+      console.error('Error fetching branches:', error);
+      toast.error('Failed to load your branches');
     } finally {
       setIsLoading(false);
     }
@@ -102,28 +71,29 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     fetchStores();
   }, [isAuthenticated, user?.id]);
 
-  // Function to create a new store
+  // Function to create a new branch
   const createStore = async (name: string, address?: string, timezone: string = 'UTC') => {
     if (!user?.id) {
-      toast.error('You must be logged in to create a store');
+      toast.error('You must be logged in to create a branch');
       return null;
     }
     
     try {
       const { data, error } = await supabase
-        .from('stores')
+        .from('branches')
         .insert({
           name,
           address: address || null,
           timezone,
-          owner_id: user.id
+          // Assuming there's an owner_id column in branches, adjust if needed
+          // owner_id: user.id
         })
         .select()
         .single();
         
       if (error) throw error;
       
-      toast.success('Store created successfully');
+      toast.success('Branch created successfully');
       
       // Refresh the stores list
       await fetchStores();
@@ -133,8 +103,8 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       
       return data;
     } catch (error) {
-      console.error('Error creating store:', error);
-      toast.error('Failed to create store');
+      console.error('Error creating branch:', error);
+      toast.error('Failed to create branch');
       return null;
     }
   };

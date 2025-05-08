@@ -8,7 +8,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Branch } from '@/types';
+import { Branch } from '@/types/branch';
 import { StaffMember } from '@/types/quick-request';
 
 interface QuickRequestHeaderProps {
@@ -55,7 +55,7 @@ const QuickRequestHeader: React.FC<QuickRequestHeaderProps> = ({
       </div>
       
       <div>
-        <Label htmlFor="branch">Store <span className="text-destructive">*</span></Label>
+        <Label htmlFor="branch">Branch <span className="text-destructive">*</span></Label>
         <Select
           name="branch"
           value={branchId}
@@ -64,11 +64,11 @@ const QuickRequestHeader: React.FC<QuickRequestHeaderProps> = ({
           required
         >
           <SelectTrigger id="branch">
-            <SelectValue placeholder={isLoading ? "Loading stores..." : "Select store"} />
+            <SelectValue placeholder={isLoading ? "Loading branches..." : "Select branch"} />
           </SelectTrigger>
           <SelectContent>
             {branches.length === 0 ? (
-              <SelectItem value="loading" disabled>No stores available</SelectItem>
+              <SelectItem value="loading" disabled>No branches available</SelectItem>
             ) : (
               branches.map(branch => (
                 <SelectItem key={branch.id} value={branch.id}>
@@ -92,7 +92,7 @@ const QuickRequestHeader: React.FC<QuickRequestHeaderProps> = ({
           <SelectTrigger id="user_id">
             <SelectValue placeholder={
               !branchId 
-                ? "Select store first" 
+                ? "Select branch first" 
                 : staffMembers.length === 0 
                   ? "No staff members found" 
                   : "Select staff member"
