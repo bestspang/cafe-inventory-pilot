@@ -43,5 +43,15 @@
   "common.quick.request": "Quick Request",
   "common.add.branch": "Add Branch",
   "common.no.branches": "No branches match your current filter.",
-  "common.view.all.branches": "View all branches"
+  "common.view.all.branches": "View all branches",
+  "sidebar.dashboard": "Dashboard",
+  "sidebar.requests": "Requests",
+  "sidebar.stock.check": "Stock Check",
+  "sidebar.inventory": "Inventory",
+  "sidebar.branches": "Branches",
+  "sidebar.suppliers": "Suppliers",
+  "sidebar.purchase.orders": "Purchase Orders",
+  "sidebar.reports": "Reports",
+  "sidebar.users": "Users",
+  "sidebar.soon": "SOON"
 }

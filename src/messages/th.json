@@ -43,5 +43,15 @@
   "common.quick.request": "คำขอด่วน",
   "common.add.branch": "เพิ่มสาขา",
   "common.no.branches": "ไม่มีสาขาที่ตรงกับตัวกรองปัจจุบันของคุณ",
-  "common.view.all.branches": "ดูสาขาทั้งหมด"
+  "common.view.all.branches": "ดูสาขาทั้งหมด",
+  "sidebar.dashboard": "แดชบอร์ด",
+  "sidebar.requests": "คำขอ",
+  "sidebar.stock.check": "ตรวจสอบสต็อก",
+  "sidebar.inventory": "สินค้าคงคลัง",
+  "sidebar.branches": "สาขา",
+  "sidebar.suppliers": "ซัพพลายเออร์",
+  "sidebar.purchase.orders": "คำสั่งซื้อ",
+  "sidebar.reports": "รายงาน",
+  "sidebar.users": "ผู้ใช้",
+  "sidebar.soon": "เร็วๆนี้"
 }
