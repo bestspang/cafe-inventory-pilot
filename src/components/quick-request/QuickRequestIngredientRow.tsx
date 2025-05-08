@@ -16,8 +16,9 @@ const QuickRequestIngredientRow: React.FC<QuickRequestIngredientRowProps> = ({
   disabled = false
 }) => {
   // Handle numeric input changes with fully controlled input
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value) || 0;
+  // Using onInput to capture changes immediately (including spinner clicks)
+  const handleInput = (e: React.FormEvent<HTMLInputElement>) => {
+    const value = parseInt((e.target as HTMLInputElement).value) || 0;
     onUpdateQuantity(ingredient.id, value);
   };
 
@@ -30,8 +31,9 @@ const QuickRequestIngredientRow: React.FC<QuickRequestIngredientRowProps> = ({
           type="number"
           min="0"
           // Ensure we always have a number for value (controlled input)
-          value={ingredient.quantity || 0}
-          onChange={handleChange}
+          value={ingredient.quantity ?? 0}
+          onInput={handleInput}
+          onChange={() => {/* no-op so React doesn't complain */}}
           className="w-20"
           disabled={disabled}
         />
