@@ -32,7 +32,7 @@ export interface Ingredient {
   categoryName?: string;
   branch_id?: string;
   isActive?: boolean;
-  created_by: string; // Made required to match DB schema
+  created_by?: string; // Made optional to work with mock data
 }
 
 export interface Category {
@@ -58,7 +58,7 @@ export interface Branch {
   address?: string | null;
   timezone?: string | null;
   is_open?: boolean;
-  owner_id: string; // Made required to match DB schema
+  owner_id: string; // Kept required to match DB schema
   created_at?: string;
   updated_at?: string;
 }
