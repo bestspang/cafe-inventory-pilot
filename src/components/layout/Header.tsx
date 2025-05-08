@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Search, Menu } from 'lucide-react';
+import { Bell, Search, Menu, Globe } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,12 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
+import { useLocale } from '@/context/LocaleContext';
 import StoreSwitcher from '@/components/stores/StoreSwitcher';
 
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { locale, setLocale } = useLocale();
 
   // Pages where the store switcher should be hidden
   const hideStoreSwitcher = ['/dashboard', '/requests', '/inventory', '/branches'];
@@ -47,6 +49,11 @@ const Header = () => {
   };
 
   const breadcrumbs = generateBreadcrumbs();
+
+  // Language toggle function
+  const toggleLanguage = () => {
+    setLocale(locale === 'en' ? 'th' : 'en');
+  };
 
   return (
     <header className="bg-background border-b flex items-center justify-between p-4 md:px-6 h-16 sticky top-0 z-10">
@@ -81,6 +88,13 @@ const Header = () => {
             className="pl-8"
           />
         </div>
+        
+        <Button size="icon" variant="ghost" className="relative" onClick={toggleLanguage}>
+          <Globe className="h-5 w-5" />
+          <span className="absolute top-0 right-0 h-4 w-4 bg-background border border-border rounded-full flex items-center justify-center text-[8px] font-medium">
+            {locale.toUpperCase()}
+          </span>
+        </Button>
         
         <Button size="icon" variant="ghost" className="relative">
           <Bell className="h-5 w-5" />
