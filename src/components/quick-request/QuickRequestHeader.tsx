@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { Branch } from '@/types';
 import { StaffMember } from '@/types/quick-request';
+import { Loader2 } from 'lucide-react';
 
 interface QuickRequestHeaderProps {
   formAction: 'request' | 'stock-update';
@@ -63,12 +64,21 @@ const QuickRequestHeader: React.FC<QuickRequestHeaderProps> = ({
           disabled={isLoading}
           required
         >
-          <SelectTrigger id="branch">
-            <SelectValue placeholder={isLoading ? "Loading branches..." : "Select branch"} />
+          <SelectTrigger id="branch" className={isLoading ? "opacity-70" : ""}>
+            {isLoading ? (
+              <div className="flex items-center">
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <span>Loading...</span>
+              </div>
+            ) : (
+              <SelectValue placeholder="Select branch" />
+            )}
           </SelectTrigger>
           <SelectContent>
             {branches.length === 0 ? (
-              <SelectItem value="loading" disabled>No branches available</SelectItem>
+              <SelectItem value="loading" disabled>
+                {isLoading ? "Loading branches..." : "No branches available"}
+              </SelectItem>
             ) : (
               branches.map(branch => (
                 <SelectItem key={branch.id} value={branch.id}>
@@ -86,24 +96,39 @@ const QuickRequestHeader: React.FC<QuickRequestHeaderProps> = ({
           name="user_id"
           value={staffId}
           onValueChange={onStaffChange}
-          disabled={isLoading || !branchId || staffMembers.length === 0}
+          disabled={isLoading || !branchId}
           required
         >
-          <SelectTrigger id="user_id">
-            <SelectValue placeholder={
-              !branchId 
-                ? "Select branch first" 
-                : staffMembers.length === 0 
-                  ? "No staff members found" 
-                  : "Select staff member"
-            } />
+          <SelectTrigger id="user_id" className={isLoading && branchId ? "opacity-70" : ""}>
+            {isLoading && branchId ? (
+              <div className="flex items-center">
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <span>Loading staff...</span>
+              </div>
+            ) : (
+              <SelectValue placeholder={
+                !branchId 
+                  ? "Select branch first" 
+                  : staffMembers.length === 0 
+                    ? "No staff members found" 
+                    : "Select staff member"
+              } />
+            )}
           </SelectTrigger>
           <SelectContent>
-            {staffMembers.map(staff => (
-              <SelectItem key={staff.id} value={staff.id}>
-                {staff.staffName}
+            {!branchId ? (
+              <SelectItem value="select-branch" disabled>Select branch first</SelectItem>
+            ) : staffMembers.length === 0 ? (
+              <SelectItem value="no-staff" disabled>
+                {isLoading ? "Loading staff members..." : "No staff members found"}
               </SelectItem>
-            ))}
+            ) : (
+              staffMembers.map(staff => (
+                <SelectItem key={staff.id} value={staff.id}>
+                  {staff.staffName}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>

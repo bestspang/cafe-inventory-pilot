@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuickRequestData } from '@/hooks/quick-request/useQuickRequestData';
@@ -18,6 +19,7 @@ const QuickRequestForm: React.FC<QuickRequestFormProps> = ({ onBranchChange }) =
   const [formAction, setFormAction] = useState<'request' | 'stock-update'>('request');
   const [staffId, setStaffId] = useState<string>('');
   const [selectedIngredients, setSelectedIngredients] = useState<QuickRequestIngredient[]>([]);
+  const [error, setError] = useState<string | null>(null);
   
   // State for control fields
   const {
@@ -32,19 +34,29 @@ const QuickRequestForm: React.FC<QuickRequestFormProps> = ({ onBranchChange }) =
   
   // Handle branch selection
   const handleBranchChange = async (branchId: string) => {
+    console.log(`Branch selected: ${branchId}`);
+    
     if (branchId === selectedBranchId) return;
     
     setStaffId('');
     setSelectedIngredients([]);
+    setError(null);
     
-    // Fetch ingredients for this branch
-    const branchIngredients = await fetchIngredients(branchId);
-    
-    // Fetch staff members for this branch
-    await fetchStaffMembers(branchId);
-    
-    // Notify parent component
-    onBranchChange(branchId);
+    try {
+      // Fetch ingredients for this branch
+      console.log(`Fetching ingredients for branch ${branchId}`);
+      const branchIngredients = await fetchIngredients(branchId);
+      
+      // Fetch staff members for this branch
+      console.log(`Fetching staff for branch ${branchId}`);
+      await fetchStaffMembers(branchId);
+      
+      // Notify parent component
+      onBranchChange(branchId);
+    } catch (err) {
+      console.error('Error during branch change:', err);
+      setError('Failed to load branch data');
+    }
   };
   
   // Handle form submission
@@ -188,14 +200,30 @@ const QuickRequestForm: React.FC<QuickRequestFormProps> = ({ onBranchChange }) =
   
   // Initialize selected ingredients when ingredients are loaded
   useEffect(() => {
-    if (ingredients.length > 0 && selectedIngredients.length === 0) {
+    if (ingredients.length > 0) {
+      console.log(`Setting ${ingredients.length} ingredients in form state`);
       setSelectedIngredients(ingredients);
     }
   }, [ingredients]);
   
+  // Display debugging information for empty states
+  if (branches.length === 0 && !isLoading) {
+    console.warn('No branches available to display');
+  }
+  
+  if (selectedBranchId && staffMembers.length === 0 && !isLoading) {
+    console.warn(`No staff members found for branch ${selectedBranchId}`);
+  }
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-6">
+        {error && (
+          <div className="bg-destructive/10 text-destructive p-3 rounded-md mb-4">
+            {error}
+          </div>
+        )}
+        
         <QuickRequestHeader
           formAction={formAction}
           branchId={selectedBranchId}
@@ -209,12 +237,18 @@ const QuickRequestForm: React.FC<QuickRequestFormProps> = ({ onBranchChange }) =
         />
         
         <div className="bg-muted/40 p-4 rounded-md">
-          <QuickRequestIngredientTable
-            ingredients={selectedIngredients}
-            onUpdateQuantity={handleUpdateQuantity}
-            disabled={isSubmitting || !selectedBranchId}
-            showDetails={formAction === 'stock-update'}
-          />
+          {selectedBranchId ? (
+            <QuickRequestIngredientTable
+              ingredients={selectedIngredients}
+              onUpdateQuantity={handleUpdateQuantity}
+              disabled={isSubmitting || !selectedBranchId}
+              showDetails={formAction === 'stock-update'}
+            />
+          ) : (
+            <div className="text-center p-4 text-muted-foreground">
+              Select a store to view available ingredients
+            </div>
+          )}
         </div>
         
         <div className="flex justify-end">
