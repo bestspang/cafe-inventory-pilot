@@ -5,6 +5,7 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components
 import QuickRequestIngredientTableRow from './QuickRequestIngredientTableRow';
 import QuickRequestIngredientTableLoading from './QuickRequestIngredientTableLoading';
 import QuickRequestIngredientTableEmpty from './QuickRequestIngredientTableEmpty';
+import { useStockCheckSettings } from '@/context/StockCheckSettingsContext';
 
 interface QuickRequestIngredientTableProps {
   ingredients: QuickRequestIngredient[];
@@ -12,6 +13,7 @@ interface QuickRequestIngredientTableProps {
   disabled?: boolean;
   showDetails?: boolean;
   isLoading?: boolean;
+  actionType: 'request' | 'stock-update';
 }
 
 const QuickRequestIngredientTable: React.FC<QuickRequestIngredientTableProps> = ({
@@ -19,10 +21,17 @@ const QuickRequestIngredientTable: React.FC<QuickRequestIngredientTableProps> = 
   onUpdateQuantity,
   disabled = false,
   showDetails = false,
-  isLoading = false
+  isLoading = false,
+  actionType
 }) => {
   // Sort ingredients by name
   const sortedIngredients = [...ingredients].sort((a, b) => a.name.localeCompare(b.name));
+  
+  // Get stock settings to determine whether to show stock details
+  const { showStockDetail } = useStockCheckSettings();
+  
+  // Only show stock details for requests (not stock updates) when setting is enabled
+  const displayStockDetails = showStockDetail && actionType === 'request';
   
   if (isLoading) {
     return <QuickRequestIngredientTableLoading />;
@@ -35,7 +44,7 @@ const QuickRequestIngredientTable: React.FC<QuickRequestIngredientTableProps> = 
           <TableRow>
             <TableHead className="w-[40%]">Name</TableHead>
             <TableHead>Unit</TableHead>
-            {showDetails && (
+            {displayStockDetails && (
               <>
                 <TableHead className="text-right">Current</TableHead>
                 <TableHead className="text-right">Reorder At</TableHead>
@@ -52,12 +61,12 @@ const QuickRequestIngredientTable: React.FC<QuickRequestIngredientTableProps> = 
                 ingredient={ingredient}
                 onUpdateQuantity={onUpdateQuantity}
                 disabled={disabled}
-                showDetails={showDetails}
+                showDetails={displayStockDetails}
               />
             ))
           ) : (
             <QuickRequestIngredientTableEmpty 
-              showDetails={showDetails} 
+              showDetails={displayStockDetails} 
             />
           )}
         </TableBody>

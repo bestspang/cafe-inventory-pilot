@@ -4,17 +4,17 @@ import { TableRow, TableCell } from '@/components/ui/table';
 
 interface QuickRequestIngredientTableEmptyProps {
   showDetails?: boolean;
-  message?: string;
 }
 
-const QuickRequestIngredientTableEmpty: React.FC<QuickRequestIngredientTableEmptyProps> = ({
-  showDetails = false,
-  message = "No ingredients available"
+const QuickRequestIngredientTableEmpty: React.FC<QuickRequestIngredientTableEmptyProps> = ({ 
+  showDetails = false 
 }) => {
   return (
     <TableRow>
-      <TableCell colSpan={showDetails ? 5 : 3} className="text-center py-4">
-        {message}
+      <TableCell colSpan={showDetails ? 5 : 3} className="h-24 text-center">
+        <div className="text-muted-foreground">
+          No ingredients found for this store
+        </div>
       </TableCell>
     </TableRow>
   );

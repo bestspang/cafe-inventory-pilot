@@ -122,7 +122,8 @@ const QuickRequestFormContainer: React.FC<QuickRequestFormContainerProps> = ({ o
                 ingredients={selectedIngredients}
                 onUpdateQuantity={handleUpdateQuantity}
                 disabled={isSubmitting || !selectedBranchId}
-                showDetails={formAction === 'stock-update'}
+                isLoading={isLoading}
+                actionType={formAction}
               />
             ) : (
               <QuickRequestFormEmpty />
