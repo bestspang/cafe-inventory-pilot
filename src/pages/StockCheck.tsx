@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Save, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useStockCheck } from '@/hooks/useStockCheck';
-import StockCheckBranchSelector from '@/components/stock-check/StockCheckBranchSelector';
 import StockCheckTable from '@/components/stock-check/StockCheckTable';
 import StockCheckLoadingState from '@/components/stock-check/StockCheckLoadingState';
 import StockCheckFilters from '@/components/stock-check/StockCheckFilters';
@@ -56,7 +56,7 @@ const StockCheck = () => {
     return Array.from(uniqueCategories.values());
   }, [stockItems]);
 
-  // Use the filtering and sorting hook
+  // Use our filter hook
   const {
     filters,
     setFilters,
@@ -76,12 +76,14 @@ const StockCheck = () => {
             <p className="text-muted-foreground">Update your current inventory counts</p>
           </div>
           <div className="w-auto">
-            <StockCheckBranchSelector 
-              selectedBranch={selectedBranch} 
-              setSelectedBranch={setSelectedBranch}
-              branches={branches}
-              isLoading={isLoading}
-            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSettingsModal(true)}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </Button>
           </div>
         </div>
 
@@ -94,16 +96,6 @@ const StockCheck = () => {
               </TabsList>
               
               <div className="ml-auto flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowSettingsModal(true)}
-                  disabled={isLoading || !selectedBranch}
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </Button>
-                
                 <Button 
                   onClick={handleSave} 
                   size="sm"
