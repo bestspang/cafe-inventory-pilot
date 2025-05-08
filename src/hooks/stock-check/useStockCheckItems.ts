@@ -34,7 +34,7 @@ export const useStockCheckItems = (selectedBranch: string) => {
         // Then, get branch inventory data for the selected branch
         const { data: branchInventory, error: inventoryError } = await supabase
           .from('branch_inventory')
-          .select('ingredient_id, on_hand_qty, reorder_pt, last_checked')
+          .select('ingredient_id, on_hand_qty, reorder_pt, last_checked, last_change')
           .eq('branch_id', selectedBranch);
         
         if (inventoryError) throw inventoryError;
@@ -44,13 +44,18 @@ export const useStockCheckItems = (selectedBranch: string) => {
         branchInventory?.forEach(item => {
           inventoryMap.set(item.ingredient_id, { 
             onHandQty: item.on_hand_qty,
-            reorderPt: item.reorder_pt
+            reorderPt: item.reorder_pt,
+            lastChange: item.last_change || 0
           });
         });
         
         // Create stock items
         const items = ingredients.map((ingredient: any) => {
-          const inventoryData = inventoryMap.get(ingredient.id) || { onHandQty: 0, reorderPt: 10 };
+          const inventoryData = inventoryMap.get(ingredient.id) || { 
+            onHandQty: 0, 
+            reorderPt: 10, 
+            lastChange: 0 
+          };
           
           return {
             id: ingredient.id,
@@ -59,7 +64,8 @@ export const useStockCheckItems = (selectedBranch: string) => {
             categoryName: ingredient.categories?.name || 'Uncategorized',
             unit: ingredient.unit,
             onHandQty: inventoryData.onHandQty,
-            reorderPt: inventoryData.reorderPt
+            reorderPt: inventoryData.reorderPt,
+            lastChange: inventoryData.lastChange
           };
         });
         

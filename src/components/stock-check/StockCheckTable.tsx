@@ -98,6 +98,7 @@ const StockCheckTable: React.FC<StockCheckTableProps> = ({
                 onSort={onSort} 
               />
             </TableHead>
+            <TableHead>Last Update</TableHead>
             <TableHead>
               <SortableColumn 
                 label="Status" 
@@ -111,7 +112,7 @@ const StockCheckTable: React.FC<StockCheckTableProps> = ({
         <TableBody>
           {items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center">
+              <TableCell colSpan={7} className="h-24 text-center">
                 No ingredients found.
               </TableCell>
             </TableRow>
@@ -171,6 +172,18 @@ const StockCheckTable: React.FC<StockCheckTableProps> = ({
                       onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 0)}
                       className="w-20"
                     />
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={`${
+                        item.lastChange > 0 ? 'text-green-600' :
+                        item.lastChange < 0 ? 'text-red-600' :
+                        'text-gray-500'
+                      }`}
+                    >
+                      {item.lastChange > 0 && '+'}
+                      {item.lastChange}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <Badge variant={stockStatus.variant}>{stockStatus.label}</Badge>

@@ -4,5 +4,6 @@ import { Ingredient } from '@/types';
 export interface StockItem extends Ingredient {
   categoryName: string;
   onHandQty: number;
-  reorderPt: number; // Add reorderPt field for branch-specific threshold
+  reorderPt: number;
+  lastChange: number; // Add lastChange field to track changes in stock
 }

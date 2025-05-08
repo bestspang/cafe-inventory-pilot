@@ -52,6 +52,7 @@ export type Database = {
         Row: {
           branch_id: string
           ingredient_id: string
+          last_change: number
           last_checked: string | null
           on_hand_qty: number
           reorder_pt: number
@@ -59,6 +60,7 @@ export type Database = {
         Insert: {
           branch_id: string
           ingredient_id: string
+          last_change?: number
           last_checked?: string | null
           on_hand_qty?: number
           reorder_pt?: number
@@ -66,6 +68,7 @@ export type Database = {
         Update: {
           branch_id?: string
           ingredient_id?: string
+          last_change?: number
           last_checked?: string | null
           on_hand_qty?: number
           reorder_pt?: number

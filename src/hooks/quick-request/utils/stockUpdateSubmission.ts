@@ -46,14 +46,35 @@ export const submitStockUpdate = async (
     
     console.log('Inserted stock items:', insertedItems?.length || 0);
     
-    // Update branch_inventory for immediate reflection
-    const branchInventoryUpdates = itemsWithQuantity.map(item => ({
-      branch_id: formState.branchId,
-      ingredient_id: item.ingredient_id,
-      on_hand_qty: item.quantity,
-      last_checked: currentTime,
-      reorder_pt: 10 // Add default reorder_pt as it's required by the table schema
-    }));
+    // First, fetch existing inventory quantities to calculate changes
+    const ingredientIds = itemsWithQuantity.map(item => item.ingredient_id);
+    const { data: currentInventory, error: inventoryFetchError } = await supabase
+      .from('branch_inventory')
+      .select('ingredient_id, on_hand_qty')
+      .eq('branch_id', formState.branchId)
+      .in('ingredient_id', ingredientIds);
+    
+    if (inventoryFetchError) throw inventoryFetchError;
+    
+    // Create a map of current inventory quantities
+    const currentQtyMap = Object.fromEntries(
+      (currentInventory || []).map(item => [item.ingredient_id, item.on_hand_qty])
+    );
+    
+    // Update branch_inventory with changes for immediate reflection
+    const branchInventoryUpdates = itemsWithQuantity.map(item => {
+      const oldQty = currentQtyMap[item.ingredient_id] || 0;
+      const newQty = item.quantity;
+      
+      return {
+        branch_id: formState.branchId,
+        ingredient_id: item.ingredient_id,
+        on_hand_qty: newQty,
+        last_change: newQty - oldQty,
+        last_checked: currentTime,
+        reorder_pt: 10 // Add default reorder_pt as it's required by the table schema
+      };
+    });
     
     // Use string instead of array for onConflict
     const { error: inventoryUpdateError } = await supabase

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,24 +27,44 @@ export const useStockCheckActions = (
       // Find the branch name for the toast
       const branchName = branches.find(b => b.id === selectedBranch)?.name || 'selected branch';
       
-      // Prepare the data for upsert - only include changed items
-      const itemsToUpdate = stockItems
-        .filter(item => updatedItems[item.id])
-        .map(item => ({
-          branch_id: selectedBranch,
-          ingredient_id: item.id,
-          on_hand_qty: item.onHandQty,
-          reorder_pt: item.reorderPt, // Include the branch-specific reorder point
-          last_checked: new Date().toISOString()
-        }));
+      // First, get current inventory quantities to calculate changes
+      const itemIds = stockItems.filter(item => updatedItems[item.id]).map(item => item.id);
       
-      if (itemsToUpdate.length === 0) {
+      if (itemIds.length === 0) {
         toast({
           title: "No changes to save",
           description: "You haven't made any changes to the inventory"
         });
         return;
       }
+      
+      const { data: currentInventory } = await supabase
+        .from('branch_inventory')
+        .select('ingredient_id, on_hand_qty')
+        .eq('branch_id', selectedBranch)
+        .in('ingredient_id', itemIds);
+      
+      // Create a map of current inventory quantities
+      const currentQtyMap = Object.fromEntries(
+        (currentInventory || []).map(item => [item.ingredient_id, item.on_hand_qty])
+      );
+      
+      // Prepare the data for upsert - only include changed items
+      const itemsToUpdate = stockItems
+        .filter(item => updatedItems[item.id])
+        .map(item => {
+          const oldQty = currentQtyMap[item.id] || 0;
+          const newQty = item.onHandQty;
+          
+          return {
+            branch_id: selectedBranch,
+            ingredient_id: item.id,
+            on_hand_qty: newQty,
+            reorder_pt: item.reorderPt,
+            last_change: newQty - oldQty,
+            last_checked: new Date().toISOString()
+          };
+        });
       
       // Fix the type issue by explicitly passing the array and proper onConflict option
       const { error } = await supabase
