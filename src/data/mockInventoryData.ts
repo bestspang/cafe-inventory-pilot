@@ -11,7 +11,8 @@ export const mockStockItems: StockItem[] = [
     categoryName: 'Beverages',
     unit: 'kg',
     onHandQty: 5,
-    reorderPt: 10
+    reorderPt: 10,
+    lastChange: 0
   },
   {
     id: '2',
@@ -20,7 +21,8 @@ export const mockStockItems: StockItem[] = [
     categoryName: 'Condiments',
     unit: 'kg',
     onHandQty: 3,
-    reorderPt: 5
+    reorderPt: 5,
+    lastChange: 0
   },
   {
     id: '3',
@@ -29,7 +31,8 @@ export const mockStockItems: StockItem[] = [
     categoryName: 'Beverages',
     unit: 'L',
     onHandQty: 12,
-    reorderPt: 15
+    reorderPt: 15,
+    lastChange: 0
   },
   {
     id: '4',
@@ -38,7 +41,8 @@ export const mockStockItems: StockItem[] = [
     categoryName: 'Supplies',
     unit: 'box',
     onHandQty: 2,
-    reorderPt: 3
+    reorderPt: 3,
+    lastChange: 0
   },
   {
     id: '5',
@@ -47,7 +51,8 @@ export const mockStockItems: StockItem[] = [
     categoryName: 'Supplies',
     unit: 'pack',
     onHandQty: 8,
-    reorderPt: 5
+    reorderPt: 5,
+    lastChange: 0
   }
 ];
 
