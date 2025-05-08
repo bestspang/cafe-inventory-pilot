@@ -9,6 +9,7 @@ import QuickRequestIngredientTable from './QuickRequestIngredientTable';
 import QuickRequestFormError from './QuickRequestFormError';
 import QuickRequestFormLoading from './QuickRequestFormLoading';
 import QuickRequestFormEmpty from './QuickRequestFormEmpty';
+import QuickRequestSummary from './QuickRequestSummary';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
@@ -134,6 +135,14 @@ const QuickRequestFormContainer: React.FC<QuickRequestFormContainerProps> = ({ o
             </div>
           )}
         </div>
+        
+        {/* Add the request summary component */}
+        {selectedIngredients.length > 0 && (
+          <QuickRequestSummary 
+            ingredients={selectedIngredients}
+            actionType={formAction}
+          />
+        )}
         
         <div className="flex justify-end">
           <Button 
