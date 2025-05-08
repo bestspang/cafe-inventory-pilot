@@ -56,6 +56,16 @@ const Header = () => {
     setLocale(locale === 'en' ? 'th' : 'en');
   };
 
+  // Handle logout with navigation
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   return (
     <header className="bg-background border-b flex items-center justify-between p-4 md:px-6 h-16 sticky top-0 z-10">
       <div className="flex items-center gap-2">
@@ -121,7 +131,7 @@ const Header = () => {
               <FormattedMessage id="settings.title" defaultMessage="Settings" />
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={logout}>
+            <DropdownMenuItem onSelect={handleLogout}>
               <FormattedMessage id="header.logout" defaultMessage="Logout" />
             </DropdownMenuItem>
           </DropdownMenuContent>

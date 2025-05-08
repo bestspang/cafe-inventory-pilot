@@ -10,7 +10,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;  // Updated to async
   isAuthenticated: boolean;
   session: Session | null;
 }
@@ -115,10 +115,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
-      // Auth state listener will handle clearing the user
-    } catch (error) {
-      console.error('Error logging out:', error);
+      setLoading(true);
+      console.log("Attempting to sign out...");
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error logging out:', error);
+        toast.error('Logout failed', {
+          description: error.message || 'Could not log out properly',
+        });
+      } else {
+        console.log("Sign out successful");
+        // Explicitly clear user data
+        setUser(null);
+        setSession(null);
+        toast.success('Logged out successfully');
+      }
+    } catch (error: any) {
+      console.error('Error in logout process:', error);
+      toast.error('Logout failed', {
+        description: error.message || 'An unexpected error occurred',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
