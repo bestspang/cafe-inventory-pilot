@@ -29,6 +29,7 @@ export const useIngredientManager = (
           name, 
           unit, 
           cost_per_unit,
+          branch_id,
           categoryId:category_id, 
           categories(id, name)
         `);
@@ -55,6 +56,7 @@ export const useIngredientManager = (
         name: item.name,
         unit: item.unit,
         costPerUnit: item.cost_per_unit,
+        branch_id: item.branch_id,
         categoryId: item.categoryId,
         categoryName: item.categories?.name || 'Uncategorized'
       }));

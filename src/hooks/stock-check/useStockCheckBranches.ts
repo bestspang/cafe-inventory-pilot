@@ -15,28 +15,23 @@ export const useStockCheckBranches = (storeId?: string | null) => {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        let query = supabase.from('stores').select('id, name');
-        
-        // Filter by current store if provided
-        if (storeId) {
-          query = query.eq('id', storeId);
-        }
-        // If user is not an owner, filter by their branch
-        else if (user?.role !== 'owner' && user?.branchId) {
-          query = query.eq('id', user.branchId);
+        if (!storeId) {
+          setIsLoading(false);
+          return;
         }
         
-        const { data, error } = await query;
+        // When storeId is provided, we're using the store context
+        // so just fetch this specific store
+        const { data, error } = await supabase
+          .from('stores')
+          .select('id, name')
+          .eq('id', storeId);
         
         if (error) throw error;
         
         if (data && data.length > 0) {
           setBranches(data);
-          // If no branch is selected or the user doesn't have access to the selected branch,
-          // set the first available branch as selected
-          if (!selectedBranch || (user?.role !== 'owner' && selectedBranch !== user.branchId)) {
-            setSelectedBranch(data[0].id);
-          }
+          setSelectedBranch(data[0].id);
         }
       } catch (error) {
         console.error('Error fetching branches:', error);
@@ -53,7 +48,7 @@ export const useStockCheckBranches = (storeId?: string | null) => {
     if (user) {
       fetchBranches();
     }
-  }, [user, storeId, selectedBranch, toast]);
+  }, [user, storeId, toast]);
 
   return {
     branches,

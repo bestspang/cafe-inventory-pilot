@@ -1,28 +1,35 @@
+import { Icons } from "@/components/icons"
 
-export type UserRole = 'owner' | 'manager' | 'staff';
-
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  branchId: string;
+export interface NavItem {
+  title: string
+  href: string
+  disabled?: boolean
+  external?: boolean
+  icon?: keyof typeof Icons
+  label?: string
 }
 
-export interface Branch {
-  id: string;
-  name: string;
-  address?: string;
-  timezone?: string;
+export interface NavLink extends Omit<NavItem, "icon"> {
+  icon?: React.ForwardRefExoticComponent<
+    Omit<React.SVGProps<SVGSVGElement>, "ref"> & {
+      title?: string | undefined
+      titleId?: string | undefined
+    } & React.RefAttributes<SVGSVGElement>
+  >
+}
+
+export interface SidebarNavItem extends NavItem {
+  items: SidebarNavItem[]
 }
 
 export interface Ingredient {
   id: string;
   name: string;
-  categoryId: string;
   unit: string;
-  costPerUnit?: number | null;
-  categoryName?: string; // Make this optional for flexibility
+  costPerUnit?: number;
+  categoryId?: string;
+  categoryName?: string;
+  branch_id?: string; // Add branch_id to the Ingredient interface
 }
 
 export interface Category {
@@ -30,34 +37,4 @@ export interface Category {
   name: string;
 }
 
-export interface StockCheck {
-  id: string;
-  branchId: string;
-  userId: string;
-  checkedAt: string;
-  items: StockCheckItem[];
-}
-
-export interface StockCheckItem {
-  id: string;
-  stockCheckId: string;
-  ingredientId: string;
-  onHandQty: number;
-}
-
-export interface Request {
-  id: string;
-  branchId: string;
-  userId: string;
-  requestedAt: string;
-  status: 'pending' | 'fulfilled';
-  items: RequestItem[];
-}
-
-export interface RequestItem {
-  id: string;
-  requestId: string;
-  ingredientId: string;
-  quantity: number;
-  note?: string;
-}
+export type ViewMode = "list" | "grid"
