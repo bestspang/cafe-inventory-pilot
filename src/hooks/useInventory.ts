@@ -6,11 +6,13 @@ import { type ViewMode } from '@/types/inventory';
 import { useCategoryManager } from './inventory/useCategoryManager';
 import { useIngredientManager } from './inventory/useIngredientManager';
 import { useFilterManager } from './inventory/useFilterManager';
+import { useStores } from '@/context/StoresContext';
 
 export type { ViewMode };
 
 export const useInventory = () => {
   const { user } = useAuth();
+  const { currentStoreId } = useStores();
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [costHistoryDialogOpen, setCostHistoryDialogOpen] = useState(false);
@@ -18,7 +20,7 @@ export const useInventory = () => {
   // Only owners and managers can modify ingredients
   const canModify = ['owner', 'manager'].includes(user?.role || '');
   
-  // Use our smaller, focused hooks
+  // Use our smaller, focused hooks with store context
   const { categories, handleNewCategory, isLoading: categoriesLoading } = useCategoryManager();
   const { 
     ingredients, 
@@ -29,7 +31,8 @@ export const useInventory = () => {
     handleDelete,
     confirmDelete,
     isLoading: ingredientsLoading
-  } = useIngredientManager(setFormDialogOpen, setDeleteDialogOpen);
+  } = useIngredientManager(setFormDialogOpen, setDeleteDialogOpen, currentStoreId);
+  
   const {
     search,
     setSearch,
@@ -44,10 +47,14 @@ export const useInventory = () => {
   // Apply filters to ingredients
   const filteredIngredients = filterIngredients(ingredients);
 
-  // Wrapper for handleAddEdit to include category creation
+  // Wrapper for handleAddEdit to include category creation and store ID
   const handleAddEditIngredient = async (data: Partial<Ingredient>) => {
     console.log('handleAddEditIngredient called with data:', data);
-    await handleAddEdit(data, categories, handleNewCategory);
+    // Ensure branch_id is set to currentStoreId
+    await handleAddEdit({
+      ...data,
+      branch_id: currentStoreId
+    }, categories, handleNewCategory);
   };
 
   // Handler for viewing cost history

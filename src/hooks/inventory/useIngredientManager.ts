@@ -1,196 +1,182 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Category, Ingredient } from '@/types';
-import { useIngredientsFetch } from './useIngredientsFetch';
+import { Ingredient } from '@/types';
+import { Category } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 import { saveIngredient, deleteIngredient } from '@/utils/inventory/ingredientOperations';
-import { handleUpdate } from '@/utils/updateHandler';
 
 export const useIngredientManager = (
   setFormDialogOpen: (open: boolean) => void,
-  setDeleteDialogOpen: (open: boolean) => void
+  setDeleteDialogOpen: (open: boolean) => void,
+  storeId?: string | null
 ) => {
-  const [currentIngredient, setCurrentIngredient] = useState<Ingredient | undefined>(undefined);
-  const { ingredients, isLoading, fetchIngredients } = useIngredientsFetch();
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [currentIngredient, setCurrentIngredient] = useState<Ingredient | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Add or edit an ingredient
-  const handleAddEdit = async (
-    data: Partial<Ingredient>, 
-    categories: Category[], 
-    handleNewCategory: (tempId: string, categoryName: string) => Promise<string | null>
-  ) => {
+  // Fetch ingredients from database, filtered by storeId
+  const fetchIngredients = async () => {
     try {
-      console.group('Handling ingredient add/edit');
-      console.log('Form data:', data);
-      console.log('Is editing:', !!data.id);
+      setIsLoading(true);
+      console.log('Fetching ingredients from database for store:', storeId);
       
-      // Check if we need to create a new category
-      let categoryId = data.categoryId;
-      
-      // If category ID starts with "new-", it's a new category
-      if (categoryId && categoryId.startsWith('new-')) {
-        console.log('Creating new category:', categoryId);
-        // Find the category object with this temp ID
-        const newCategory = categories.find(c => c.id === categoryId);
+      let query = supabase
+        .from('ingredients')
+        .select(`
+          id, 
+          name, 
+          unit, 
+          cost_per_unit,
+          categoryId:category_id, 
+          categories(id, name)
+        `);
         
-        if (newCategory) {
-          // Create the new category in the database
-          const realCategoryId = await handleNewCategory(categoryId, newCategory.name);
-          if (!realCategoryId) {
-            throw new Error("Failed to create new category");
-          }
-          categoryId = realCategoryId;
-          console.log('New category created with ID:', realCategoryId);
-        }
+      // Filter by store if storeId is provided
+      if (storeId) {
+        query = query.eq('branch_id', storeId);
       }
       
-      // For existing ingredients, use our update handler for better debugging
-      if (data.id) {
-        console.log('Updating existing ingredient:', data.id);
-        
-        // Prepare update payload
-        const updatePayload: Record<string, any> = {
-          name: data.name,
-          category_id: categoryId,
-          unit: data.unit
-        };
-        
-        // If cost is provided, handle it separately
-        if (data.costPerUnit !== undefined) {
-          updatePayload.cost_per_unit = data.costPerUnit;
-        }
-        
-        // Use our generic update handler
-        const { success } = await handleUpdate(
-          'ingredients', 
-          data.id,
-          updatePayload,
-          fetchIngredients
-        );
-        
-        console.log('Update result:', success);
-        
-        if (!success) {
-          throw new Error("Failed to update ingredient");
-        }
-      } else {
-        // For new ingredients, use the existing saveIngredient function
-        console.log('Creating new ingredient');
-        const result = await saveIngredient(data, categoryId || null);
-        
-        // Show success message
-        toast({
-          title: "Ingredient added",
-          description: result.message
-        });
-        
-        // Refresh ingredients list
-        await fetchIngredients();
+      // Order by name
+      query = query.order('name');
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        throw error;
       }
       
-      // Close the form dialog
-      setFormDialogOpen(false);
-      console.groupEnd();
-      return true;
-    } catch (error: any) {
-      console.error('Error saving ingredient:', error);
-      console.groupEnd();
+      console.log('Fetched ingredients:', data);
       
-      // Format user-friendly error message
-      let errorMessage = "Please try again later.";
+      // Map and format the response data to match our Ingredient type
+      const formattedData = data.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        unit: item.unit,
+        costPerUnit: item.cost_per_unit,
+        categoryId: item.categoryId,
+        categoryName: item.categories?.name || 'Uncategorized'
+      }));
       
-      if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      if (error.code) {
-        switch (error.code) {
-          case '42501':
-            errorMessage = "You don't have permission to perform this operation.";
-            break;
-          case '23505':
-            errorMessage = "An ingredient with this name already exists.";
-            break;
-          default:
-            errorMessage = `Database error: ${error.message || error.details || error.hint || "Unknown error"}`;
-        }
-      }
-      
-      throw {
-        code: error.code,
-        message: "Failed to save ingredient",
-        details: errorMessage,
-        hint: error.hint
-      };
+      setIngredients(formattedData);
+    } catch (error) {
+      console.error('Error fetching ingredients:', error);
+      toast({
+        title: "Failed to load ingredients",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Set up an ingredient for editing
+  // Initial fetch when storeId changes
+  useEffect(() => {
+    if (storeId) {
+      console.log('Store ID changed, fetching ingredients:', storeId);
+      fetchIngredients();
+    }
+  }, [storeId]);
+
+  // Add/edit ingredient handler
+  const handleAddEdit = async (
+    data: Partial<Ingredient>, 
+    categories: Category[], 
+    handleNewCategory: (name: string) => Promise<string>
+  ) => {
+    try {
+      // Get or create category ID
+      let categoryId: string | null = null;
+      
+      if (data.categoryId) {
+        categoryId = data.categoryId;
+      } else if (data.categoryName) {
+        const existingCategory = categories.find(cat => 
+          cat.name.toLowerCase() === data.categoryName?.toLowerCase());
+        
+        if (existingCategory) {
+          categoryId = existingCategory.id;
+        } else {
+          categoryId = await handleNewCategory(data.categoryName);
+        }
+      }
+      
+      // Save ingredient with branch_id and category
+      const result = await saveIngredient({
+        ...data,
+        branch_id: storeId
+      }, categoryId);
+      
+      if (result.success) {
+        toast({
+          title: data.id ? 'Ingredient updated' : 'Ingredient added',
+          description: result.message
+        });
+        
+        fetchIngredients();
+        setFormDialogOpen(false);
+      }
+      
+    } catch (error: any) {
+      console.error('Error in handleAddEdit:', error);
+      toast({
+        title: data.id ? 'Failed to update ingredient' : 'Failed to add ingredient',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Edit handler
   const handleEdit = (ingredient: Ingredient) => {
     setCurrentIngredient(ingredient);
     setFormDialogOpen(true);
   };
 
-  // Set up an ingredient for deletion
+  // Delete handler
   const handleDelete = (ingredient: Ingredient) => {
     setCurrentIngredient(ingredient);
     setDeleteDialogOpen(true);
   };
 
-  // Delete an ingredient
+  // Confirm delete handler
   const confirmDelete = async () => {
     if (!currentIngredient) return;
     
     try {
-      await deleteIngredient(currentIngredient.id);
+      const result = await deleteIngredient(currentIngredient.id);
       
-      toast({
-        title: "Ingredient deleted",
-        description: `${currentIngredient.name} has been removed from inventory.`
-      });
-      
-      // Refresh ingredients after deletion
-      await fetchIngredients();
-      
-      // Close dialog
-      setDeleteDialogOpen(false);
-      setCurrentIngredient(undefined);
+      if (result.success) {
+        toast({
+          title: 'Ingredient deleted',
+          description: `${currentIngredient.name} has been removed from inventory`
+        });
+        
+        fetchIngredients();
+        setDeleteDialogOpen(false);
+      }
     } catch (error: any) {
-      console.error('Error deleting ingredient:', error);
-      
-      let errorMessage = "Please try again later.";
-      
-      if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      if (error.code) {
-        switch (error.code) {
-          case '42501':
-            errorMessage = "You don't have permission to delete this ingredient.";
-            break;
-          default:
-            errorMessage = error.message || error.details || "Unknown error";
-        }
-      }
-      
+      console.error('Error in confirmDelete:', error);
       toast({
-        title: "Failed to delete ingredient",
-        description: errorMessage,
-        variant: "destructive"
+        title: 'Failed to delete ingredient',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive'
       });
     }
   };
 
   return {
     ingredients,
+    setIngredients,
     currentIngredient,
     setCurrentIngredient,
+    isLoading,
+    fetchIngredients,
     handleAddEdit,
     handleEdit,
     handleDelete,
-    confirmDelete,
-    isLoading
+    confirmDelete
   };
 };

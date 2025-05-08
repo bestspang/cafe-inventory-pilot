@@ -1,187 +1,240 @@
 
-import React, { useEffect, useRef } from 'react';
-import { toast } from '@/hooks/use-toast';
+import React, { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { useQuickRequestData } from '@/hooks/quick-request/useQuickRequestData';
-import { useQuickRequestFormState } from '@/hooks/quick-request/useQuickRequestFormState';
-import { useQuickRequestSubmit } from '@/hooks/quick-request/useQuickRequestSubmit';
+import { QuickRequestIngredient } from '@/types/quick-request';
 import QuickRequestHeader from './QuickRequestHeader';
-import QuickRequestIngredientsTable from './QuickRequestIngredientsTable';
-import QuickRequestFooter from './QuickRequestFooter';
-import QuickRequestSummary from './QuickRequestSummary';
+import QuickRequestIngredientTable from './QuickRequestIngredientTable';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface QuickRequestFormProps {
-  onBranchChange?: (branchId: string) => void;
+  onBranchChange: (branchId: string) => void;
 }
 
 const QuickRequestForm: React.FC<QuickRequestFormProps> = ({ onBranchChange }) => {
-  // Create ref for form element
-  const formRef = useRef<HTMLFormElement>(null);
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formAction, setFormAction] = useState<'request' | 'stock-update'>('request');
+  const [staffId, setStaffId] = useState<string>('');
+  const [selectedIngredients, setSelectedIngredients] = useState<QuickRequestIngredient[]>([]);
   
-  // Get data and state from custom hooks
-  const { 
-    isLoading, 
-    setIsLoading,
-    branches, 
-    staffMembers, 
-    ingredients, 
-    fetchStaffMembers 
+  // State for control fields
+  const {
+    isLoading,
+    branches,
+    staffMembers,
+    ingredients,
+    fetchStaffMembers,
+    fetchIngredients,
+    selectedBranchId
   } = useQuickRequestData();
   
-  const {
-    formState,
-    setFormState,
-    handleUpdateQuantity,
-    handleReset
-  } = useQuickRequestFormState(ingredients);
-  
-  const { isSubmitting, handleSubmit } = useQuickRequestSubmit();
-  
-  // Fetch staff members when branch changes
-  useEffect(() => {
-    if (formState.branchId) {
-      fetchStaffMembers(formState.branchId).then(staff => {
-        if (staff && staff.length > 0) {
-          setFormState(prev => ({ ...prev, staffId: staff[0].id }));
-        } else {
-          // Clear staffId if no staff members found
-          setFormState(prev => ({ ...prev, staffId: '' }));
-        }
-      });
-      
-      // Notify parent component about branch change
-      if (onBranchChange) {
-        onBranchChange(formState.branchId);
-      }
-    }
-  }, [formState.branchId, fetchStaffMembers, onBranchChange]);
-  
-  // Set default branch if available
-  useEffect(() => {
-    if (branches.length > 0 && !formState.branchId) {
-      const defaultBranch = branches[0].id;
-      setFormState(prev => ({ ...prev, branchId: defaultBranch }));
-      
-      // Notify parent component about initial branch selection
-      if (onBranchChange) {
-        onBranchChange(defaultBranch);
-      }
-    }
-  }, [branches, onBranchChange]);
-  
-  // Form validation
-  const validateForm = () => {
-    if (!formState.branchId) {
-      toast({
-        title: 'Missing Information',
-        description: 'Please select a store',
-        variant: 'destructive'
-      });
-      return false;
-    }
+  // Handle branch selection
+  const handleBranchChange = async (branchId: string) => {
+    if (branchId === selectedBranchId) return;
     
-    if (!formState.staffId) {
-      toast({
-        title: 'Missing Information',
-        description: 'Please select a staff member',
-        variant: 'destructive'
-      });
-      return false;
-    }
+    setStaffId('');
+    setSelectedIngredients([]);
     
-    return true;
+    // Fetch ingredients for this branch
+    const branchIngredients = await fetchIngredients(branchId);
+    
+    // Fetch staff members for this branch
+    await fetchStaffMembers(branchId);
+    
+    // Notify parent component
+    onBranchChange(branchId);
   };
   
-  // Handle form submission using FormData to capture all inputs
-  const onSubmitForm = async (e: React.FormEvent) => {
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Force any focused input to commit its value
-    (document.activeElement as HTMLElement)?.blur();
-    
-    // Read values directly from the DOM using FormData
-    if (!formRef.current) return;
-    
-    const formData = new FormData(formRef.current);
-    
-    // Get form action, branch, staff and comment
-    const action = formData.get('action') as 'request' | 'stock-update';
-    const branchId = formData.get('branch') as string;
-    const staffId = formData.get('user_id') as string;
-    const comment = formData.get('comment') as string;
-    
-    // Build ingredients array with quantities from form inputs
-    const ingredientsWithQuantity = ingredients.map(ing => {
-      const quantityValue = formData.get(`qty_${ing.id}`);
-      const quantity = quantityValue ? Number(quantityValue) : 0;
-      
-      return {
-        ...ing,
-        quantity
-      };
-    }).filter(ing => ing.quantity > 0);
-    
-    console.log('Form submission - active ingredients:', ingredientsWithQuantity.length);
-    
-    // Check if there are any items with quantity > 0
-    if (ingredientsWithQuantity.length === 0) {
+    if (!selectedBranchId) {
       toast({
-        title: 'Missing Information',
-        description: 'Please add at least one item with a quantity',
-        variant: 'destructive'
+        title: "Store required",
+        description: "Please select a store before submitting",
+        variant: "destructive"
       });
       return;
     }
     
-    // Create submission form state from the FormData values
-    const submissionState = {
-      action,
-      branchId,
-      staffId,
-      ingredients: ingredientsWithQuantity,
-      comment
-    };
-    
-    setIsLoading(true);
-    const success = await handleSubmit(submissionState, staffMembers, validateForm);
-    if (success) {
-      handleReset();
+    if (!staffId) {
+      toast({
+        title: "Staff name required",
+        description: "Please select or enter a staff name",
+        variant: "destructive"
+      });
+      return;
     }
-    setIsLoading(false);
+    
+    // Filter ingredients that have a quantity > 0
+    const itemsToSubmit = selectedIngredients.filter(ing => ing.quantity > 0);
+    
+    if (itemsToSubmit.length === 0) {
+      toast({
+        title: "No ingredients selected",
+        description: "Please add quantities to at least one ingredient",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      if (formAction === 'request') {
+        // Create a new request with the selected ingredients
+        const { data: request, error: requestError } = await supabase
+          .from('requests')
+          .insert({
+            branch_id: selectedBranchId,
+            user_id: staffId,
+            requested_at: new Date().toISOString(),
+            status: 'pending'
+          })
+          .select('id')
+          .single();
+        
+        if (requestError) throw requestError;
+        
+        // Add request items
+        const requestItems = itemsToSubmit.map(ing => ({
+          request_id: request.id,
+          ingredient_id: ing.id,
+          quantity: ing.quantity,
+          note: null
+        }));
+        
+        const { error: itemsError } = await supabase
+          .from('request_items')
+          .insert(requestItems);
+        
+        if (itemsError) throw itemsError;
+        
+        toast({
+          title: "Request submitted",
+          description: `${itemsToSubmit.length} ingredients have been requested`
+        });
+      } else {
+        // Stock update - create a new stock check
+        const { data: stockCheck, error: checkError } = await supabase
+          .from('stock_checks')
+          .insert({
+            branch_id: selectedBranchId,
+            user_id: staffId,
+            checked_at: new Date().toISOString()
+          })
+          .select('id')
+          .single();
+        
+        if (checkError) throw checkError;
+        
+        // Add stock check items and update branch inventory
+        for (const ingredient of itemsToSubmit) {
+          // Add to stock_check_items
+          const { error: itemError } = await supabase
+            .from('stock_check_items')
+            .insert({
+              stock_check_id: stockCheck.id,
+              ingredient_id: ingredient.id,
+              on_hand_qty: ingredient.quantity
+            });
+          
+          if (itemError) throw itemError;
+          
+          // Update branch_inventory
+          const { error: inventoryError } = await supabase
+            .from('branch_inventory')
+            .upsert({
+              branch_id: selectedBranchId,
+              ingredient_id: ingredient.id,
+              on_hand_qty: ingredient.quantity,
+              last_checked: new Date().toISOString()
+            }, {
+              onConflict: 'branch_id,ingredient_id'
+            });
+          
+          if (inventoryError) throw inventoryError;
+        }
+        
+        toast({
+          title: "Stock update submitted",
+          description: `${itemsToSubmit.length} ingredient quantities have been updated`
+        });
+      }
+      
+      // Reset form
+      setSelectedIngredients(ingredients.map(ing => ({ ...ing, quantity: 0 })));
+    } catch (error: any) {
+      console.error(`Error submitting ${formAction}:`, error);
+      toast({
+        title: `Failed to submit ${formAction}`,
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
+  // Handle ingredient quantity updates
+  const handleUpdateQuantity = (id: string, quantity: number) => {
+    setSelectedIngredients(prev => 
+      prev.map(ing => ing.id === id ? { ...ing, quantity } : ing)
+    );
+  };
+  
+  // Initialize selected ingredients when ingredients are loaded
+  useEffect(() => {
+    if (ingredients.length > 0 && selectedIngredients.length === 0) {
+      setSelectedIngredients(ingredients);
+    }
+  }, [ingredients]);
+  
   return (
-    <form ref={formRef} onSubmit={onSubmitForm} className="space-y-6">
-      <QuickRequestHeader
-        formAction={formState.action}
-        branchId={formState.branchId}
-        staffId={formState.staffId}
-        branches={branches}
-        staffMembers={staffMembers}
-        isLoading={isLoading || isSubmitting}
-        onActionChange={(value) => setFormState(prev => ({ ...prev, action: value }))}
-        onBranchChange={(value) => setFormState(prev => ({ ...prev, branchId: value, staffId: '' }))}
-        onStaffChange={(value) => setFormState(prev => ({ ...prev, staffId: value }))}
-      />
-      
-      <QuickRequestIngredientsTable
-        ingredients={formState.ingredients}
-        onUpdateQuantity={handleUpdateQuantity}
-        actionType={formState.action}
-        disabled={isLoading || isSubmitting}
-      />
-      
-      <QuickRequestSummary 
-        ingredients={formState.ingredients} 
-        actionType={formState.action}
-      />
-      
-      <QuickRequestFooter
-        comment={formState.comment}
-        onCommentChange={(value) => setFormState(prev => ({ ...prev, comment: value }))}
-        onReset={handleReset}
-        onSubmit={onSubmitForm}
-        isLoading={isLoading || isSubmitting}
-      />
+    <form onSubmit={handleSubmit}>
+      <div className="space-y-6">
+        <QuickRequestHeader
+          formAction={formAction}
+          branchId={selectedBranchId}
+          staffId={staffId}
+          branches={branches}
+          staffMembers={staffMembers}
+          isLoading={isLoading}
+          onActionChange={setFormAction}
+          onBranchChange={handleBranchChange}
+          onStaffChange={setStaffId}
+        />
+        
+        <div className="bg-muted/40 p-4 rounded-md">
+          <QuickRequestIngredientTable
+            ingredients={selectedIngredients}
+            onUpdateQuantity={handleUpdateQuantity}
+            disabled={isSubmitting || !selectedBranchId}
+            showDetails={formAction === 'stock-update'}
+          />
+        </div>
+        
+        <div className="flex justify-end">
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || !selectedBranchId || !staffId}
+            className="w-full md:w-auto"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              formAction === 'request' ? 'Submit Request' : 'Update Stock'
+            )}
+          </Button>
+        </div>
+      </div>
     </form>
   );
 };

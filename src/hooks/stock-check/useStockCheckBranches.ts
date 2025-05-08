@@ -4,21 +4,25 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 
-export const useStockCheckBranches = () => {
+export const useStockCheckBranches = (storeId?: string | null) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [branches, setBranches] = useState<{id: string, name: string}[]>([]);
   const [selectedBranch, setSelectedBranch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch available branches based on user role
+  // Fetch available branches based on user role and current store
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        let query = supabase.from('branches').select('id, name');
+        let query = supabase.from('stores').select('id, name');
         
+        // Filter by current store if provided
+        if (storeId) {
+          query = query.eq('id', storeId);
+        }
         // If user is not an owner, filter by their branch
-        if (user?.role !== 'owner' && user?.branchId) {
+        else if (user?.role !== 'owner' && user?.branchId) {
           query = query.eq('id', user.branchId);
         }
         
@@ -49,7 +53,7 @@ export const useStockCheckBranches = () => {
     if (user) {
       fetchBranches();
     }
-  }, [user, selectedBranch, toast]);
+  }, [user, storeId, selectedBranch, toast]);
 
   return {
     branches,

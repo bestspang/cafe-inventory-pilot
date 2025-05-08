@@ -1,10 +1,9 @@
-
 import { Ingredient } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
 // Add or edit an ingredient
 export const saveIngredient = async (
-  data: Partial<Ingredient>,
+  data: Partial<Ingredient> & { branch_id?: string | null },
   categoryId: string | null
 ) => {
   console.log('Saving ingredient with data:', data, 'and categoryId:', categoryId);
@@ -15,6 +14,11 @@ export const saveIngredient = async (
   
   if (!userId) {
     throw new Error("You must be logged in to save ingredients.");
+  }
+  
+  // Check if we have a branch_id
+  if (!data.branch_id) {
+    throw new Error("Branch ID is required to save ingredients.");
   }
   
   try {
@@ -52,7 +56,8 @@ export const saveIngredient = async (
             .update({
               name: data.name,
               category_id: categoryId,
-              unit: data.unit
+              unit: data.unit,
+              branch_id: data.branch_id
             })
             .eq('id', data.id);
           
@@ -67,7 +72,8 @@ export const saveIngredient = async (
             .update({
               name: data.name,
               category_id: categoryId,
-              unit: data.unit
+              unit: data.unit,
+              branch_id: data.branch_id
             })
             .eq('id', data.id);
           
@@ -83,7 +89,8 @@ export const saveIngredient = async (
           .update({
             name: data.name,
             category_id: categoryId,
-            unit: data.unit
+            unit: data.unit,
+            branch_id: data.branch_id
           })
           .eq('id', data.id);
         
@@ -107,7 +114,8 @@ export const saveIngredient = async (
           category_id: categoryId,
           unit: data.unit,
           cost_per_unit: data.costPerUnit,
-          created_by: userId // Add the user ID to satisfy RLS
+          created_by: userId,
+          branch_id: data.branch_id
         }]);
       
       if (error) {

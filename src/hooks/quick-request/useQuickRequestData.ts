@@ -17,18 +17,18 @@ export const useQuickRequestData = () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from('branches')
+        .from('stores')
         .select('id, name');
       
       if (error) throw error;
       
       if (data) {
-        console.log('Branches loaded:', data);
+        console.log('Stores loaded:', data);
         setBranches(data);
         return data;
       }
     } catch (error) {
-      console.error('Error fetching branches:', error);
+      console.error('Error fetching stores:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch store locations',
@@ -45,10 +45,11 @@ export const useQuickRequestData = () => {
     try {
       setIsLoading(true);
       
-      // First get all ingredients
+      // First get all ingredients for this store
       const { data: ingredientsData, error: ingredientsError } = await supabase
         .from('ingredients')
-        .select('id, name, unit');
+        .select('id, name, unit')
+        .eq('branch_id', branchId || selectedBranchId);
       
       if (ingredientsError) throw ingredientsError;
       
@@ -61,11 +62,11 @@ export const useQuickRequestData = () => {
         }));
         
         // If branch is selected, fetch stock levels
-        if (branchId) {
+        if (branchId || selectedBranchId) {
           const { data: stockData, error: stockError } = await supabase
             .from('branch_inventory')
             .select('ingredient_id, on_hand_qty, reorder_pt')
-            .eq('branch_id', branchId);
+            .eq('branch_id', branchId || selectedBranchId);
           
           if (stockError) {
             console.error('Error fetching stock levels:', stockError);
@@ -92,7 +93,7 @@ export const useQuickRequestData = () => {
         }
         
         setIngredients(ingredientsWithQuantity);
-        setSelectedBranchId(branchId || '');
+        if (branchId) setSelectedBranchId(branchId);
         return ingredientsWithQuantity;
       }
     } catch (error) {
@@ -148,7 +149,6 @@ export const useQuickRequestData = () => {
   // Load initial data on component mount
   useEffect(() => {
     fetchBranches();
-    fetchIngredients();
   }, []);
 
   return {

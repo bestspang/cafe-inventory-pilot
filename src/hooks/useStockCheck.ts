@@ -3,14 +3,17 @@ import { useState } from 'react';
 import { useStockCheckBranches } from '@/hooks/stock-check/useStockCheckBranches';
 import { useStockCheckItems } from '@/hooks/stock-check/useStockCheckItems';
 import { useStockCheckActions } from '@/hooks/stock-check/useStockCheckActions';
+import { useStores } from '@/context/StoresContext';
 
 export const useStockCheck = () => {
+  const { currentStoreId } = useStores();
+  
   const {
     branches,
     selectedBranch,
     setSelectedBranch,
     isLoading: branchesLoading
-  } = useStockCheckBranches();
+  } = useStockCheckBranches(currentStoreId);
 
   const {
     stockItems,
