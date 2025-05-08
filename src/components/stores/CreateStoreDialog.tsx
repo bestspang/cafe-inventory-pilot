@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useStores } from '@/context/StoresContext';
+import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/components/ui/sonner';
 
 interface CreateStoreDialogProps {
@@ -14,6 +15,7 @@ interface CreateStoreDialogProps {
 
 export default function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps) {
   const { createStore } = useStores();
+  const { user } = useAuth();
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,11 +27,16 @@ export default function CreateStoreDialog({ open, onOpenChange }: CreateStoreDia
       toast.error('Branch name is required');
       return;
     }
+
+    if (!user) {
+      toast.error('You must be logged in to create a branch');
+      return;
+    }
     
     setIsSubmitting(true);
     
     try {
-      // This will now automatically update the stores list in StoresContext
+      // This will now automatically set owner_id to the current user
       const newStore = await createStore(name.trim(), address.trim());
       
       if (newStore) {

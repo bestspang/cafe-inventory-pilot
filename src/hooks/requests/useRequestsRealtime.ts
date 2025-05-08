@@ -10,26 +10,23 @@ export const useRequestsRealtime = (
   
   useEffect(() => {
     // Set up realtime subscription
-    // For owners, listen to all changes across all branches
-    // For other roles, only listen to changes in their branch
-    let channelFilter = {};
-    
-    if (user && user.role !== 'owner' && user.branchId) {
-      channelFilter = {
-        filter: `branch_id=eq.${user.branchId}`
-      };
-    }
-    
-    const channel = supabase
+    if (!user) return;
+
+    // First, subscribe to requests changes
+    const requestsChannel = supabase
       .channel('requests-changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
-        table: 'requests',
-        ...channelFilter
+        table: 'requests'
       }, () => {
         refreshFunction();
       })
+      .subscribe();
+    
+    // Then, subscribe to request_items changes
+    const itemsChannel = supabase
+      .channel('request-items-changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
@@ -40,7 +37,8 @@ export const useRequestsRealtime = (
       .subscribe();
       
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(requestsChannel);
+      supabase.removeChannel(itemsChannel);
     };
   }, [refreshFunction, user]);
 };

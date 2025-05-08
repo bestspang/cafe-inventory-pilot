@@ -1,52 +1,135 @@
 
 import { useState } from 'react';
-import { useBranchCreate } from './operations/useBranchCreate';
-import { useBranchUpdate } from './operations/useBranchUpdate';
-import { useBranchDelete } from './operations/useBranchDelete';
-import { useBranchStatusToggle } from './operations/useBranchStatusToggle';
+import { supabase } from '@/integrations/supabase/client';
 import { Branch } from '@/types/branch';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
-/**
- * Combined hook that provides all branch management operations
- * Acts as a facade over the individual operation hooks
- */
-export const useBranchManager = () => {
-  // Track combined loading state
+interface BranchCreateValues {
+  name: string;
+  address?: string;
+  timezone?: string;
+  owner_id?: string;
+}
+
+interface BranchUpdateValues extends BranchCreateValues {
+  id: string;
+}
+
+export function useBranchManager() {
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Individual operation hooks
-  const { createBranch: _createBranch, isLoading: isCreating } = useBranchCreate();
-  const { updateBranch: _updateBranch, isLoading: isUpdating } = useBranchUpdate();
-  const { deleteBranch: _deleteBranch, isLoading: isDeleting } = useBranchDelete();
-  const { toggleBranchStatus: _toggleStatus, isLoading: isToggling } = useBranchStatusToggle();
+  const { toast } = useToast();
+  const { user } = useAuth();
 
-  // Set combined loading state whenever any operation starts/ends
-  useState(() => {
-    setIsLoading(isCreating || isUpdating || isDeleting || isToggling);
-  });
+  const createBranch = async (values: BranchCreateValues): Promise<Branch | null> => {
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'You must be logged in to create a branch',
+        variant: 'destructive'
+      });
+      return null;
+    }
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('branches')
+        .insert({
+          name: values.name,
+          address: values.address || null,
+          timezone: values.timezone || 'UTC',
+          owner_id: user.id // Make sure owner_id is set to the current user
+        })
+        .select('*')
+        .single();
+      
+      if (error) throw error;
 
-  // Wrapper functions that pass through to the individual hook implementations
-  const createBranch = async (branch: Partial<Branch>) => {
-    return await _createBranch(branch);
+      toast({
+        title: 'Branch created',
+        description: `${values.name} has been created successfully`
+      });
+      
+      return data;
+    } catch (error: any) {
+      console.error('Error creating branch:', error);
+      toast({
+        title: 'Failed to create branch',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive'
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const updateBranch = async (branch: Partial<Branch> & { id: string }, refreshFn?: () => Promise<void>) => {
-    return await _updateBranch(branch, refreshFn);
+  const updateBranch = async (values: BranchUpdateValues): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('branches')
+        .update({
+          name: values.name,
+          address: values.address || null,
+          timezone: values.timezone || 'UTC'
+          // Note: We don't allow updating owner_id here
+        })
+        .eq('id', values.id);
+      
+      if (error) throw error;
+
+      toast({
+        title: 'Branch updated',
+        description: `${values.name} has been updated successfully`
+      });
+      return true;
+    } catch (error: any) {
+      console.error('Error updating branch:', error);
+      toast({
+        title: 'Failed to update branch',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive'
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const deleteBranch = async (branchId: string) => {
-    return await _deleteBranch(branchId);
-  };
+  const deleteBranch = async (id: string, branchName: string): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('branches')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
 
-  const toggleBranchStatus = async (branch: Branch) => {
-    return await _toggleStatus(branch);
+      toast({
+        title: 'Branch deleted',
+        description: `${branchName} has been deleted successfully`
+      });
+      return true;
+    } catch (error: any) {
+      console.error('Error deleting branch:', error);
+      toast({
+        title: 'Failed to delete branch',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive'
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
-    isLoading: isCreating || isUpdating || isDeleting || isToggling,
     createBranch,
     updateBranch,
     deleteBranch,
-    toggleBranchStatus
+    isLoading
   };
-};
+}

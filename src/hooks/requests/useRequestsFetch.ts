@@ -48,6 +48,8 @@ export const useRequestsFetch = () => {
   // Fetch requests from Supabase
   const fetchRequests = async () => {
     try {
+      if (!user) return;
+      
       setIsLoading(true);
       let query = supabase
         .from('requests')
@@ -76,12 +78,8 @@ export const useRequestsFetch = () => {
             )
           )
         `)
+        .or(`branches.owner_id.eq.${user.id}`) // Filter by branches the user owns
         .order('requested_at', { ascending: false });
-      
-      // If user is not an owner, filter by their assigned branch
-      if (user && user.role !== 'owner' && user.branchId) {
-        query = query.eq('branch_id', user.branchId);
-      }
 
       const { data, error } = await query;
 
@@ -104,12 +102,15 @@ export const useRequestsFetch = () => {
     }
   };
 
-  // Fetch branches for filter
+  // Fetch branches for filter - only those owned by the current user
   const fetchBranches = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('branches')
         .select('id, name')
+        .eq('owner_id', user.id)
         .order('name');
 
       if (error) {
@@ -126,9 +127,11 @@ export const useRequestsFetch = () => {
 
   // Initial data fetch
   useEffect(() => {
-    fetchRequests();
-    fetchBranches();
-  }, [user?.branchId]);
+    if (user) {
+      fetchRequests();
+      fetchBranches();
+    }
+  }, [user?.id]);
 
   return {
     requests,

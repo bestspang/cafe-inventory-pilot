@@ -45,10 +45,11 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Get branches
+      // Get branches where the user is the owner
       const { data, error } = await supabase
         .from('branches')
         .select('id, name, address, timezone, is_open, created_at, updated_at')
+        .eq('owner_id', user.id)
         .order('name');
       
       if (error) throw error;
@@ -79,14 +80,14 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
 
   // Set up realtime subscription for branches changes
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !user?.id) return;
     
     console.log('Setting up realtime subscription for branches');
     
     const channel = supabase
       .channel('branches_changes')
       .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'branches' },
+          { event: '*', schema: 'public', table: 'branches', filter: `owner_id=eq.${user.id}` },
           (payload) => {
             console.group('Branch change detected via StoresContext');
             console.log('Change type:', payload.eventType);
@@ -104,7 +105,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       console.log('Cleaning up branches subscription in StoresContext');
       supabase.removeChannel(channel);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id]);
 
   // Function to create a new branch
   const createStore = async (name: string, address?: string, timezone: string = 'UTC') => {
@@ -120,6 +121,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
           name,
           address: address || null,
           timezone,
+          owner_id: user.id // Ensure owner_id is set to the current user
         })
         .select()
         .single();

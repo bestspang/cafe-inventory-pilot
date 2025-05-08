@@ -13,6 +13,7 @@ import BranchForm from './BranchForm';
 import { BranchFormValues } from '@/lib/schemas/branch-schema';
 import { useEffect, useState } from 'react';
 import { useBranchesData } from '@/hooks/branches/useBranchesData';
+import { useAuth } from '@/context/AuthContext';
 
 interface BranchFormDialogProps {
   branch: Branch | null;
@@ -30,6 +31,8 @@ export default function BranchFormDialog({
   const isEditing = !!branch;
   const { createBranch, updateBranch, isLoading } = useBranchManager();
   const { refetch } = useBranchesData();
+  const { user } = useAuth();
+  
   // Track internal submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -59,10 +62,13 @@ export default function BranchFormDialog({
           address: data.address,
           timezone: data.timezone
         });
-      } else {
+      } else if (user) {
         console.log('[BranchFormDialog] Attempting to create new branch');
-        // createBranch now updates the StoresContext internally
-        const newBranch = await createBranch(data);
+        // Make sure to include owner_id when creating branch
+        const newBranch = await createBranch({
+          ...data,
+          owner_id: user.id
+        });
         success = !!newBranch;
         
         // Always refetch after creating a branch to ensure the list is updated

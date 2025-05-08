@@ -1,71 +1,73 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { toast } from '@/components/ui/sonner';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Branch } from '@/types';
+import { Branch } from '@/types/branch';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
-export const useBranchesData = () => {
+export function useBranchesData() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
-  const fetchBranches = useCallback(async () => {
+  const fetchBranches = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      console.group('Fetching branches data');
-      
-      const { data, error, status } = await supabase
+      // Query branches owned by the current user
+      const { data, error } = await supabase
         .from('branches')
-        .select('id, name, address, timezone, is_open, created_at, updated_at')
+        .select('*')
+        .eq('owner_id', user.id)
         .order('name');
-        
-      console.log('Branches fetch response:', { status, count: data?.length });
       
-      if (error) {
-        console.error('Error fetching branches:', error);
-        toast.error(`Failed to load branches: ${error.message}`);
-        return;
-      }
+      if (error) throw error;
       
-      console.log('Branches fetched successfully, count:', data?.length);
-      console.log('Branch data sample:', data?.slice(0, 2));
-      
-      setBranches(data as Branch[]);
+      setBranches(data || []);
     } catch (error: any) {
       console.error('Error fetching branches:', error);
-      toast.error(`Failed to load branches: ${error?.message || 'Unknown error'}`);
+      toast({
+        title: 'Failed to load branches',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
-      console.groupEnd();
     }
-  }, []);
+  };
 
   useEffect(() => {
-    console.log('useBranchesData hook initialized, fetching initial data...');
-    fetchBranches();
-    
-    // Subscribe to changes
+    if (user) {
+      fetchBranches();
+    }
+  }, [user]);
+
+  // Listen for realtime updates
+  useEffect(() => {
+    if (!user) return;
+
     const channel = supabase
       .channel('branches_changes')
-      .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'branches' },
-          (payload) => {
-            console.group('Branch change detected');
-            console.log('Change type:', payload.eventType);
-            console.log('Changed data:', payload.new);
-            console.log('Refreshing branch list...');
-            console.groupEnd();
-            fetchBranches();
-          }
-      )
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'branches',
+        filter: `owner_id=eq.${user.id}`
+      }, () => {
+        fetchBranches();
+      })
       .subscribe();
-      
-    console.log('Branches realtime subscription activated');
-      
+
     return () => {
-      console.log('Cleaning up branches subscription');
       supabase.removeChannel(channel);
     };
-  }, [fetchBranches]);
+  }, [user]);
 
-  return { branches, isLoading, refetch: fetchBranches };
-};
+  return {
+    branches,
+    isLoading,
+    refetch: fetchBranches
+  };
+}

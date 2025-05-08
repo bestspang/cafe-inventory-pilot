@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,22 +15,39 @@ export const useStockCheckBranches = (storeId?: string | null) => {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        if (!storeId) {
+        if (!user) {
           setIsLoading(false);
           return;
         }
         
-        // When storeId is provided, just fetch this specific branch
-        const { data, error } = await supabase
-          .from('branches')
-          .select('id, name, address, timezone, is_open, created_at, updated_at')
-          .eq('id', storeId);
-        
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          setBranches(data as Branch[]);
-          setSelectedBranch(data[0].id);
+        // When storeId is provided, fetch this specific branch
+        if (storeId) {
+          const { data, error } = await supabase
+            .from('branches')
+            .select('id, name, address, timezone, is_open, created_at, updated_at')
+            .eq('id', storeId)
+            .eq('owner_id', user.id); // Ensure the branch belongs to the current user
+          
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            setBranches(data as Branch[]);
+            setSelectedBranch(data[0].id);
+          }
+        } else {
+          // Otherwise fetch all branches owned by the current user
+          const { data, error } = await supabase
+            .from('branches')
+            .select('id, name, address, timezone, is_open, created_at, updated_at')
+            .eq('owner_id', user.id)
+            .order('name');
+            
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            setBranches(data as Branch[]);
+            setSelectedBranch(data[0].id);
+          }
         }
       } catch (error) {
         console.error('Error fetching branches:', error);
