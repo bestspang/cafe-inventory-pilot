@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useQuickRequestData } from '@/hooks/quick-request/useQuickRequestData';
 import { useQuickRequestFormState } from '@/hooks/quick-request/useQuickRequestFormState';
@@ -9,6 +9,9 @@ import QuickRequestIngredientsTable from './QuickRequestIngredientsTable';
 import QuickRequestFooter from './QuickRequestFooter';
 
 const QuickRequestForm: React.FC = () => {
+  // Create ref for form element
+  const formRef = useRef<HTMLFormElement>(null);
+  
   // Get data and state from custom hooks
   const { 
     isLoading, 
@@ -85,32 +88,61 @@ const QuickRequestForm: React.FC = () => {
       return false;
     }
     
+    return true;
+  };
+  
+  // Handle form submission using FormData to capture all inputs
+  const onSubmitForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Force any focused input to commit its value
+    (document.activeElement as HTMLElement)?.blur();
+    
+    // Read values directly from the DOM using FormData
+    if (!formRef.current) return;
+    
+    const formData = new FormData(formRef.current);
+    
+    // Get form action, branch, staff and comment
+    const action = formData.get('action') as 'request' | 'stock-update';
+    const branchId = formData.get('branch') as string;
+    const staffId = formData.get('user_id') as string;
+    const comment = formData.get('comment') as string;
+    
+    // Build ingredients array with quantities from form inputs
+    const ingredientsWithQuantity = ingredients.map(ing => {
+      const quantityValue = formData.get(`qty_${ing.id}`);
+      const quantity = quantityValue ? Number(quantityValue) : 0;
+      
+      return {
+        ...ing,
+        quantity
+      };
+    }).filter(ing => ing.quantity > 0);
+    
+    console.log('Form submission - active ingredients:', ingredientsWithQuantity.length);
+    
     // Check if there are any items with quantity > 0
-    const hasItems = formState.ingredients.some(ing => ing.quantity > 0);
-    if (!hasItems) {
+    if (ingredientsWithQuantity.length === 0) {
       toast({
         title: 'Missing Information',
         description: 'Please add at least one item with a quantity',
         variant: 'destructive'
       });
-      return false;
+      return;
     }
     
-    return true;
-  };
-  
-  // Handle form submission - making sure all current input values are captured
-  const onSubmitForm = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default form submission
-    
-    // No need to manually update from document.activeElement since all inputs are controlled
-    // and already in the formState
-    
-    console.log('Form submission - active ingredients:', 
-      formState.ingredients.filter(ing => ing.quantity > 0).length);
+    // Create submission form state from the FormData values
+    const submissionState = {
+      action,
+      branchId,
+      staffId,
+      ingredients: ingredientsWithQuantity,
+      comment
+    };
     
     setIsLoading(true);
-    const success = await handleSubmit(formState, staffMembers, validateForm);
+    const success = await handleSubmit(submissionState, staffMembers, validateForm);
     if (success) {
       handleReset();
     }
@@ -118,7 +150,7 @@ const QuickRequestForm: React.FC = () => {
   };
   
   return (
-    <form onSubmit={onSubmitForm} className="space-y-6">
+    <form ref={formRef} onSubmit={onSubmitForm} className="space-y-6">
       <QuickRequestHeader
         formAction={formState.action}
         branchId={formState.branchId}

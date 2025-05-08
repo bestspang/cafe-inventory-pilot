@@ -21,23 +21,17 @@ const QuickRequestIngredientRow: React.FC<QuickRequestIngredientRowProps> = ({
     onUpdateQuantity(ingredient.id, value);
   };
 
-  // Add blur handler to ensure the value is properly saved when focus is lost
-  const handleBlur = () => {
-    // Re-trigger the update with the current value to ensure it's properly saved
-    onUpdateQuantity(ingredient.id, ingredient.quantity);
-  };
-
   return (
     <TableRow>
       <TableCell className="font-medium">{ingredient.name}</TableCell>
       <TableCell>
         <Input
+          name={`qty_${ingredient.id}`}
           type="number"
           min="0"
           // Ensure we always have a number for value (controlled input)
           value={ingredient.quantity}
           onChange={handleChange}
-          onBlur={handleBlur}
           className="w-20"
           disabled={disabled}
         />

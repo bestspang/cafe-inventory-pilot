@@ -39,6 +39,7 @@ const QuickRequestHeader: React.FC<QuickRequestHeaderProps> = ({
       <div>
         <Label htmlFor="action">Action</Label>
         <Select
+          name="action"
           value={formAction}
           onValueChange={(value: 'request' | 'stock-update') => onActionChange(value)}
           disabled={isLoading}
@@ -56,6 +57,7 @@ const QuickRequestHeader: React.FC<QuickRequestHeaderProps> = ({
       <div>
         <Label htmlFor="branch">Store <span className="text-destructive">*</span></Label>
         <Select
+          name="branch"
           value={branchId}
           onValueChange={onBranchChange}
           disabled={isLoading}
@@ -81,6 +83,7 @@ const QuickRequestHeader: React.FC<QuickRequestHeaderProps> = ({
       <div>
         <Label htmlFor="user_id">Staff Name <span className="text-destructive">*</span></Label>
         <Select
+          name="user_id"
           value={staffId}
           onValueChange={onStaffChange}
           disabled={isLoading || !branchId || staffMembers.length === 0}

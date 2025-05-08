@@ -25,6 +25,7 @@ const QuickRequestFooter: React.FC<QuickRequestFooterProps> = ({
         <Label htmlFor="comment">Comments</Label>
         <Textarea
           id="comment"
+          name="comment"
           placeholder="Add any additional information here..."
           value={comment}
           onChange={(e) => onCommentChange(e.target.value)}
