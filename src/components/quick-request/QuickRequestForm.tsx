@@ -7,6 +7,7 @@ import { useQuickRequestSubmit } from '@/hooks/quick-request/useQuickRequestSubm
 import QuickRequestHeader from './QuickRequestHeader';
 import QuickRequestIngredientsTable from './QuickRequestIngredientsTable';
 import QuickRequestFooter from './QuickRequestFooter';
+import QuickRequestSummary from './QuickRequestSummary';
 
 const QuickRequestForm: React.FC = () => {
   // Create ref for form element
@@ -168,6 +169,12 @@ const QuickRequestForm: React.FC = () => {
         onUpdateQuantity={handleUpdateQuantity}
         actionType={formState.action}
         disabled={isLoading || isSubmitting}
+      />
+      
+      {/* Add the summary component here */}
+      <QuickRequestSummary 
+        ingredients={formState.ingredients} 
+        actionType={formState.action}
       />
       
       <QuickRequestFooter
