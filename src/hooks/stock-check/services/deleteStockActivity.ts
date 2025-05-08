@@ -15,7 +15,7 @@ export const deleteStockActivity = async (activityId: string): Promise<boolean> 
       // If it's a stock check item
       const { error, count } = await supabase
         .from('stock_check_items')
-        .delete({ returning: 'minimal' })
+        .delete()
         .eq('id', id);
         
       if (error) {
