@@ -20,16 +20,17 @@ export const useBranchCreate = () => {
     
     try {
       console.log('Creating new branch:', branch);
+      console.log('Current user ID:', user.id);
       
-      // Insert branch
+      // Insert branch with owner_id set to current user ID
       const { data: branchData, error: branchError } = await supabase
         .from('branches')
         .insert({
           name: branch.name,
           address: branch.address,
           timezone: branch.timezone || 'Asia/Bangkok', // Changed default from UTC to Asia/Bangkok
-          is_open: branch.is_open !== undefined ? branch.is_open : true
-          // We don't set owner_id as it might not exist in DB
+          is_open: branch.is_open !== undefined ? branch.is_open : true,
+          owner_id: user.id // Make sure owner_id is set to current user's ID
         })
         .select()
         .single();

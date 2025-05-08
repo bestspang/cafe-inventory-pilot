@@ -16,6 +16,8 @@ export function useBranchesData() {
     
     setIsLoading(true);
     try {
+      console.log('Fetching branches for user:', user.id);
+      
       // With RLS enabled, this will automatically filter to branches owned by the current user
       const { data, error } = await supabase
         .from('branches')
@@ -24,6 +26,7 @@ export function useBranchesData() {
       
       if (error) throw error;
       
+      console.log('Fetched branches:', data);
       setBranches(data as Branch[] || []);
     } catch (error: any) {
       console.error('Error fetching branches:', error);

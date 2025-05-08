@@ -36,6 +36,7 @@ export default function CreateStoreDialog({ open, onOpenChange }: CreateStoreDia
     setIsSubmitting(true);
     
     try {
+      console.log('Creating branch for user:', user.id);
       // This will now automatically set owner_id to the current user
       const newStore = await createStore(name.trim(), address.trim());
       

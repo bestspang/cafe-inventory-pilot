@@ -10,7 +10,7 @@ export const fetchBranches = async (): Promise<Branch[]> => {
     // Try fetching from 'branches' table first
     const { data: branchesData, error: branchesError } = await supabase
       .from('branches')
-      .select('id, name')
+      .select('id, name, owner_id')
       .order('name');
     
     if (branchesError) {
@@ -19,7 +19,7 @@ export const fetchBranches = async (): Promise<Branch[]> => {
       // Fall back to 'stores' table if there was an error
       const { data: storesData, error: storesError } = await supabase
         .from('stores')
-        .select('id, name')
+        .select('id, name, owner_id')
         .order('name');
       
       if (storesError) {
@@ -29,20 +29,18 @@ export const fetchBranches = async (): Promise<Branch[]> => {
       
       if (storesData && storesData.length > 0) {
         console.log('Stores loaded:', storesData);
-        // Create objects that satisfy the Branch interface
-        return storesData.map(store => ({ ...store, owner_id: undefined } as Branch));
+        return storesData as Branch[];
       }
     } else if (branchesData && branchesData.length > 0) {
       console.log('Branches loaded:', branchesData);
-      // Create objects that satisfy the Branch interface
-      return branchesData.map(branch => ({ ...branch, owner_id: undefined } as Branch));
+      return branchesData as Branch[];
     } else {
       console.log('No branches found in branches table, trying stores table');
       
       // If no branches found, try stores table
       const { data: storesData, error: storesError } = await supabase
         .from('stores')
-        .select('id, name')
+        .select('id, name, owner_id')
         .order('name');
       
       if (storesError) {
@@ -51,8 +49,7 @@ export const fetchBranches = async (): Promise<Branch[]> => {
       }
       
       console.log('Stores loaded:', storesData);
-      // Create objects that satisfy the Branch interface
-      return (storesData || []).map(store => ({ ...store, owner_id: undefined } as Branch));
+      return (storesData || []) as Branch[];
     }
   } catch (error) {
     console.error('Error fetching branches/stores:', error);

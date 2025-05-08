@@ -48,13 +48,14 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       // Get branches - with RLS enabled, this will automatically filter to user's branches
       const { data, error } = await supabase
         .from('branches')
-        .select('id, name, address, timezone, is_open, created_at, updated_at')
+        .select('id, name, address, timezone, is_open, created_at, updated_at, owner_id')
         .order('name');
       
       if (error) throw error;
       
       // Type the data explicitly as Branch[]
       const typedData = data as Branch[];
+      console.log('Fetched branches:', typedData);
       setStores(typedData);
       
       // If we have stores but no current selection, try to restore from localStorage or use first
@@ -116,13 +117,15 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     }
     
     try {
+      console.log('Creating new branch with owner_id:', user.id);
+      
       const { data, error } = await supabase
         .from('branches')
         .insert({
           name,
           address: address || null,
-          timezone
-          // Note: We're not setting owner_id here as it might not exist in DB
+          timezone,
+          owner_id: user.id // Explicitly set owner_id to current user's ID
         })
         .select()
         .single();
@@ -133,6 +136,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       
       // Use a simple type assertion
       const newBranch = data as Branch;
+      console.log('New branch created:', newBranch);
       
       // Optimistically update the local state
       addStore(newBranch);
