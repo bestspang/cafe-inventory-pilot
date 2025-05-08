@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { StoresProvider } from "@/context/StoresContext";
 import { seedDemoData } from "@/utils/seedDemoData";
 
 // Auth
@@ -40,45 +41,47 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes - these don't require authentication */}
-              <Route path="/login" element={
-                <AuthGuard requireAuth={false} redirectTo="/dashboard">
-                  <Login />
-                </AuthGuard>
-              } />
-              
-              <Route path="/quick-request" element={<QuickRequest />} />
-              
-              {/* Root route - determines where to go based on auth */}
-              <Route path="/" element={<Index />} />
-              
-              {/* Protected routes - require authentication */}
-              <Route element={<AuthGuard requireAuth={true}><AppLayout /></AuthGuard>}>
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="inventory" element={<Inventory />} />
-                <Route path="stock-check" element={<StockCheck />} />
-                <Route path="requests" element={<Requests />} />
-                <Route path="requests/new" element={<NewRequest />} />
-                <Route path="branches" element={<Branches />} />
-                <Route path="manage-staff" element={<ManageStaff />} />
+          <StoresProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Public routes - these don't require authentication */}
+                <Route path="/login" element={
+                  <AuthGuard requireAuth={false} redirectTo="/dashboard">
+                    <Login />
+                  </AuthGuard>
+                } />
                 
-                {/* Coming Soon Pages */}
-                <Route path="suppliers" element={<ComingSoonPage />} />
-                <Route path="purchase-orders" element={<ComingSoonPage />} />
-                <Route path="reports" element={<ComingSoonPage />} />
-                <Route path="users" element={<ComingSoonPage />} />
-                <Route path="settings" element={<ComingSoonPage />} />
-                <Route path="profile" element={<ComingSoonPage />} />
+                <Route path="/quick-request" element={<QuickRequest />} />
                 
-                {/* Catch-all for other routes */}
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
+                {/* Root route - determines where to go based on auth */}
+                <Route path="/" element={<Index />} />
+                
+                {/* Protected routes - require authentication */}
+                <Route element={<AuthGuard requireAuth={true}><AppLayout /></AuthGuard>}>
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="inventory" element={<Inventory />} />
+                  <Route path="stock-check" element={<StockCheck />} />
+                  <Route path="requests" element={<Requests />} />
+                  <Route path="requests/new" element={<NewRequest />} />
+                  <Route path="branches" element={<Branches />} />
+                  <Route path="manage-staff" element={<ManageStaff />} />
+                  
+                  {/* Coming Soon Pages */}
+                  <Route path="suppliers" element={<ComingSoonPage />} />
+                  <Route path="purchase-orders" element={<ComingSoonPage />} />
+                  <Route path="reports" element={<ComingSoonPage />} />
+                  <Route path="users" element={<ComingSoonPage />} />
+                  <Route path="settings" element={<ComingSoonPage />} />
+                  <Route path="profile" element={<ComingSoonPage />} />
+                  
+                  {/* Catch-all for other routes */}
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </StoresProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

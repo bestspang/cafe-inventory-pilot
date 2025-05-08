@@ -54,6 +54,6 @@ const QuickRequestIngredientRow: React.FC<QuickRequestIngredientRowProps> = ({
       )}
     </TableRow>
   );
-};
+}
 
 export default QuickRequestIngredientRow;

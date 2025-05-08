@@ -182,6 +182,7 @@ export type Database = {
       }
       ingredients: {
         Row: {
+          branch_id: string | null
           category_id: string | null
           cost_per_unit: number | null
           created_at: string | null
@@ -191,6 +192,7 @@ export type Database = {
           unit: string
         }
         Insert: {
+          branch_id?: string | null
           category_id?: string | null
           cost_per_unit?: number | null
           created_at?: string | null
@@ -200,6 +202,7 @@ export type Database = {
           unit: string
         }
         Update: {
+          branch_id?: string | null
           category_id?: string | null
           cost_per_unit?: number | null
           created_at?: string | null
@@ -209,6 +212,13 @@ export type Database = {
           unit?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ingredients_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ingredients_category_id_fkey"
             columns: ["category_id"]
@@ -506,6 +516,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stores: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          is_open: boolean
+          name: string
+          owner_id: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_open?: boolean
+          name: string
+          owner_id: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_open?: boolean
+          name?: string
+          owner_id?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

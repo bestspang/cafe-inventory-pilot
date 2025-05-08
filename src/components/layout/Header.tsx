@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
+import StoreSwitcher from '@/components/stores/StoreSwitcher';
 
 const Header = () => {
   const location = useLocation();
@@ -67,6 +68,8 @@ const Header = () => {
       </div>
       
       <div className="flex items-center gap-2">
+        <StoreSwitcher />
+        
         <div className="hidden md:flex relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input 
