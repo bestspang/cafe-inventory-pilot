@@ -5,15 +5,19 @@ import { supabase } from '@/integrations/supabase/client';
 // Add or edit an ingredient
 export const saveIngredient = async (
   data: Partial<Ingredient> & { branch_id?: string | null },
-  categoryId: string | null
+  categoryId: string | null,
+  userId?: string
 ) => {
   console.log('Saving ingredient with data:', data, 'and categoryId:', categoryId);
   
-  // Get the current user's ID from the authenticated session
-  const { data: { session } } = await supabase.auth.getSession();
-  const userId = session?.user?.id;
+  // Get the current user's ID from the authenticated session if not provided
+  let userIdToUse = userId;
+  if (!userIdToUse) {
+    const { data: { session } } = await supabase.auth.getSession();
+    userIdToUse = session?.user?.id;
+  }
   
-  if (!userId) {
+  if (!userIdToUse) {
     throw new Error("You must be logged in to save ingredients.");
   }
   
@@ -38,7 +42,7 @@ export const saveIngredient = async (
           const { error: costUpdateError } = await supabase.rpc('update_ingredient_cost', {
             p_ingr_id: data.id,
             p_new_cost: data.costPerUnit,
-            p_user_id: userId
+            p_user_id: userIdToUse
           });
           
           if (costUpdateError) {
@@ -105,7 +109,7 @@ export const saveIngredient = async (
       };
     } else {
       // Add new ingredient
-      console.log('Adding new ingredient with user ID:', userId);
+      console.log('Adding new ingredient with user ID:', userIdToUse);
       const { error } = await supabase
         .from('ingredients')
         .insert([{
@@ -113,7 +117,7 @@ export const saveIngredient = async (
           category_id: categoryId,
           unit: data.unit,
           cost_per_unit: data.costPerUnit,
-          created_by: userId,
+          created_by: userIdToUse,
           is_active: true, // Set new ingredients as active by default
           // Branch ID is optional now
           ...(data.branch_id ? { branch_id: data.branch_id } : {})

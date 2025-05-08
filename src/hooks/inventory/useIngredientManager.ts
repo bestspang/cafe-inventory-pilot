@@ -109,11 +109,13 @@ export const useIngredientManager = (
       }
       
       // Save ingredient with category and branch_id if storing
-      const result = await saveIngredient({
+      const ingredientData = {
         ...data,
-        branch_id: data.branch_id || storeId || null,
-        created_by: data.id ? undefined : user.id // Only set created_by for new ingredients
-      }, categoryId);
+        branch_id: data.branch_id || storeId || null
+      };
+      
+      // Pass the user ID separately to the saveIngredient function
+      const result = await saveIngredient(ingredientData, categoryId, user.id);
       
       if (result.success) {
         toast({

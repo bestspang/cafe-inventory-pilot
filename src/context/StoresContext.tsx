@@ -48,13 +48,12 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       // Get branches where the user is the owner
       const { data, error } = await supabase
         .from('branches')
-        .select('id, name, address, timezone, is_open, created_at, updated_at, owner_id')
-        .eq('owner_id', user.id)
+        .select('id, name, address, timezone, is_open, created_at, updated_at')
         .order('name');
       
       if (error) throw error;
       
-      // Type the data explicitly as an array to avoid deep type nesting issues
+      // Type the data explicitly as Branch[]
       const typedData: Branch[] = data || [];
       setStores(typedData);
       
@@ -89,7 +88,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     const channel = supabase
       .channel('branches_changes')
       .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'branches', filter: `owner_id=eq.${user.id}` },
+          { event: '*', schema: 'public', table: 'branches' },
           (payload) => {
             console.group('Branch change detected via StoresContext');
             console.log('Change type:', payload.eventType);
@@ -122,8 +121,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
         .insert({
           name,
           address: address || null,
-          timezone,
-          owner_id: user.id // Make sure owner_id is set to the current user
+          timezone
         })
         .select()
         .single();
