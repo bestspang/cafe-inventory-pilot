@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, ClipboardList, ShoppingBag, Store, FileText, BarChart4, Users, Bell, Settings, Package } from 'lucide-react';
@@ -26,7 +25,7 @@ const navItems: NavItem[] = [{
   icon: ShoppingBag,
   path: "/stock-check"
 }, {
-  title: "Ingredients",
+  title: "Inventory",
   icon: Package,
   path: "/inventory",
   role: ['owner', 'manager']
