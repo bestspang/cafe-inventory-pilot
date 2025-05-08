@@ -54,7 +54,12 @@ export const useInventory = () => {
     await handleAddEdit({
       ...data,
       branch_id: currentStoreId
-    }, categories, (name: string) => handleNewCategory(name));
+    }, categories, (name: string) => {
+      // The handleNewCategory function requires two arguments: tempId and categoryName
+      // Here we're generating a temporary ID using the current timestamp
+      const tempId = `temp-${Date.now()}`;
+      return handleNewCategory(tempId, name);
+    });
   };
 
   // Handler for viewing cost history
