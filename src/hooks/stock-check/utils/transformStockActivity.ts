@@ -54,7 +54,8 @@ export const getStaffName = (
 export const transformStockCheckData = (
   stockCheckData: any[],
   staffMap: Map<string, string>,
-  profileMap: Map<string, string>
+  profileMap: Map<string, string>,
+  lastChangeMap: Map<string, number> = new Map()
 ) => {
   const activities: StockActivity[] = [];
   
@@ -69,6 +70,11 @@ export const transformStockCheckData = (
     if (stockCheck.stock_check_items && stockCheck.stock_check_items.length > 0) {
       stockCheck.stock_check_items.forEach((item: any) => {
         if (item.ingredients) {
+          // Get the last_change value from the map if available
+          const changeValue = item.ingredients.id && lastChangeMap.has(item.ingredients.id)
+            ? lastChangeMap.get(item.ingredients.id)
+            : 0;
+            
           activities.push({
             id: `sci-${item.id}`,
             checkedAt: stockCheck.checked_at,
@@ -76,7 +82,7 @@ export const transformStockCheckData = (
             staffName,
             ingredient: item.ingredients.name,
             quantity: item.on_hand_qty,
-            quantityChange: item.last_change || 0, // Add the quantity change
+            quantityChange: changeValue,
             unit: item.ingredients.unit,
             comment: null,
             source: 'stock-check',

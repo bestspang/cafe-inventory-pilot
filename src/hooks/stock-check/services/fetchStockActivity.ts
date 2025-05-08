@@ -21,14 +21,31 @@ export const fetchStockActivity = async (): Promise<StockActivity[]> => {
         stock_check_items(
           id,
           on_hand_qty,
-          ingredients(id, name, unit),
-          last_change
+          ingredients(id, name, unit)
         )
       `)
       .order('checked_at', { ascending: false })
       .limit(100);
       
     if (stockCheckError) throw stockCheckError;
+    
+    // Get branch_inventory data to retrieve last_change info
+    const { data: inventoryData, error: inventoryError } = await supabase
+      .from('branch_inventory')
+      .select('ingredient_id, last_change')
+      .order('last_checked', { ascending: false });
+      
+    if (inventoryError) throw inventoryError;
+    
+    // Create a map of ingredient_id to last_change
+    const lastChangeMap = new Map();
+    if (inventoryData) {
+      inventoryData.forEach(item => {
+        if (item.ingredient_id && item.last_change !== undefined) {
+          lastChangeMap.set(item.ingredient_id, item.last_change);
+        }
+      });
+    }
     
     // Separate query to get staff names from store_staff table and profiles
     const userIds = stockCheckData?.map(sc => sc.user_id) || [];
@@ -71,7 +88,7 @@ export const fetchStockActivity = async (): Promise<StockActivity[]> => {
     if (requestError) throw requestError;
     
     // Transform the data
-    const stockCheckActivities = transformStockCheckData(stockCheckData || [], staffMap, profileMap);
+    const stockCheckActivities = transformStockCheckData(stockCheckData || [], staffMap, profileMap, lastChangeMap);
     const requestActivities = transformRequestData(requestData || []);
     
     // Combine and sort all activities
