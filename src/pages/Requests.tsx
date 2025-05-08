@@ -12,17 +12,19 @@ import { useRequestsFilters } from '@/hooks/requests/useRequestsFilters';
 import { useRequestsRealtime } from '@/hooks/requests/useRequestsRealtime';
 import { useRequestDelete } from '@/hooks/requests/useRequestDelete';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useStores } from '@/context/StoresContext';
 
 const Requests = () => {
   const { user } = useAuth();
+  const { currentStoreId } = useStores();
   
-  // Use our custom hooks
-  const { requests, setRequests, isLoading, branches, fetchRequests } = useRequestsFetch();
+  // Use our custom hooks with current store ID
+  const { requests, setRequests, isLoading, branches, fetchRequests } = useRequestsFetch(currentStoreId);
   const { handleToggleStatus } = useRequestStatusToggle(requests, setRequests);
   const { deleteRequest } = useRequestDelete(fetchRequests);
   
   // Set up realtime subscription
-  useRequestsRealtime(fetchRequests);
+  useRequestsRealtime(fetchRequests, currentStoreId);
   
   // Use our filter hook
   const {

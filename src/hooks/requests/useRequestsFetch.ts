@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { RequestItem, RequestDB } from '@/types/requests';
 
-export const useRequestsFetch = () => {
+export const useRequestsFetch = (storeId?: string | null) => {
   const { toast } = useToast();
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,7 +47,7 @@ export const useRequestsFetch = () => {
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('requests')
         .select(`
           id,
@@ -75,6 +75,13 @@ export const useRequestsFetch = () => {
           )
         `)
         .order('requested_at', { ascending: false });
+      
+      // Filter by store if storeId is provided
+      if (storeId) {
+        query = query.eq('branch_id', storeId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;
@@ -99,7 +106,7 @@ export const useRequestsFetch = () => {
   const fetchBranches = async () => {
     try {
       const { data, error } = await supabase
-        .from('branches')
+        .from('stores')
         .select('id, name')
         .order('name');
 
@@ -119,7 +126,7 @@ export const useRequestsFetch = () => {
   useEffect(() => {
     fetchRequests();
     fetchBranches();
-  }, []);
+  }, [storeId]);
 
   return {
     requests,

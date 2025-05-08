@@ -25,13 +25,13 @@ export const useStockCheck = () => {
     handleQuantityChange,
     handleReorderPointChange,
     setUpdatedItems
-  } = useStockCheckItems(selectedBranch);
+  } = useStockCheckItems(selectedBranch || currentStoreId);
 
   const { 
     handleSave,
     handleReorderPointSave 
   } = useStockCheckActions(
-    selectedBranch,
+    selectedBranch || currentStoreId,
     stockItems,
     updatedItems,
     setUpdatedItems,
@@ -40,6 +40,11 @@ export const useStockCheck = () => {
 
   // Combined loading state
   const isLoading = branchesLoading || itemsLoading;
+
+  // If no branch is selected, default to the current store
+  if (currentStoreId && !selectedBranch) {
+    setSelectedBranch(currentStoreId);
+  }
 
   return {
     search,

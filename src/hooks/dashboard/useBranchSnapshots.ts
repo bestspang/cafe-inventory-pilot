@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { useStores } from '@/context/StoresContext';
 
 export interface BranchSnapshot {
   id: string;
@@ -27,6 +28,7 @@ export const useBranchSnapshots = ({
   const [branches, setBranches] = useState<BranchSnapshot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const { stores } = useStores();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,31 +36,19 @@ export const useBranchSnapshots = ({
       try {
         setIsLoading(true);
         
-        // First fetch branches
-        let query = supabase
-          .from('branches')
-          .select(`
-            id, 
-            name
-          `);
-        
-        // If user is not an owner, filter to show only their branch
-        if (user?.role !== 'owner' && user?.branchId) {
-          query = query.eq('id', user.branchId);
+        if (!stores || stores.length === 0) {
+          setIsLoading(false);
+          setBranches([]);
+          return;
         }
         
-        const { data: branchData, error: branchError } = await query;
-        
-        if (branchError) throw branchError;
-        if (!branchData) throw new Error("No branch data returned");
-        
-        // For each branch, fetch inventory, requests, and last check data
-        const snapshots = await Promise.all(branchData.map(async branch => {
+        // Process store data from context
+        const snapshots = await Promise.all(stores.map(async store => {
           // Get inventory health
           const { data: inventoryData, error: inventoryError } = await supabase
             .from('branch_inventory')
             .select('on_hand_qty, reorder_pt')
-            .eq('branch_id', branch.id);
+            .eq('branch_id', store.id);
           
           if (inventoryError) throw inventoryError;
           
@@ -75,7 +65,7 @@ export const useBranchSnapshots = ({
           const { count: pendingRequests, error: requestsError } = await supabase
             .from('requests')
             .select('*', { count: 'exact', head: true })
-            .eq('branch_id', branch.id)
+            .eq('branch_id', store.id)
             .eq('status', 'pending');
           
           if (requestsError) throw requestsError;
@@ -84,16 +74,16 @@ export const useBranchSnapshots = ({
           const { data: checksData, error: checksError } = await supabase
             .from('stock_checks')
             .select('checked_at')
-            .eq('branch_id', branch.id)
+            .eq('branch_id', store.id)
             .order('checked_at', { ascending: false })
             .limit(1);
           
           if (checksError) throw checksError;
           
           return {
-            id: branch.id,
-            name: branch.name,
-            stockHealth: stockHealth,
+            id: store.id,
+            name: store.name,
+            stockHealth,
             pendingRequests: pendingRequests || 0,
             lastCheckDate: checksData && checksData.length > 0 ? checksData[0].checked_at : undefined
           };
@@ -122,47 +112,34 @@ export const useBranchSnapshots = ({
       }
     };
 
-    if (user) {
+    if (user && stores.length > 0) {
       fetchBranchSnapshots();
     }
     
     // Set up realtime subscriptions for branch snapshot updates
-    const inventoryChannel = supabase
-      .channel('branch_inventory_updates')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'branch_inventory' }, 
-        () => {
-          fetchBranchSnapshots();
-        }
-      )
-      .subscribe();
+    const channels = stores.map(store => {
+      return supabase
+        .channel(`branch_inventory_updates_${store.id}`)
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'branch_inventory',
+            filter: `branch_id=eq.${store.id}`
+          }, 
+          () => {
+            fetchBranchSnapshots();
+          }
+        )
+        .subscribe();
+    });
       
-    const requestsChannel = supabase
-      .channel('branch_requests_updates')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'requests' }, 
-        () => {
-          fetchBranchSnapshots();
-        }
-      )
-      .subscribe();
-      
-    const checksChannel = supabase
-      .channel('branch_checks_updates')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'stock_checks' }, 
-        () => {
-          fetchBranchSnapshots();
-        }
-      )
-      .subscribe();
-    
     return () => {
-      supabase.removeChannel(inventoryChannel);
-      supabase.removeChannel(requestsChannel);
-      supabase.removeChannel(checksChannel);
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
     };
-  }, [user, branchFilter, toast]);
+  }, [user, stores, branchFilter, toast]);
   
   return { branches, isLoading };
 };

@@ -45,23 +45,49 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      
+      // Get stores where user is owner
+      const { data: ownedStores, error: ownedError } = await supabase
         .from('stores')
         .select('id, name, address, timezone, is_open')
+        .eq('owner_id', user.id)
         .order('name');
-        
-      if (error) throw error;
       
-      setStores(data || []);
+      if (ownedError) throw ownedError;
+      
+      // Get stores where user is staff or manager (for future use)
+      const { data: staffStores, error: staffError } = await supabase
+        .from('store_staff')
+        .select(`
+          store_id,
+          role,
+          stores(id, name, address, timezone, is_open)
+        `)
+        .eq('user_id', user.id);
+        
+      if (staffError) throw staffError;
+      
+      // Combine stores and remove duplicates
+      const allStores = [
+        ...(ownedStores || []),
+        ...(staffStores?.map(s => s.stores) || [])
+      ].filter(Boolean);
+      
+      // Remove duplicates based on store ID
+      const uniqueStores = Array.from(
+        new Map(allStores.map(store => [store.id, store])).values()
+      );
+      
+      setStores(uniqueStores);
       
       // If we have stores but no current selection, try to restore from localStorage or use first
-      if (data && data.length > 0 && !currentStoreId) {
+      if (uniqueStores.length > 0 && !currentStoreId) {
         const savedStoreId = localStorage.getItem('selectedStoreId');
         
         // Check if the saved ID is in the available stores
-        const validSavedId = savedStoreId && data.some(store => store.id === savedStoreId);
+        const validSavedId = savedStoreId && uniqueStores.some(store => store.id === savedStoreId);
         
-        setCurrentStoreId(validSavedId ? savedStoreId : data[0].id);
+        setCurrentStoreId(validSavedId ? savedStoreId : uniqueStores[0].id);
       }
     } catch (error) {
       console.error('Error fetching stores:', error);
