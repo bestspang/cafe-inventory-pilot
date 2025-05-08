@@ -45,9 +45,9 @@ const App = () => {
         <AuthProvider>
           <StoresProvider>
             <LocaleProvider>
-              <Toaster />
-              <Sonner />
               <BrowserRouter>
+                <Toaster />
+                <Sonner />
                 <Routes>
                   {/* Public routes - these don't require authentication */}
                   <Route path="/login" element={
