@@ -49,32 +49,22 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from('branches')
         .select('id, name, address, timezone, is_open, created_at, updated_at')
-        .eq('owner_id', user.id)
         .order('name');
       
       if (error) throw error;
       
-      // Fix: Use a more direct type assertion to avoid deep instantiation
-      const branchData = (data || []) as Array<{
-        id: string;
-        name: string;
-        address: string | null;
-        timezone: string | null;
-        is_open: boolean;
-        created_at: string;
-        updated_at: string;
-      }>;
-      
-      setStores(branchData);
+      // Type the data explicitly as an array to avoid deep type nesting issues
+      const typedData: Branch[] = data || [];
+      setStores(typedData);
       
       // If we have stores but no current selection, try to restore from localStorage or use first
-      if (branchData.length > 0 && !currentStoreId) {
+      if (typedData.length > 0 && !currentStoreId) {
         const savedStoreId = localStorage.getItem('selectedStoreId');
         
         // Check if the saved ID is in the available stores
-        const validSavedId = savedStoreId && branchData.some(store => store.id === savedStoreId);
+        const validSavedId = savedStoreId && typedData.some(store => store.id === savedStoreId);
         
-        setCurrentStoreId(validSavedId ? savedStoreId : branchData[0].id);
+        setCurrentStoreId(validSavedId ? savedStoreId : typedData[0].id);
       }
     } catch (error) {
       console.error('Error fetching branches:', error);
@@ -98,7 +88,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     const channel = supabase
       .channel('branches_changes')
       .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'branches', filter: `owner_id=eq.${user.id}` },
+          { event: '*', schema: 'public', table: 'branches' },
           (payload) => {
             console.group('Branch change detected via StoresContext');
             console.log('Change type:', payload.eventType);
@@ -131,8 +121,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
         .insert({
           name,
           address: address || null,
-          timezone,
-          owner_id: user.id // Ensure owner_id is set to the current user
+          timezone
         })
         .select()
         .single();
@@ -141,8 +130,8 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       
       toast.success('Branch created successfully');
       
-      // Simple type assertion to avoid complex type checking
-      const newBranch = data as unknown as Branch;
+      // Use a simple type assertion
+      const newBranch = data as Branch;
       
       // Optimistically update the local state
       addStore(newBranch);
