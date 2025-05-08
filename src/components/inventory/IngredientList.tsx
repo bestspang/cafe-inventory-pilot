@@ -117,7 +117,7 @@ const IngredientList: React.FC<IngredientListProps> = ({
                         onClick={() => onDelete(ingredient)}
                       >
                         <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Delete</span>
+                        <span className="sr-only">Archive</span>
                       </Button>
                     </div>
                   </TableCell>

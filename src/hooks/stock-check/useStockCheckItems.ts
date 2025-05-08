@@ -18,7 +18,7 @@ export const useStockCheckItems = (selectedBranch: string) => {
       
       setIsLoading(true);
       try {
-        // First, get all ingredients
+        // First, get all active ingredients
         const { data: ingredients, error: ingredientsError } = await supabase
           .from('ingredients')
           .select(`
@@ -26,8 +26,10 @@ export const useStockCheckItems = (selectedBranch: string) => {
             name, 
             unit, 
             categoryId:category_id, 
-            categories(id, name)
-          `);
+            categories(id, name),
+            is_active
+          `)
+          .eq('is_active', true); // Only fetch active ingredients
         
         if (ingredientsError) throw ingredientsError;
         
@@ -65,7 +67,8 @@ export const useStockCheckItems = (selectedBranch: string) => {
             unit: ingredient.unit,
             onHandQty: inventoryData.onHandQty,
             reorderPt: inventoryData.reorderPt,
-            lastChange: inventoryData.lastChange
+            lastChange: inventoryData.lastChange,
+            isActive: ingredient.is_active
           };
         });
         

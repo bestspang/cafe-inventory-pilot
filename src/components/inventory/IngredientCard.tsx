@@ -66,7 +66,7 @@ const IngredientCard: React.FC<IngredientCardProps> = ({
           </Button>
           <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}>
             <Trash2 className="h-4 w-4 mr-1" />
-            Delete
+            Archive
           </Button>
         </CardFooter>
       )}

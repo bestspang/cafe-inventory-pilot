@@ -1,3 +1,4 @@
+
 import { Ingredient } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -113,6 +114,7 @@ export const saveIngredient = async (
           unit: data.unit,
           cost_per_unit: data.costPerUnit,
           created_by: userId,
+          is_active: true, // Set new ingredients as active by default
           // Branch ID is optional now
           ...(data.branch_id ? { branch_id: data.branch_id } : {})
         }]);
@@ -133,18 +135,19 @@ export const saveIngredient = async (
   }
 };
 
-// Delete an ingredient
+// Soft delete an ingredient by setting is_active to false
 export const deleteIngredient = async (ingredientId: string) => {
-  console.log('Deleting ingredient:', ingredientId);
+  console.log('Soft-deleting ingredient:', ingredientId);
   
   try {
+    // Instead of deleting, update is_active to false
     const { error } = await supabase
       .from('ingredients')
-      .delete()
+      .update({ is_active: false })
       .eq('id', ingredientId);
     
     if (error) {
-      console.error('Error deleting ingredient:', error);
+      console.error('Error soft-deleting ingredient:', error);
       handleDatabaseError(error);
     }
     
@@ -152,7 +155,7 @@ export const deleteIngredient = async (ingredientId: string) => {
       success: true
     };
   } catch (error: any) {
-    console.error('Unexpected error deleting ingredient:', error);
+    console.error('Unexpected error soft-deleting ingredient:', error);
     throw new Error(`Unexpected error: ${error.message || 'Unknown error'}`);
   }
 };

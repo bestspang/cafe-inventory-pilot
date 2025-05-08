@@ -31,8 +31,10 @@ export const useIngredientManager = (
           cost_per_unit,
           branch_id,
           categoryId:category_id, 
-          categories(id, name)
+          categories(id, name),
+          is_active
         `)
+        .eq('is_active', true) // Only fetch active ingredients
         .order('name');
       
       if (error) {
@@ -49,7 +51,8 @@ export const useIngredientManager = (
         costPerUnit: item.cost_per_unit,
         branch_id: item.branch_id,
         categoryId: item.categoryId,
-        categoryName: item.categories?.name || 'Uncategorized'
+        categoryName: item.categories?.name || 'Uncategorized',
+        isActive: item.is_active
       }));
       
       setIngredients(formattedData);
@@ -130,7 +133,7 @@ export const useIngredientManager = (
     setDeleteDialogOpen(true);
   };
 
-  // Confirm delete handler
+  // Confirm delete handler (now performs soft deletion)
   const confirmDelete = async () => {
     if (!currentIngredient) return;
     
@@ -139,8 +142,8 @@ export const useIngredientManager = (
       
       if (result.success) {
         toast({
-          title: 'Ingredient deleted',
-          description: `${currentIngredient.name} has been removed from inventory`
+          title: 'Ingredient archived',
+          description: `${currentIngredient.name} has been archived from inventory`
         });
         
         fetchIngredients();
@@ -149,7 +152,7 @@ export const useIngredientManager = (
     } catch (error: any) {
       console.error('Error in confirmDelete:', error);
       toast({
-        title: 'Failed to delete ingredient',
+        title: 'Failed to archive ingredient',
         description: error.message || 'An unexpected error occurred',
         variant: 'destructive'
       });

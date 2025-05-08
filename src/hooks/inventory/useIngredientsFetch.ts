@@ -23,8 +23,10 @@ export const useIngredientsFetch = () => {
           unit, 
           cost_per_unit,
           categoryId:category_id, 
-          categories(id, name)
+          categories(id, name),
+          is_active
         `)
+        .eq('is_active', true) // Only fetch active ingredients
         .order('name');
       
       if (error) {
@@ -40,7 +42,8 @@ export const useIngredientsFetch = () => {
         unit: item.unit,
         costPerUnit: item.cost_per_unit,
         categoryId: item.categoryId,
-        categoryName: item.categories?.name || 'Uncategorized'
+        categoryName: item.categories?.name || 'Uncategorized',
+        isActive: item.is_active
       }));
       
       setIngredients(formattedData);

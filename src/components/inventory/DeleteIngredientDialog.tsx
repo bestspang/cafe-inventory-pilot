@@ -31,14 +31,15 @@ const DeleteIngredientDialog: React.FC<DeleteIngredientDialogProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete {ingredient?.name} from your inventory.
-            This action cannot be undone.
+            This will archive {ingredient?.name} from your active inventory.
+            The ingredient will be hidden but all historical data will be preserved.
+            You can restore it later if needed.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirmDelete} className="bg-destructive text-destructive-foreground">
-            Delete
+            Archive
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
