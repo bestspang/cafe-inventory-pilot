@@ -4,19 +4,22 @@ import { QuickRequestIngredient } from '@/types/quick-request';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 interface QuickRequestIngredientTableProps {
   ingredients: QuickRequestIngredient[];
   onUpdateQuantity: (id: string, quantity: number) => void;
   disabled?: boolean;
   showDetails?: boolean;
+  isLoading?: boolean;
 }
 
 const QuickRequestIngredientTable: React.FC<QuickRequestIngredientTableProps> = ({
   ingredients,
   onUpdateQuantity,
   disabled = false,
-  showDetails = false
+  showDetails = false,
+  isLoading = false
 }) => {
   // Handle quantity change
   const handleQuantityChange = (id: string, value: string) => {
@@ -28,6 +31,15 @@ const QuickRequestIngredientTable: React.FC<QuickRequestIngredientTableProps> = 
   
   // Sort ingredients by name
   const sortedIngredients = [...ingredients].sort((a, b) => a.name.localeCompare(b.name));
+  
+  if (isLoading) {
+    return (
+      <div className="text-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+        <p className="text-muted-foreground">Loading ingredients...</p>
+      </div>
+    );
+  }
   
   return (
     <div className="border rounded-md overflow-hidden">

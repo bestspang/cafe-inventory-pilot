@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuickRequestData } from '@/hooks/quick-request/useQuickRequestData';
@@ -45,7 +44,7 @@ const QuickRequestForm: React.FC<QuickRequestFormProps> = ({ onBranchChange }) =
     try {
       // Fetch ingredients for this branch
       console.log(`Fetching ingredients for branch ${branchId}`);
-      const branchIngredients = await fetchIngredients(branchId);
+      await fetchIngredients(branchId);
       
       // Fetch staff members for this branch
       console.log(`Fetching staff for branch ${branchId}`);
@@ -201,7 +200,7 @@ const QuickRequestForm: React.FC<QuickRequestFormProps> = ({ onBranchChange }) =
   // Initialize selected ingredients when ingredients are loaded
   useEffect(() => {
     if (ingredients.length > 0) {
-      console.log(`Setting ${ingredients.length} ingredients in form state`);
+      console.log(`Setting ${ingredients.length} ingredients in form state`, ingredients);
       setSelectedIngredients(ingredients);
     }
   }, [ingredients]);
@@ -237,13 +236,24 @@ const QuickRequestForm: React.FC<QuickRequestFormProps> = ({ onBranchChange }) =
         />
         
         <div className="bg-muted/40 p-4 rounded-md">
-          {selectedBranchId ? (
-            <QuickRequestIngredientTable
-              ingredients={selectedIngredients}
-              onUpdateQuantity={handleUpdateQuantity}
-              disabled={isSubmitting || !selectedBranchId}
-              showDetails={formAction === 'stock-update'}
-            />
+          {isLoading && selectedBranchId ? (
+            <div className="text-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+              <p className="text-muted-foreground">Loading ingredients...</p>
+            </div>
+          ) : selectedBranchId ? (
+            selectedIngredients.length > 0 ? (
+              <QuickRequestIngredientTable
+                ingredients={selectedIngredients}
+                onUpdateQuantity={handleUpdateQuantity}
+                disabled={isSubmitting || !selectedBranchId}
+                showDetails={formAction === 'stock-update'}
+              />
+            ) : (
+              <div className="text-center p-8">
+                <p className="text-muted-foreground">No ingredients found for this branch</p>
+              </div>
+            )
           ) : (
             <div className="text-center p-4 text-muted-foreground">
               Select a store to view available ingredients

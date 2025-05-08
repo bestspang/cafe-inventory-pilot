@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -91,42 +90,20 @@ export const useQuickRequestData = () => {
       
       console.log(`Fetching ingredients for branch ${targetBranchId}...`);
       
-      // First get all ingredients for this branch
-      const { data: ingredientsData, error: ingredientsError } = await supabase
+      // Get ALL ingredients first - not filtered by branch
+      const { data: allIngredientsData, error: allIngredientsError } = await supabase
         .from('ingredients')
         .select('id, name, unit')
-        .eq('branch_id', targetBranchId)
         .eq('is_active', true);
       
-      if (ingredientsError) {
-        console.error('Error fetching ingredients:', ingredientsError);
-        
-        // Try getting all ingredients if branch-specific query fails
-        const { data: allIngredients, error: allIngrError } = await supabase
-          .from('ingredients')
-          .select('id, name, unit')
-          .eq('is_active', true);
-          
-        if (allIngrError) {
-          console.error('Error fetching all ingredients:', allIngrError);
-          throw allIngrError;
-        }
-        
-        console.log('All ingredients loaded:', allIngredients?.length || 0);
-        
-        let ingredientsWithQuantity: QuickRequestIngredient[] = (allIngredients || []).map(ingredient => ({
-          ...ingredient,
-          quantity: 0
-        }));
-        
-        setIngredients(ingredientsWithQuantity);
-        if (branchId) setSelectedBranchId(branchId);
-        return ingredientsWithQuantity;
+      if (allIngredientsError) {
+        console.error('Error fetching ingredients:', allIngredientsError);
+        throw allIngredientsError;
       }
       
-      console.log('Branch-specific ingredients loaded:', ingredientsData?.length || 0);
+      console.log('All ingredients loaded:', allIngredientsData?.length || 0);
       
-      let ingredientsWithQuantity: QuickRequestIngredient[] = (ingredientsData || []).map(ingredient => ({
+      let ingredientsWithQuantity: QuickRequestIngredient[] = (allIngredientsData || []).map(ingredient => ({
         ...ingredient,
         quantity: 0
       }));
@@ -164,6 +141,7 @@ export const useQuickRequestData = () => {
         }
       }
       
+      console.log('Setting ingredients state with:', ingredientsWithQuantity.length, 'items');
       setIngredients(ingredientsWithQuantity);
       if (branchId) setSelectedBranchId(branchId);
       return ingredientsWithQuantity;
