@@ -5,11 +5,13 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Branch } from '@/types/branch';
 import { useStores } from '@/context/StoresContext';
+import { useBranchesData } from '@/hooks/branches/useBranchesData';
 
 export const useBranchCreate = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const { addStore } = useStores(); // Get the addStore function from StoresContext
+  const { refetch } = useBranchesData(); // Get the refetch function to update branches list
 
   const createBranch = async (branch: Partial<Branch>) => {
     if (!user) return null;
@@ -50,6 +52,9 @@ export const useBranchCreate = () => {
       
       // Add the new branch to the StoresContext
       addStore(branchData);
+      
+      // Explicitly refresh the branches list to ensure immediate UI update
+      refetch();
         
       toast.success('Branch created successfully');
       return branchData;

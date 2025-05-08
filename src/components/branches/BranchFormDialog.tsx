@@ -1,3 +1,4 @@
+
 import { 
   Dialog,
   DialogContent,
@@ -63,6 +64,11 @@ export default function BranchFormDialog({
         // createBranch now updates the StoresContext internally
         const newBranch = await createBranch(data);
         success = !!newBranch;
+        
+        // Always refetch after creating a branch to ensure the list is updated
+        if (success) {
+          await refetch();
+        }
       }
       
       if (success) {
@@ -71,6 +77,9 @@ export default function BranchFormDialog({
         // If onSave prop is provided, call it
         if (onSave) {
           await onSave();
+        } else {
+          // If no onSave provided, explicitly refetch
+          await refetch();
         }
         
         // Explicitly close the dialog and reset state
