@@ -20,8 +20,8 @@ const Header = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  // Hide store switcher on Dashboard and Requests pages
-  const hideStoreSwitcher = ['/dashboard', '/requests'].includes(location.pathname);
+  // Hide store switcher on Dashboard, Requests, and now Inventory pages
+  const hideStoreSwitcher = ['/dashboard', '/requests', '/inventory'].includes(location.pathname);
 
   // Generate breadcrumbs from current path
   const generateBreadcrumbs = () => {

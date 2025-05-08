@@ -76,11 +76,11 @@ const Inventory = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold">Inventory Management</h1>
+        <h1 className="text-2xl font-bold">Global Ingredient Registry</h1>
         <p className="text-muted-foreground">
           {canModify 
-            ? 'Add, edit, and manage your inventory ingredients.' 
-            : 'View your inventory ingredients.'
+            ? 'Add, edit, and manage your global ingredient list.' 
+            : 'View the global ingredient list.'
           }
         </p>
       </div>

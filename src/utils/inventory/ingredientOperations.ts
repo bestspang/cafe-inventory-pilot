@@ -1,4 +1,3 @@
-
 import { Ingredient } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -15,11 +14,6 @@ export const saveIngredient = async (
   
   if (!userId) {
     throw new Error("You must be logged in to save ingredients.");
-  }
-  
-  // Check if we have a branch_id
-  if (!data.branch_id) {
-    throw new Error("Branch ID is required to save ingredients.");
   }
   
   try {
@@ -58,7 +52,8 @@ export const saveIngredient = async (
               name: data.name,
               category_id: categoryId,
               unit: data.unit,
-              branch_id: data.branch_id
+              // Keep branch_id as is if it exists
+              ...(data.branch_id ? { branch_id: data.branch_id } : {})
             })
             .eq('id', data.id);
           
@@ -74,7 +69,8 @@ export const saveIngredient = async (
               name: data.name,
               category_id: categoryId,
               unit: data.unit,
-              branch_id: data.branch_id
+              // Keep branch_id as is if it exists
+              ...(data.branch_id ? { branch_id: data.branch_id } : {})
             })
             .eq('id', data.id);
           
@@ -91,7 +87,8 @@ export const saveIngredient = async (
             name: data.name,
             category_id: categoryId,
             unit: data.unit,
-            branch_id: data.branch_id
+            // Keep branch_id as is if it exists
+            ...(data.branch_id ? { branch_id: data.branch_id } : {})
           })
           .eq('id', data.id);
         
@@ -116,7 +113,8 @@ export const saveIngredient = async (
           unit: data.unit,
           cost_per_unit: data.costPerUnit,
           created_by: userId,
-          branch_id: data.branch_id
+          // Branch ID is optional now
+          ...(data.branch_id ? { branch_id: data.branch_id } : {})
         }]);
       
       if (error) {

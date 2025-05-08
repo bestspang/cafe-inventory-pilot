@@ -16,13 +16,13 @@ export const useIngredientManager = (
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Fetch ingredients from database, filtered by storeId
+  // Fetch all ingredients from database, without filtering by storeId
   const fetchIngredients = async () => {
     try {
       setIsLoading(true);
-      console.log('Fetching ingredients from database for store:', storeId);
+      console.log('Fetching all ingredients from database');
       
-      let query = supabase
+      const { data, error } = await supabase
         .from('ingredients')
         .select(`
           id, 
@@ -32,17 +32,8 @@ export const useIngredientManager = (
           branch_id,
           categoryId:category_id, 
           categories(id, name)
-        `);
-        
-      // Filter by store if storeId is provided
-      if (storeId) {
-        query = query.eq('branch_id', storeId);
-      }
-      
-      // Order by name
-      query = query.order('name');
-      
-      const { data, error } = await query;
+        `)
+        .order('name');
       
       if (error) {
         throw error;
@@ -74,13 +65,10 @@ export const useIngredientManager = (
     }
   };
 
-  // Initial fetch when storeId changes
+  // Initial fetch
   useEffect(() => {
-    if (storeId) {
-      console.log('Store ID changed, fetching ingredients:', storeId);
-      fetchIngredients();
-    }
-  }, [storeId]);
+    fetchIngredients();
+  }, []);
 
   // Add/edit ingredient handler
   const handleAddEdit = async (
@@ -105,10 +93,9 @@ export const useIngredientManager = (
         }
       }
       
-      // Save ingredient with branch_id and category
+      // Save ingredient with category, without requiring branch_id
       const result = await saveIngredient({
-        ...data,
-        branch_id: storeId
+        ...data
       }, categoryId);
       
       if (result.success) {

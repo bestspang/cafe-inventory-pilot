@@ -6,13 +6,11 @@ import { type ViewMode } from '@/types/inventory';
 import { useCategoryManager } from './inventory/useCategoryManager';
 import { useIngredientManager } from './inventory/useIngredientManager';
 import { useFilterManager } from './inventory/useFilterManager';
-import { useStores } from '@/context/StoresContext';
 
 export type { ViewMode };
 
 export const useInventory = () => {
   const { user } = useAuth();
-  const { currentStoreId } = useStores();
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [costHistoryDialogOpen, setCostHistoryDialogOpen] = useState(false);
@@ -20,7 +18,7 @@ export const useInventory = () => {
   // Only owners and managers can modify ingredients
   const canModify = ['owner', 'manager'].includes(user?.role || '');
   
-  // Use our smaller, focused hooks with store context
+  // Use our smaller, focused hooks - now without passing store context
   const { categories, handleNewCategory, isLoading: categoriesLoading } = useCategoryManager();
   const { 
     ingredients, 
@@ -31,7 +29,7 @@ export const useInventory = () => {
     handleDelete,
     confirmDelete,
     isLoading: ingredientsLoading
-  } = useIngredientManager(setFormDialogOpen, setDeleteDialogOpen, currentStoreId);
+  } = useIngredientManager(setFormDialogOpen, setDeleteDialogOpen);
   
   const {
     search,
@@ -47,14 +45,11 @@ export const useInventory = () => {
   // Apply filters to ingredients
   const filteredIngredients = filterIngredients(ingredients);
 
-  // Wrapper for handleAddEdit to include category creation and store ID
+  // Wrapper for handleAddEdit to include category creation
   const handleAddEditIngredient = async (data: Partial<Ingredient>) => {
     console.log('handleAddEditIngredient called with data:', data);
-    // Ensure branch_id is set to currentStoreId
-    await handleAddEdit({
-      ...data,
-      branch_id: currentStoreId
-    }, categories, (name: string) => {
+    // No longer setting branch_id to currentStoreId
+    await handleAddEdit(data, categories, (name: string) => {
       // The handleNewCategory function requires two arguments: tempId and categoryName
       // Here we're generating a temporary ID using the current timestamp
       const tempId = `temp-${Date.now()}`;
