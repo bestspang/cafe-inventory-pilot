@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -45,30 +44,49 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Get branches - with RLS enabled, this will automatically filter to user's branches
-      const { data, error } = await supabase
-        .from('branches')
+      // Try fetching from stores table first (with owner_id)
+      const { data: storesData, error: storesError } = await supabase
+        .from('stores')
         .select('id, name, address, timezone, is_open, created_at, updated_at, owner_id')
+        .eq('owner_id', user.id)
         .order('name');
       
-      if (error) throw error;
-      
-      // Type the data explicitly as Branch[]
-      const typedData = data as Branch[];
-      console.log('Fetched branches:', typedData);
-      setStores(typedData);
+      if (!storesError && storesData && storesData.length > 0) {
+        console.log('Fetched stores:', storesData);
+        setStores(storesData as Branch[]);
+      } else {
+        // Fallback to branches table
+        const { data: branchesData, error: branchesError } = await supabase
+          .from('branches')
+          .select('id, name, address, timezone, is_open, created_at, updated_at')
+          .order('name');
+        
+        if (branchesError) {
+          console.error('Error fetching branches:', branchesError);
+          throw branchesError;
+        }
+        
+        // Add owner_id to match Branch type
+        const branchesWithOwnerId = (branchesData || []).map(branch => ({
+          ...branch,
+          owner_id: user.id // Set current user as owner for all branches
+        }));
+        
+        console.log('Fetched branches with added owner_id:', branchesWithOwnerId);
+        setStores(branchesWithOwnerId as Branch[]);
+      }
       
       // If we have stores but no current selection, try to restore from localStorage or use first
-      if (typedData.length > 0 && !currentStoreId) {
+      if (stores.length > 0 && !currentStoreId) {
         const savedStoreId = localStorage.getItem('selectedStoreId');
         
         // Check if the saved ID is in the available stores
-        const validSavedId = savedStoreId && typedData.some(store => store.id === savedStoreId);
+        const validSavedId = savedStoreId && stores.some(store => store.id === savedStoreId);
         
-        setCurrentStoreId(validSavedId ? savedStoreId : typedData[0].id);
+        setCurrentStoreId(validSavedId ? savedStoreId : stores[0].id);
       }
     } catch (error) {
-      console.error('Error fetching branches:', error);
+      console.error('Error fetching branches/stores:', error);
       toast.error('Failed to load your branches');
     } finally {
       setIsLoading(false);
@@ -119,32 +137,57 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Creating new branch with owner_id:', user.id);
       
-      const { data, error } = await supabase
-        .from('branches')
+      // Try creating in stores table first
+      const { data: storeData, error: storeError } = await supabase
+        .from('stores')
         .insert({
           name,
           address: address || null,
           timezone,
-          owner_id: user.id // Explicitly set owner_id to current user's ID
+          owner_id: user.id
         })
         .select()
         .single();
         
-      if (error) throw error;
+      if (!storeError && storeData) {
+        toast.success('Branch created successfully');
+        console.log('New store created:', storeData);
+        addStore(storeData as Branch);
+        setCurrentStoreId(storeData.id);
+        return storeData as Branch;
+      }
+      
+      console.log('Failed to create in stores table, trying branches table');
+      
+      // Fallback to branches table
+      const { data: branchData, error: branchError } = await supabase
+        .from('branches')
+        .insert({
+          name,
+          address: address || null,
+          timezone
+          // Note: branches table might not have owner_id column
+        })
+        .select()
+        .single();
+        
+      if (branchError) {
+        console.error('Error creating branch:', branchError);
+        toast.error('Failed to create branch');
+        return null;
+      }
+      
+      // Add owner_id to match Branch type
+      const branchWithOwnerId = {
+        ...branchData,
+        owner_id: user.id
+      };
       
       toast.success('Branch created successfully');
-      
-      // Use a simple type assertion
-      const newBranch = data as Branch;
-      console.log('New branch created:', newBranch);
-      
-      // Optimistically update the local state
-      addStore(newBranch);
-      
-      // Set the new store as current
-      setCurrentStoreId(newBranch.id);
-      
-      return newBranch;
+      console.log('New branch created:', branchWithOwnerId);
+      addStore(branchWithOwnerId as Branch);
+      setCurrentStoreId(branchWithOwnerId.id);
+      return branchWithOwnerId as Branch;
     } catch (error) {
       console.error('Error creating branch:', error);
       toast.error('Failed to create branch');

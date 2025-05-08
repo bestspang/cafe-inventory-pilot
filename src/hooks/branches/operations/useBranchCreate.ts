@@ -10,8 +10,8 @@ import { useBranchesData } from '@/hooks/branches/useBranchesData';
 export const useBranchCreate = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  const { addStore } = useStores(); // Get the addStore function from StoresContext
-  const { refetch } = useBranchesData(); // Get the refetch function to update branches list
+  const { addStore } = useStores(); 
+  const { refetch } = useBranchesData();
 
   const createBranch = async (branch: Partial<Branch>) => {
     if (!user) return null;
@@ -22,15 +22,49 @@ export const useBranchCreate = () => {
       console.log('Creating new branch:', branch);
       console.log('Current user ID:', user.id);
       
-      // Insert branch with owner_id set to current user ID
+      // Try creating in stores table first (with owner_id)
+      const { data: storeData, error: storeError } = await supabase
+        .from('stores')
+        .insert({
+          name: branch.name,
+          address: branch.address || null,
+          timezone: branch.timezone || 'Asia/Bangkok',
+          is_open: branch.is_open !== undefined ? branch.is_open : true,
+          owner_id: user.id
+        })
+        .select()
+        .single();
+      
+      if (!storeError && storeData) {
+        console.log('Store created successfully:', storeData);
+        
+        // Log activity
+        await supabase
+          .from('branch_activity')
+          .insert({
+            branch_id: storeData.id,
+            action: 'created',
+            performed_by: user.id
+          });
+        
+        addStore(storeData as Branch);
+        refetch();
+        toast.success('Branch created successfully');
+        return storeData as Branch;
+      }
+      
+      console.log('Failed to create in stores table, trying branches table');
+      console.log('Store error:', storeError);
+      
+      // Fallback to branches table
       const { data: branchData, error: branchError } = await supabase
         .from('branches')
         .insert({
           name: branch.name,
-          address: branch.address,
-          timezone: branch.timezone || 'Asia/Bangkok', // Changed default from UTC to Asia/Bangkok
+          address: branch.address || null,
+          timezone: branch.timezone || 'Asia/Bangkok', 
           is_open: branch.is_open !== undefined ? branch.is_open : true,
-          owner_id: user.id // Make sure owner_id is set to current user's ID
+          // Note: branches table might not have owner_id column
         })
         .select()
         .single();
@@ -43,6 +77,12 @@ export const useBranchCreate = () => {
       
       console.log('Branch created successfully:', branchData);
       
+      // Add owner_id to match Branch type
+      const branchWithOwnerId = {
+        ...branchData,
+        owner_id: user.id
+      };
+      
       // Log activity
       await supabase
         .from('branch_activity')
@@ -53,13 +93,13 @@ export const useBranchCreate = () => {
         });
       
       // Add the new branch to the StoresContext
-      addStore(branchData as Branch);
+      addStore(branchWithOwnerId as Branch);
       
       // Explicitly refresh the branches list to ensure immediate UI update
       refetch();
         
       toast.success('Branch created successfully');
-      return branchData as Branch;
+      return branchWithOwnerId as Branch;
     } catch (error) {
       console.error('Error creating branch:', error);
       toast.error('Failed to create branch');
