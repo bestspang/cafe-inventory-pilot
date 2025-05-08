@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Branch } from '@/types';
+import { Branch } from '@/types/branch';
 
 interface AddStaffFormProps {
   branches: Branch[];
@@ -41,7 +41,10 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({
           <Label htmlFor="branch">Store</Label>
           <Select
             value={newStaff.branchId}
-            onValueChange={(value) => setNewStaff(prev => ({ ...prev, branchId: value }))}
+            onValueChange={(value) => setNewStaff({
+              ...newStaff,
+              branchId: value
+            })}
             disabled={isLoading}
           >
             <SelectTrigger id="branch">
@@ -63,7 +66,10 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({
             id="staffName"
             placeholder="Enter staff name"
             value={newStaff.staffName}
-            onChange={(e) => setNewStaff(prev => ({ ...prev, staffName: e.target.value }))}
+            onChange={(e) => setNewStaff({
+              ...newStaff,
+              staffName: e.target.value
+            })}
             disabled={isLoading}
           />
         </div>
