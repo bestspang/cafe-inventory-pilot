@@ -1,4 +1,5 @@
 
+// Define the StockActivity type for activity data
 export interface StockActivity {
   id: string;
   checkedAt: string;

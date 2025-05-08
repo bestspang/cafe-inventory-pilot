@@ -5,7 +5,8 @@ import { StockActivity } from './types';
 import { fetchStockActivity } from './services/fetchStockActivity';
 import { deleteStockActivity } from './services/deleteStockActivity';
 
-export { StockActivity }; // Re-export to maintain backward compatibility
+// Properly re-export the type using 'export type' syntax
+export type { StockActivity }; // Fix for isolatedModules error
 
 export const useStockActivity = () => {
   const [activities, setActivities] = useState<StockActivity[]>([]);
