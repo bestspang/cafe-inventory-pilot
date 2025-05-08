@@ -1,0 +1,23 @@
+
+{
+  "settings.language": "Language",
+  "settings.title": "Settings",
+  "settings.notifications": "Notifications",
+  "settings.notifications.description": "Configure how you want to receive notifications",
+  "settings.email.notifications": "Email Notifications",
+  "settings.email.notifications.description": "Receive email notifications for important events",
+  "settings.push.notifications": "Push Notifications",
+  "settings.push.notifications.description": "Receive browser push notifications for real-time updates",
+  "settings.security": "Security",
+  "settings.security.description": "Manage your account security settings",
+  "settings.two.factor": "Two-Factor Authentication",
+  "settings.two.factor.description": "Add an extra layer of security to your account",
+  "dashboard.title": "Dashboard",
+  "dashboard.subtitle": "Here's an overview of your café operations",
+  "inventory.title": "Inventory",
+  "inventory.subtitle": "Manage your ingredients and supplies",
+  "stock.check.title": "Stock Check",
+  "stock.check.subtitle": "Update your current inventory counts",
+  "requests.title": "Requests",
+  "requests.subtitle": "Manage ingredient requests from branches"
+}

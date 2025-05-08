@@ -1,0 +1,23 @@
+
+{
+  "settings.language": "ภาษา",
+  "settings.title": "การตั้งค่า",
+  "settings.notifications": "การแจ้งเตือน",
+  "settings.notifications.description": "กำหนดวิธีรับการแจ้งเตือน",
+  "settings.email.notifications": "การแจ้งเตือนทางอีเมล",
+  "settings.email.notifications.description": "รับการแจ้งเตือนทางอีเมลสำหรับเหตุการณ์สำคัญ",
+  "settings.push.notifications": "การแจ้งเตือนแบบพุช",
+  "settings.push.notifications.description": "รับการแจ้งเตือนแบบพุชของเบราว์เซอร์สำหรับการอัปเดตแบบเรียลไทม์",
+  "settings.security": "ความปลอดภัย",
+  "settings.security.description": "จัดการการตั้งค่าความปลอดภัยของบัญชีของคุณ",
+  "settings.two.factor": "การยืนยันตัวตนแบบสองชั้น",
+  "settings.two.factor.description": "เพิ่มระดับความปลอดภัยให้กับบัญชีของคุณ",
+  "dashboard.title": "แดชบอร์ด",
+  "dashboard.subtitle": "นี่คือภาพรวมของการดำเนินงานคาเฟ่ของคุณ",
+  "inventory.title": "สินค้าคงคลัง",
+  "inventory.subtitle": "จัดการส่วนผสมและอุปกรณ์",
+  "stock.check.title": "ตรวจสอบสต็อก",
+  "stock.check.subtitle": "อัปเดตจำนวนสินค้าคงคลังปัจจุบันของคุณ",
+  "requests.title": "คำขอ",
+  "requests.subtitle": "จัดการคำขอส่วนผสมจากสาขา"
+}

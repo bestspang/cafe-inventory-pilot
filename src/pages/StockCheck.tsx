@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+import { useIntl, FormattedMessage } from 'react-intl';
 import { Save, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
@@ -15,6 +15,7 @@ import StockCheckSettingsModal from '@/components/stock-check/StockCheckSettings
 import { StockCheckSettingsProvider } from '@/context/StockCheckSettingsContext';
 
 const StockCheck = () => {
+  const intl = useIntl();
   const { user } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [activeTab, setActiveTab] = useState<'stock-check' | 'activity'>('stock-check');
@@ -67,13 +68,16 @@ const StockCheck = () => {
     filteredAndSortedItems
   } = useStockCheckFilters(stockItems);
 
+  const stockCheckTitle = intl.formatMessage({ id: 'stock.check.title', defaultMessage: 'Stock Check' });
+  const stockCheckSubtitle = intl.formatMessage({ id: 'stock.check.subtitle', defaultMessage: 'Update your current inventory counts' });
+
   return (
     <StockCheckSettingsProvider branchId={selectedBranch}>
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Stock Check</h1>
-            <p className="text-muted-foreground">Update your current inventory counts</p>
+            <h1 className="text-2xl font-bold">{stockCheckTitle}</h1>
+            <p className="text-muted-foreground">{stockCheckSubtitle}</p>
           </div>
           <div className="w-auto">
             <Button
@@ -82,7 +86,7 @@ const StockCheck = () => {
               onClick={() => setShowSettingsModal(true)}
             >
               <Settings className="mr-2 h-4 w-4" />
-              Settings
+              <FormattedMessage id="settings.title" defaultMessage="Settings" />
             </Button>
           </div>
         </div>
@@ -91,8 +95,8 @@ const StockCheck = () => {
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'stock-check' | 'activity')} className="w-full">
             <div className="flex items-center justify-between">
               <TabsList>
-                <TabsTrigger value="stock-check">Stock Check</TabsTrigger>
-                <TabsTrigger value="activity">Activity</TabsTrigger>
+                <TabsTrigger value="stock-check">{stockCheckTitle}</TabsTrigger>
+                <TabsTrigger value="activity"><FormattedMessage id="stock.check.activity" defaultMessage="Activity" /></TabsTrigger>
               </TabsList>
               
               <div className="ml-auto flex items-center gap-2">
@@ -102,7 +106,7 @@ const StockCheck = () => {
                   disabled={isLoading || Object.keys(updatedItems).length === 0}
                 >
                   <Save className="mr-2 h-4 w-4" />
-                  Save Stock Check
+                  <FormattedMessage id="stock.check.save" defaultMessage="Save Stock Check" />
                 </Button>
               </div>
             </div>

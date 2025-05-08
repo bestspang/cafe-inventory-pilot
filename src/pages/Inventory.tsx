@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useIntl } from 'react-intl';
 import { useInventory } from '@/hooks/useInventory';
 import { useInventoryFilters } from '@/hooks/inventory/useInventoryFilters';
 import { useArchivedIngredients } from '@/hooks/inventory/useArchivedIngredients';
@@ -10,6 +11,8 @@ import InventoryContent from '@/components/inventory/InventoryContent';
 import InventoryDialogs from '@/components/inventory/InventoryDialogs';
 
 const Inventory = () => {
+  const intl = useIntl();
+  
   const {
     ingredients,
     formDialogOpen,
@@ -62,6 +65,8 @@ const Inventory = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <InventoryHeader 
+        title={intl.formatMessage({ id: 'inventory.title', defaultMessage: 'Inventory' })}
+        subtitle={intl.formatMessage({ id: 'inventory.subtitle', defaultMessage: 'Manage your ingredients and supplies' })}
         canModify={canModify}
         onOpenArchives={() => setArchiveDialogOpen(true)}
       />

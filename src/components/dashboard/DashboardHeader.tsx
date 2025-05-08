@@ -1,4 +1,6 @@
+
 import React from 'react';
+import { FormattedMessage } from 'react-intl';
 
 interface DashboardHeaderProps {
   title: string;

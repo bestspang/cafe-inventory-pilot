@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardMetrics } from '@/hooks/dashboard/useDashboardMetrics';
 import { useDashboardTrends } from '@/hooks/dashboard/useDashboardTrends';
 import { useBranchSnapshots } from '@/hooks/dashboard/useBranchSnapshots';
+import { useIntl } from 'react-intl';
 import BranchesSection from '@/components/dashboard/BranchesSection';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardMetrics from '@/components/dashboard/DashboardMetrics';
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [branchFilter, setBranchFilter] = useState<'all' | 'healthy' | 'at-risk'>('all');
+  const intl = useIntl();
   
   const isOwner = user?.role === 'owner';
   const isManager = user?.role === 'manager';
@@ -35,6 +37,7 @@ export default function Dashboard() {
   // Format the welcome message
   const welcomeName = user?.name || (user?.email ? extractNameFromEmail(user.email) : 'User');
   const welcomeMessage = `Welcome, ${welcomeName}`;
+  const dashboardSubtitle = intl.formatMessage({ id: 'dashboard.subtitle', defaultMessage: "Here's an overview of your café operations" });
   
   const handleStatCardClick = useCallback((metric: string) => {
     switch (metric) {
@@ -67,7 +70,7 @@ export default function Dashboard() {
     <div className="space-y-6 animate-fade-in">
       <DashboardHeader 
         title={welcomeMessage} 
-        subtitle="Here's an overview of your café operations"
+        subtitle={dashboardSubtitle}
       />
       
       <DashboardMetrics

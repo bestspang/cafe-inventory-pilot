@@ -21,7 +21,6 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem('locale', locale);
-    // Future expansion: if you use i18n library: i18n.changeLanguage(locale)
     document.documentElement.lang = locale;
   }, [locale]);
 
