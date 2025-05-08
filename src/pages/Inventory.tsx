@@ -65,8 +65,6 @@ const Inventory = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <InventoryHeader 
-        title={intl.formatMessage({ id: 'inventory.title', defaultMessage: 'Inventory' })}
-        subtitle={intl.formatMessage({ id: 'inventory.subtitle', defaultMessage: 'Manage your ingredients and supplies' })}
         canModify={canModify}
         onOpenArchives={() => setArchiveDialogOpen(true)}
       />
