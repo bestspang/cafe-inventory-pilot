@@ -16,11 +16,10 @@ export function useBranchesData() {
     
     setIsLoading(true);
     try {
-      // Query branches owned by the current user
+      // With RLS enabled, this will automatically filter to branches owned by the current user
       const { data, error } = await supabase
         .from('branches')
         .select('*')
-        .eq('owner_id', user.id)
         .order('name');
       
       if (error) throw error;
@@ -53,8 +52,7 @@ export function useBranchesData() {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'branches',
-        filter: `owner_id=eq.${user.id}`
+        table: 'branches'
       }, () => {
         fetchBranches();
       })

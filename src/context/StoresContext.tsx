@@ -45,10 +45,10 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Get branches where the user is the owner
+      // Get branches - with RLS enabled, this will automatically filter to user's branches
       const { data, error } = await supabase
         .from('branches')
-        .select('id, name, address, timezone, is_open, created_at, updated_at')
+        .select('id, name, address, timezone, is_open, created_at, updated_at, owner_id')
         .order('name');
       
       if (error) throw error;
@@ -121,7 +121,8 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
         .insert({
           name,
           address: address || null,
-          timezone
+          timezone,
+          owner_id: user.id // Make sure owner_id is set to the current user
         })
         .select()
         .single();

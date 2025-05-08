@@ -31,6 +31,8 @@ export interface Ingredient {
   categoryId?: string;
   categoryName?: string;
   branch_id?: string;
+  isActive?: boolean;
+  created_by?: string;
 }
 
 export interface Category {
@@ -56,6 +58,7 @@ export interface Branch {
   address?: string | null;
   timezone?: string | null;
   is_open?: boolean;
+  owner_id: string;
   created_at?: string;
   updated_at?: string;
 }

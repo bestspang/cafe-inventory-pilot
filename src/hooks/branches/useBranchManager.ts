@@ -10,7 +10,6 @@ interface BranchCreateValues {
   name: string;
   address?: string;
   timezone?: string;
-  owner_id?: string;
 }
 
 interface BranchUpdateValues extends BranchCreateValues {
@@ -127,7 +126,6 @@ export function useBranchManager() {
     }
   };
 
-  // Add the missing toggleBranchStatus function
   const toggleBranchStatus = async (branch: Branch): Promise<boolean> => {
     setIsLoading(true);
     try {
@@ -163,7 +161,7 @@ export function useBranchManager() {
     createBranch,
     updateBranch,
     deleteBranch,
-    toggleBranchStatus, // Added the missing function
+    toggleBranchStatus,
     isLoading
   };
 }
