@@ -5,6 +5,7 @@ import { Ingredient } from '@/types';
 import { Category } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { saveIngredient, deleteIngredient } from '@/utils/inventory/ingredientOperations';
+import { useAuth } from '@/context/AuthContext';
 
 export const useIngredientManager = (
   setFormDialogOpen: (open: boolean) => void,
@@ -15,6 +16,7 @@ export const useIngredientManager = (
   const [currentIngredient, setCurrentIngredient] = useState<Ingredient | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Fetch all ingredients from database, without filtering by storeId
   const fetchIngredients = async () => {
@@ -22,6 +24,7 @@ export const useIngredientManager = (
       setIsLoading(true);
       console.log('Fetching all ingredients from database');
       
+      // RLS will automatically filter to only show ingredients for branches owned by the current user
       const { data, error } = await supabase
         .from('ingredients')
         .select(`
@@ -80,6 +83,15 @@ export const useIngredientManager = (
     handleNewCategory: (name: string) => Promise<string>
   ) => {
     try {
+      if (!user?.id) {
+        toast({
+          title: "Authentication required",
+          description: "You must be logged in to manage ingredients.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       // Get or create category ID
       let categoryId: string | null = null;
       
@@ -96,9 +108,11 @@ export const useIngredientManager = (
         }
       }
       
-      // Save ingredient with category, without requiring branch_id
+      // Save ingredient with category and branch_id if storing
       const result = await saveIngredient({
-        ...data
+        ...data,
+        branch_id: data.branch_id || storeId || null,
+        created_by: data.id ? undefined : user.id // Only set created_by for new ingredients
       }, categoryId);
       
       if (result.success) {

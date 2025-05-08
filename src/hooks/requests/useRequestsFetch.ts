@@ -78,8 +78,9 @@ export const useRequestsFetch = () => {
             )
           )
         `)
-        .or(`branches.owner_id.eq.${user.id}`) // Filter by branches the user owns
         .order('requested_at', { ascending: false });
+
+      // Query is automatically filtered by RLS to only branches owned by the current user
 
       const { data, error } = await query;
 
@@ -110,9 +111,10 @@ export const useRequestsFetch = () => {
       const { data, error } = await supabase
         .from('branches')
         .select('id, name')
-        .eq('owner_id', user.id)
         .order('name');
 
+      // Query is automatically filtered by RLS to only branches owned by the current user
+      
       if (error) {
         throw error;
       }
