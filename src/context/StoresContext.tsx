@@ -54,12 +54,21 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       
       if (error) throw error;
       
-      // Fix: Explicitly cast the data to Branch[] to avoid deep type instantiation error
-      const branchData = data as Branch[];
-      setStores(branchData || []);
+      // Fix: Use a more direct type assertion to avoid deep instantiation
+      const branchData = (data || []) as Array<{
+        id: string;
+        name: string;
+        address: string | null;
+        timezone: string | null;
+        is_open: boolean;
+        created_at: string;
+        updated_at: string;
+      }>;
+      
+      setStores(branchData);
       
       // If we have stores but no current selection, try to restore from localStorage or use first
-      if (branchData && branchData.length > 0 && !currentStoreId) {
+      if (branchData.length > 0 && !currentStoreId) {
         const savedStoreId = localStorage.getItem('selectedStoreId');
         
         // Check if the saved ID is in the available stores
@@ -132,8 +141,8 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       
       toast.success('Branch created successfully');
       
-      // Explicitly cast data to Branch to avoid type issues
-      const newBranch = data as Branch;
+      // Simple type assertion to avoid complex type checking
+      const newBranch = data as unknown as Branch;
       
       // Optimistically update the local state
       addStore(newBranch);
