@@ -54,8 +54,7 @@ export const getStaffName = (
 export const transformStockCheckData = (
   stockCheckData: any[],
   staffMap: Map<string, string>,
-  profileMap: Map<string, string>,
-  lastChangeMap: Map<string, number> = new Map()
+  profileMap: Map<string, string>
 ) => {
   const activities: StockActivity[] = [];
   
@@ -70,19 +69,19 @@ export const transformStockCheckData = (
     if (stockCheck.stock_check_items && stockCheck.stock_check_items.length > 0) {
       stockCheck.stock_check_items.forEach((item: any) => {
         if (item.ingredients) {
-          // Get the last_change value from the map if available
-          const changeValue = item.ingredients.id && lastChangeMap.has(item.ingredients.id)
-            ? lastChangeMap.get(item.ingredients.id)
-            : 0;
-            
+          // Use qty_diff from the database if available, otherwise calculate it
+          const quantityChange = item.qty_diff !== null 
+            ? item.qty_diff 
+            : ((item.on_hand_after || item.on_hand_qty) - (item.on_hand_before || 0));
+          
           activities.push({
             id: `sci-${item.id}`,
             checkedAt: stockCheck.checked_at,
             branchName: stockCheck.branches?.name || 'Unknown',
             staffName,
             ingredient: item.ingredients.name,
-            quantity: item.on_hand_qty,
-            quantityChange: changeValue,
+            quantity: item.on_hand_after || item.on_hand_qty, // Use after value as the current quantity
+            quantityChange: quantityChange,
             unit: item.ingredients.unit,
             comment: null,
             source: 'stock-check',

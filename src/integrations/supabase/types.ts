@@ -386,21 +386,30 @@ export type Database = {
           created_at: string | null
           id: string
           ingredient_id: string
+          on_hand_after: number | null
+          on_hand_before: number | null
           on_hand_qty: number
+          qty_diff: number | null
           stock_check_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           ingredient_id: string
+          on_hand_after?: number | null
+          on_hand_before?: number | null
           on_hand_qty: number
+          qty_diff?: number | null
           stock_check_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
           ingredient_id?: string
+          on_hand_after?: number | null
+          on_hand_before?: number | null
           on_hand_qty?: number
+          qty_diff?: number | null
           stock_check_id?: string
         }
         Relationships: [

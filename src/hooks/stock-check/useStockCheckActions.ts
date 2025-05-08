@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,14 +73,22 @@ export const useStockCheckActions = (
         
       if (stockCheckError) throw stockCheckError;
       
-      // Prepare stock check items for the new stock check
+      // Prepare stock check items for the new stock check, now including before/after values
       const stockCheckItems = stockItems
         .filter(item => updatedItems[item.id])
-        .map(item => ({
-          stock_check_id: stockCheck.id,
-          ingredient_id: item.id,
-          on_hand_qty: item.onHandQty
-        }));
+        .map(item => {
+          const oldQty = currentQtyMap[item.id] || 0;
+          const newQty = item.onHandQty;
+          
+          return {
+            stock_check_id: stockCheck.id,
+            ingredient_id: item.id,
+            on_hand_qty: newQty,
+            on_hand_before: oldQty,
+            on_hand_after: newQty,
+            qty_diff: newQty - oldQty
+          };
+        });
         
       // Insert the stock check items
       const { error: itemsError } = await supabase

@@ -1,29 +1,33 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export const deleteStockActivity = async (activityId: string) => {
+export const deleteStockActivity = async (activityId: string): Promise<boolean> => {
   try {
-    if (activityId.startsWith('sci-')) {
-      // Extract the actual ID without any prefix
-      const stockCheckItemId = activityId.substring(4);
-      
+    // Extract the ID portion without the prefix
+    const [prefix, id] = activityId.split('-');
+    
+    if (!id) {
+      return false;
+    }
+    
+    if (prefix === 'sci') {
+      // If it's a stock check item
       const { error } = await supabase
         .from('stock_check_items')
         .delete()
-        .eq('id', stockCheckItemId);
-      
+        .eq('id', id);
+        
       if (error) throw error;
       return true;
-    } 
-    else if (activityId.startsWith('req-')) {
-      // For request items, extract the ID number
-      const requestItemId = activityId.substring(4);
-      
+    } else if (prefix === 'req') {
+      // If it's a request item
+      // Note: For requests, we don't delete the request_item,
+      // we just mark it as not fulfilled
       const { error } = await supabase
         .from('request_items')
-        .delete()
-        .eq('id', requestItemId);
-      
+        .update({ fulfilled: false })
+        .eq('id', id);
+        
       if (error) throw error;
       return true;
     }
@@ -31,6 +35,6 @@ export const deleteStockActivity = async (activityId: string) => {
     return false;
   } catch (error) {
     console.error('Error deleting activity:', error);
-    throw error;
+    return false;
   }
 };

@@ -39,7 +39,7 @@ const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity, onDelete 
 
   // Determine the change indicator
   const renderQuantityChange = () => {
-    if (!activity.quantityChange || activity.quantityChange === 0) {
+    if (activity.quantityChange === undefined || activity.quantityChange === null || activity.quantityChange === 0) {
       return <span className="text-muted-foreground">0</span>;
     }
     
