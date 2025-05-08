@@ -29,6 +29,7 @@ export const useStockActivity = () => {
           checked_at,
           branches(name),
           user_id,
+          username,
           stock_check_items(
             id,
             on_hand_qty,
@@ -104,8 +105,13 @@ export const useStockActivity = () => {
       // Process regular stock checks
       if (stockCheckData) {
         stockCheckData.forEach(stockCheck => {
-          // First check for staff name from staff map
-          let staffName = staffMap.get(stockCheck.user_id);
+          // First check for username from the stock check itself (new field)
+          let staffName = stockCheck.username;
+          
+          // If no username in stock check, check staff map
+          if (!staffName && staffMap.has(stockCheck.user_id)) {
+            staffName = staffMap.get(stockCheck.user_id);
+          }
           
           // If not found in staff map, check profiles
           if (!staffName && profileMap.has(stockCheck.user_id)) {

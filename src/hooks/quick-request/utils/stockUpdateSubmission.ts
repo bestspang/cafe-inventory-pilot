@@ -16,11 +16,13 @@ export const submitStockUpdate = async (
   
   try {
     // Create a new stock check with the staff ID as user_id
+    // Also include the staff name as username
     const { data, error: stockCheckError } = await supabase
       .from('stock_checks')
       .insert({
         branch_id: formState.branchId,
         user_id: formState.staffId, // Using staffId directly as the user_id
+        username: selectedStaff.staffName, // Adding staff name as username
         checked_at: currentTime,
       })
       .select('id')

@@ -50,14 +50,21 @@ export const useStockCheckActions = (
         (currentInventory || []).map(item => [item.ingredient_id, item.on_hand_qty])
       );
       
-      // Create a new stock check record with user information
+      // Create a new stock check record with user information and username
       const currentTime = new Date().toISOString();
+      
+      // Get username from email if user exists
+      let username = null;
+      if (user?.email) {
+        username = user.email.split('@')[0];
+      }
       
       const { data: stockCheck, error: stockCheckError } = await supabase
         .from('stock_checks')
         .insert({
           branch_id: selectedBranch,
           user_id: user?.id || null,
+          username: username, // Store the username derived from email
           checked_at: currentTime
         })
         .select('id')
