@@ -3,13 +3,19 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const deleteStockActivity = async (activityId: string): Promise<boolean> => {
   try {
-    // Extract the ID portion without the prefix
-    const [prefix, id] = activityId.split('-');
-    
-    if (!id) {
+    // Extract the ID portion and the prefix
+    const parts = activityId.split('-');
+    if (parts.length < 2) {
       console.error('Invalid activity ID format:', activityId);
       return false;
     }
+    
+    const prefix = parts[0];
+    // Get the actual UUID part by joining any remaining parts
+    // This handles cases where the UUID itself might contain hyphens
+    const id = parts.slice(1).join('-');
+    
+    console.log(`Attempting to delete activity with prefix: ${prefix}, id: ${id}`);
     
     if (prefix === 'sci') {
       // If it's a stock check item
