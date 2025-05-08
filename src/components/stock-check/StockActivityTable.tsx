@@ -9,11 +9,11 @@ import {
   TableRow
 } from '@/components/ui/table';
 import StockActivityRow from './StockActivityRow';
-import type { StockActivity } from '@/hooks/stock-check/useStockActivity';
+import type { StockActivity } from '@/hooks/stock-check/types';
 
 interface StockActivityTableProps {
   activities: StockActivity[];
-  onActivityDelete: () => void;
+  onActivityDelete: (id: string) => Promise<boolean>;
 }
 
 const StockActivityTable: React.FC<StockActivityTableProps> = ({ 

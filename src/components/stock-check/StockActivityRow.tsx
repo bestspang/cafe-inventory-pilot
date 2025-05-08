@@ -4,13 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { useDateFormatter } from '@/hooks/requests/useDateFormatter';
 import { Trash2 } from 'lucide-react';
-import type { StockActivity } from '@/hooks/stock-check/useStockActivity';
-import { supabase } from '@/integrations/supabase/client';
+import type { StockActivity } from '@/hooks/stock-check/types';
 import { toast } from '@/hooks/use-toast';
 
 interface StockActivityRowProps {
   activity: StockActivity;
-  onDelete: () => void;
+  onDelete: (id: string) => Promise<boolean>;
 }
 
 const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity, onDelete }) => {
@@ -18,34 +17,16 @@ const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity, onDelete 
   
   const handleDelete = async () => {
     try {
-      if (activity.source === 'stock-check') {
-        // Extract the actual ID without any prefix
-        const stockCheckItemId = activity.id.startsWith('sci-') ? activity.id.substring(4) : activity.id;
-        
-        const { error } = await supabase
-          .from('stock_check_items')
-          .delete()
-          .eq('id', stockCheckItemId);
-        
-        if (error) throw error;
-      } else if (activity.source === 'fulfilled-request') {
-        // For request items, extract the ID number
-        const requestItemId = activity.id.startsWith('req-') ? activity.id.substring(4) : activity.id;
-        
-        const { error } = await supabase
-          .from('request_items')
-          .delete()
-          .eq('id', requestItemId);
-        
-        if (error) throw error;
+      const success = await onDelete(activity.id);
+      
+      if (success) {
+        toast({
+          title: "Activity deleted",
+          description: "The activity record has been removed successfully",
+        });
+      } else {
+        throw new Error("Failed to delete activity");
       }
-      
-      toast({
-        title: "Activity deleted",
-        description: "The activity record has been removed successfully",
-      });
-      
-      onDelete();
     } catch (error) {
       console.error('Error deleting activity:', error);
       toast({
@@ -57,7 +38,7 @@ const StockActivityRow: React.FC<StockActivityRowProps> = ({ activity, onDelete 
   };
   
   return (
-    <TableRow key={activity.id}>
+    <TableRow>
       <TableCell className="whitespace-nowrap">
         {formatDate(activity.checkedAt)}
       </TableCell>
