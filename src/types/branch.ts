@@ -24,7 +24,8 @@ export interface BranchActivity {
 
 export interface StaffMember {
   id: string;
-  branch_id: string;
-  staff_name: string;
-  created_at: string;
+  branchId: string;
+  staffName: string;
+  createdAt: string;
+  branchName?: string;
 }

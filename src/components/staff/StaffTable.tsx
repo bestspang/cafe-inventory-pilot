@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { StaffMember } from '@/types/quick-request';
+import { StaffMember } from '@/types/branch';
 
 interface StaffTableProps {
   staffMembers: StaffMember[];
