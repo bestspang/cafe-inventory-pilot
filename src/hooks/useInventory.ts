@@ -28,6 +28,7 @@ export const useInventory = () => {
     handleEdit,
     handleDelete,
     confirmDelete,
+    fetchIngredients,
     isLoading: ingredientsLoading
   } = useIngredientManager(setFormDialogOpen, setDeleteDialogOpen);
   
@@ -88,6 +89,7 @@ export const useInventory = () => {
     handleDelete,
     confirmDelete,
     handleViewCostHistory,
+    fetchIngredients,
     hasFilters,
     isLoading
   };

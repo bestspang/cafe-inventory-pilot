@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Archive } from 'lucide-react';
 import { useInventory } from '@/hooks/useInventory';
 import InventoryFilters from '@/components/inventory/InventoryFilters';
 import IngredientCard from '@/components/inventory/IngredientCard';
@@ -7,9 +8,12 @@ import IngredientList from '@/components/inventory/IngredientList';
 import IngredientFormDialog from '@/components/inventory/IngredientFormDialog';
 import DeleteIngredientDialog from '@/components/inventory/DeleteIngredientDialog';
 import CostHistoryDialog from '@/components/inventory/CostHistoryDialog';
+import ArchivedIngredientsDialog from '@/components/inventory/ArchivedIngredientsDialog';
 import InventoryEmptyState from '@/components/inventory/InventoryEmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { useInventoryFilters } from '@/hooks/inventory/useInventoryFilters';
+import { useArchivedIngredients } from '@/hooks/inventory/useArchivedIngredients';
 
 const InventorySkeletons = ({ viewMode }: { viewMode: 'grid' | 'list' }) => {
   return viewMode === 'grid' ? (
@@ -56,8 +60,18 @@ const Inventory = () => {
     handleDelete,
     confirmDelete,
     handleViewCostHistory,
-    isLoading
+    isLoading,
+    fetchIngredients
   } = useInventory();
+
+  // Use the archived ingredients hook and pass the fetchIngredients callback
+  const {
+    archivedIngredients,
+    isLoading: archiveLoading,
+    dialogOpen: archiveDialogOpen,
+    setDialogOpen: setArchiveDialogOpen,
+    restoreIngredient
+  } = useArchivedIngredients(fetchIngredients);
 
   // Use our new filter hook
   const {
@@ -75,14 +89,28 @@ const Inventory = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold">Global Ingredient Registry</h1>
-        <p className="text-muted-foreground">
-          {canModify 
-            ? 'Add, edit, and manage your global ingredient list.' 
-            : 'View the global ingredient list.'
-          }
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Global Ingredient Registry</h1>
+          <p className="text-muted-foreground">
+            {canModify 
+              ? 'Add, edit, and manage your global ingredient list.' 
+              : 'View the global ingredient list.'
+            }
+          </p>
+        </div>
+        
+        {canModify && (
+          <Button 
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={() => setArchiveDialogOpen(true)}
+          >
+            <Archive className="h-4 w-4" />
+            Archives
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -162,6 +190,15 @@ const Inventory = () => {
         open={costHistoryDialogOpen}
         onOpenChange={setCostHistoryDialogOpen}
         ingredient={currentIngredient}
+      />
+
+      {/* Archived Ingredients Dialog */}
+      <ArchivedIngredientsDialog
+        open={archiveDialogOpen}
+        onOpenChange={setArchiveDialogOpen}
+        archivedIngredients={archivedIngredients}
+        onRestoreIngredient={restoreIngredient}
+        isLoading={archiveLoading}
       />
     </div>
   );
