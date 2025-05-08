@@ -6,6 +6,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import BranchCard from '@/components/dashboard/BranchCard';
 import { BranchSnapshot } from '@/hooks/dashboard/useBranchSnapshots';
 import { useNavigate } from 'react-router-dom';
+import { FormattedMessage } from 'react-intl';
 
 interface BranchesSectionProps {
   isOwner: boolean;
@@ -28,7 +29,10 @@ const BranchesSection: React.FC<BranchesSectionProps> = ({
     <div className="pt-2">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">
-          {isOwner ? 'All Branches' : 'Your Branch'}
+          {isOwner ? 
+            <FormattedMessage id="dashboard.branches" defaultMessage="All Branches" /> : 
+            <FormattedMessage id="dashboard.your.branch" defaultMessage="Your Branch" />
+          }
         </h2>
         
         {isOwner && (
@@ -40,7 +44,7 @@ const BranchesSection: React.FC<BranchesSectionProps> = ({
                 onClick={() => setBranchFilter('all')}
                 className="rounded-r-none"
               >
-                All
+                <FormattedMessage id="dashboard.all" defaultMessage="All" />
               </Button>
               <Button 
                 variant={branchFilter === 'healthy' ? 'default' : 'outline'}
@@ -48,7 +52,7 @@ const BranchesSection: React.FC<BranchesSectionProps> = ({
                 onClick={() => setBranchFilter('healthy')}
                 className="rounded-none border-x-0"
               >
-                Healthy
+                <FormattedMessage id="dashboard.healthy" defaultMessage="Healthy" />
               </Button>
               <Button 
                 variant={branchFilter === 'at-risk' ? 'default' : 'outline'}
@@ -56,29 +60,29 @@ const BranchesSection: React.FC<BranchesSectionProps> = ({
                 onClick={() => setBranchFilter('at-risk')}
                 className="rounded-l-none"
               >
-                At Risk
+                <FormattedMessage id="dashboard.at.risk" defaultMessage="At Risk" />
               </Button>
             </div>
             
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-1" /> New
+                  <Plus className="h-4 w-4 mr-1" /> <FormattedMessage id="dashboard.new" defaultMessage="New" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-48 p-0">
                 <div className="p-1">
                   <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => navigate('/requests/new')}>
-                    New Request
+                    <FormattedMessage id="common.new.request" defaultMessage="New Request" />
                   </Button>
                   <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => navigate('/stock-check')}>
-                    Stock Check
+                    <FormattedMessage id="stock.check.title" defaultMessage="Stock Check" />
                   </Button>
                   <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => navigate('/branches/new')}>
-                    Add Branch
+                    <FormattedMessage id="common.add.branch" defaultMessage="Add Branch" />
                   </Button>
                   <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => navigate('/inventory')}>
-                    Add Ingredient
+                    <FormattedMessage id="inventory.title" defaultMessage="Add Ingredient" />
                   </Button>
                 </div>
               </PopoverContent>
@@ -105,7 +109,7 @@ const BranchesSection: React.FC<BranchesSectionProps> = ({
           {displayedBranches.length === 0 ? (
             <div className="col-span-full text-center py-8 border rounded-md bg-muted/20">
               <p className="text-muted-foreground">
-                No branches match your current filter.
+                <FormattedMessage id="common.no.branches" defaultMessage="No branches match your current filter." />
               </p>
               {branchFilter !== 'all' && (
                 <Button 
@@ -113,7 +117,7 @@ const BranchesSection: React.FC<BranchesSectionProps> = ({
                   onClick={() => setBranchFilter('all')}
                   className="mt-2"
                 >
-                  View all branches
+                  <FormattedMessage id="common.view.all.branches" defaultMessage="View all branches" />
                 </Button>
               )}
             </div>

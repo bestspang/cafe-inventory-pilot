@@ -6,7 +6,7 @@ import { Sparkline } from './Sparkline';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface StatCardProps {
-  title: string;
+  title: React.ReactNode;
   value: string | number;
   icon: React.ReactNode;
   trend?: {

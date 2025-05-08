@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarTrigger } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { useLocale } from '@/context/LocaleContext';
+import { FormattedMessage, useIntl } from 'react-intl';
 
 const LanguageIndicator = () => {
   const { locale } = useLocale();
@@ -18,7 +19,8 @@ const LanguageIndicator = () => {
 };
 
 type NavItem = {
-  title: string;
+  titleId: string;
+  defaultTitle: string;
   icon: React.ElementType;
   path: string;
   role?: Array<'owner' | 'manager' | 'staff'>;
@@ -29,62 +31,72 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    title: "Dashboard",
+    titleId: "sidebar.dashboard",
+    defaultTitle: "Dashboard",
     icon: Home,
     path: "/dashboard"
   }, 
   {
-    title: "Requests",
+    titleId: "sidebar.requests",
+    defaultTitle: "Requests",
     icon: ClipboardList,
     path: "/requests"
   }, 
   {
-    title: "Stock Check",
+    titleId: "sidebar.stock.check",
+    defaultTitle: "Stock Check",
     icon: ShoppingBag,
     path: "/stock-check"
   }, 
   {
-    title: "Inventory",
+    titleId: "sidebar.inventory",
+    defaultTitle: "Inventory",
     icon: Package,
     path: "/inventory",
     role: ['owner', 'manager']
   }, 
   {
-    title: "Branches",
+    titleId: "sidebar.branches",
+    defaultTitle: "Branches",
     icon: Store,
     path: "/branches",
     role: ['owner', 'manager']
   }, 
   {
-    title: "Suppliers",
+    titleId: "sidebar.suppliers",
+    defaultTitle: "Suppliers",
     icon: Store,
     path: "/suppliers",
     role: ['owner', 'manager'],
     isComing: true
   }, 
   {
-    title: "Purchase Orders",
+    titleId: "sidebar.purchase.orders",
+    defaultTitle: "Purchase Orders",
     icon: FileText,
     path: "/purchase-orders",
     role: ['owner', 'manager'],
     isComing: true
   }, 
   {
-    title: "Reports",
+    titleId: "sidebar.reports",
+    defaultTitle: "Reports",
     icon: BarChart4,
     path: "/reports",
     role: ['owner', 'manager'],
     isComing: true
   }, 
   {
-    title: "Users",
+    titleId: "sidebar.users",
+    defaultTitle: "Users",
     icon: Users,
     path: "/users",
     role: ['owner'],
     isComing: true
   }, 
   {
-    title: "Settings",
+    titleId: "settings.title",
+    defaultTitle: "Settings",
     icon: Settings,
     path: "/settings",
     showLanguageIndicator: true
@@ -94,6 +106,7 @@ const navItems: NavItem[] = [
 const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const intl = useIntl();
   
   const filteredNavItems = navItems.filter(item => {
     if (!item.role) return true;
@@ -129,12 +142,14 @@ const AppSidebar = () => {
                     >
                       <span className="flex items-center">
                         <item.icon className="mr-2 h-5 w-5" />
-                        <span>{item.title}</span>
+                        <span>
+                          <FormattedMessage id={item.titleId} defaultMessage={item.defaultTitle} />
+                        </span>
                       </span>
                       
                       {item.isComing && (
                         <span className="absolute -top-1 right-0 bg-primary text-primary-foreground text-[8px] px-1 py-0.5 rounded-full">
-                          SOON
+                          <FormattedMessage id="sidebar.soon" defaultMessage="SOON" />
                         </span>
                       )}
                       

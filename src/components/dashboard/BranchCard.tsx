@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { FormattedMessage } from 'react-intl';
 
 interface BranchCardProps {
   id: string;
@@ -144,7 +145,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
           size="sm"
           onClick={() => navigate(`/branches/${id}`)}
         >
-          View Details
+          <FormattedMessage id="dashboard.view.details" defaultMessage="View Details" />
         </Button>
         {pendingRequests > 0 && (
           <Button 
@@ -152,7 +153,7 @@ const BranchCard: React.FC<BranchCardProps> = ({
             size="sm"
             onClick={() => navigate(`/requests?branch=${id}&status=pending`)}
           >
-            View Requests
+            <FormattedMessage id="dashboard.view.requests" defaultMessage="View Requests" />
           </Button>
         )}
       </CardFooter>

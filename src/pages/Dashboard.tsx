@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDashboardMetrics } from '@/hooks/dashboard/useDashboardMetrics';
 import { useDashboardTrends } from '@/hooks/dashboard/useDashboardTrends';
 import { useBranchSnapshots } from '@/hooks/dashboard/useBranchSnapshots';
-import { useIntl } from 'react-intl';
+import { useIntl, FormattedMessage } from 'react-intl';
 import BranchesSection from '@/components/dashboard/BranchesSection';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardMetrics from '@/components/dashboard/DashboardMetrics';
@@ -36,7 +36,10 @@ export default function Dashboard() {
   
   // Format the welcome message
   const welcomeName = user?.name || (user?.email ? extractNameFromEmail(user.email) : 'User');
-  const welcomeMessage = `Welcome, ${welcomeName}`;
+  const welcomeMessage = intl.formatMessage(
+    { id: 'dashboard.welcome', defaultMessage: 'Welcome, {name}' },
+    { name: welcomeName }
+  );
   const dashboardSubtitle = intl.formatMessage({ id: 'dashboard.subtitle', defaultMessage: "Here's an overview of your café operations" });
   
   const handleStatCardClick = useCallback((metric: string) => {

@@ -5,6 +5,7 @@ import { ClipboardList, ShoppingBag, Store, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { FormattedMessage } from 'react-intl';
 
 interface QuickActionsProps {
   isLoading?: boolean;
@@ -37,7 +38,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ isLoading = false }) => {
           onClick={() => navigate('/requests/new')}
         >
           <ClipboardList className="h-4 w-4 mr-2 group-hover:text-primary-foreground transition-colors" />
-          New Request
+          <FormattedMessage id="common.new.request" defaultMessage="New Request" />
         </Button>
       )}
       
@@ -49,7 +50,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ isLoading = false }) => {
           onClick={() => navigate('/stock-check')}
         >
           <ShoppingBag className="h-4 w-4 mr-2 group-hover:text-primary-foreground transition-colors" />
-          Stock Check
+          <FormattedMessage id="stock.check.title" defaultMessage="Stock Check" />
         </Button>
       )}
       
@@ -60,7 +61,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ isLoading = false }) => {
         onClick={() => navigate('/quick-request')}
       >
         <PlusCircle className="h-4 w-4 mr-2 group-hover:text-primary-foreground transition-colors" />
-        Quick Request
+        <FormattedMessage id="common.quick.request" defaultMessage="Quick Request" />
       </Button>
       
       {isOwner && (
@@ -71,7 +72,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ isLoading = false }) => {
           onClick={() => navigate('/branches/new')}
         >
           <Store className="h-4 w-4 mr-2 group-hover:text-primary-foreground transition-colors" />
-          Add Branch
+          <FormattedMessage id="common.add.branch" defaultMessage="Add Branch" />
         </Button>
       )}
     </div>

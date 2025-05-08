@@ -15,6 +15,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
 import { useLocale } from '@/context/LocaleContext';
 import StoreSwitcher from '@/components/stores/StoreSwitcher';
+import { FormattedMessage } from 'react-intl';
 
 const Header = () => {
   const location = useLocation();
@@ -114,14 +115,14 @@ const Header = () => {
             <div className="px-2 py-1.5 text-sm font-medium">{user?.email}</div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => navigate('/profile')}>
-              Profile
+              <FormattedMessage id="header.profile" defaultMessage="Profile" />
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => navigate('/settings')}>
-              Settings
+              <FormattedMessage id="settings.title" defaultMessage="Settings" />
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={logout}>
-              Logout
+              <FormattedMessage id="header.logout" defaultMessage="Logout" />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

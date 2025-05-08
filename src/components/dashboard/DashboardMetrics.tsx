@@ -3,6 +3,7 @@ import React from 'react';
 import { Store, Package, AlertTriangle, ClipboardCheck } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
 import { DashboardMetrics as MetricsData } from '@/hooks/dashboard/useDashboardMetrics';
+import { FormattedMessage } from 'react-intl';
 
 interface DashboardMetricsProps {
   metrics: MetricsData | null;
@@ -28,7 +29,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard
-        title="Total Branches"
+        title={<FormattedMessage id="dashboard.stats.branches" defaultMessage="Total Branches" />}
         value={isOwner ? metrics?.totalBranches || 0 : 1}
         icon={<Store className="h-5 w-5" />}
         sparklineData={branchTrendValues}
@@ -36,7 +37,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         onClick={() => onStatCardClick('branches')}
       />
       <StatCard
-        title="Low Stock Items"
+        title={<FormattedMessage id="dashboard.stats.low.stock" defaultMessage="Low Stock Items" />}
         value={(metrics?.lowStockItems || 0).toString()}
         icon={<Package className="h-5 w-5" />}
         trend={{ value: 8, isPositive: false }}
@@ -45,7 +46,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         onClick={() => onStatCardClick('low-stock')}
       />
       <StatCard
-        title="Pending Requests"
+        title={<FormattedMessage id="dashboard.stats.requests" defaultMessage="Pending Requests" />}
         value={(metrics?.pendingRequests || 0).toString()}
         icon={<ClipboardCheck className="h-5 w-5" />}
         trend={{ value: 12, isPositive: true }}
@@ -54,7 +55,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         onClick={() => onStatCardClick('requests')}
       />
       <StatCard
-        title="Missing Stock Checks"
+        title={<FormattedMessage id="dashboard.stats.stock.checks" defaultMessage="Missing Stock Checks" />}
         value={isOwner ? (metrics?.missingStockChecks || 0).toString() : "0"}
         icon={<AlertTriangle className="h-5 w-5" />}
         sparklineData={stockChecksTrendValues}

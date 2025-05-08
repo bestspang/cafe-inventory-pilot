@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useIntl, FormattedMessage } from 'react-intl';
 import { Save, Settings } from 'lucide-react';
@@ -96,7 +97,9 @@ const StockCheck = () => {
             <div className="flex items-center justify-between">
               <TabsList>
                 <TabsTrigger value="stock-check">{stockCheckTitle}</TabsTrigger>
-                <TabsTrigger value="activity"><FormattedMessage id="stock.check.activity" defaultMessage="Activity" /></TabsTrigger>
+                <TabsTrigger value="activity">
+                  <FormattedMessage id="stock.check.activity" defaultMessage="Activity" />
+                </TabsTrigger>
               </TabsList>
               
               <div className="ml-auto flex items-center gap-2">
