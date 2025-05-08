@@ -10,6 +10,12 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardMetrics from '@/components/dashboard/DashboardMetrics';
 import QuickActionsSection from '@/components/dashboard/QuickActionsSection';
 
+const extractNameFromEmail = (email: string): string => {
+  // Extract the part before @ and capitalize the first letter
+  const namePart = email.split('@')[0];
+  return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+};
+
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -24,6 +30,10 @@ export default function Dashboard() {
   const { branches, isLoading: isLoadingBranches } = useBranchSnapshots({ 
     branchFilter 
   });
+  
+  // Format the welcome message
+  const welcomeName = user?.name || (user?.email ? extractNameFromEmail(user.email) : 'User');
+  const welcomeMessage = `Welcome, ${welcomeName}`;
   
   const handleStatCardClick = useCallback((metric: string) => {
     switch (metric) {
@@ -55,7 +65,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 animate-fade-in">
       <DashboardHeader 
-        title={`Welcome, ${user?.name || 'User'}`} 
+        title={welcomeMessage} 
         subtitle="Here's an overview of your café operations"
       />
       
