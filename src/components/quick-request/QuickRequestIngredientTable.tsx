@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { QuickRequestIngredient } from '@/types/quick-request';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import QuickRequestIngredientTableRow from './QuickRequestIngredientTableRow';
+import QuickRequestIngredientTableLoading from './QuickRequestIngredientTableLoading';
+import QuickRequestIngredientTableEmpty from './QuickRequestIngredientTableEmpty';
 
 interface QuickRequestIngredientTableProps {
   ingredients: QuickRequestIngredient[];
@@ -21,24 +21,11 @@ const QuickRequestIngredientTable: React.FC<QuickRequestIngredientTableProps> = 
   showDetails = false,
   isLoading = false
 }) => {
-  // Handle quantity change
-  const handleQuantityChange = (id: string, value: string) => {
-    const quantity = parseFloat(value);
-    if (!isNaN(quantity) && quantity >= 0) {
-      onUpdateQuantity(id, quantity);
-    }
-  };
-  
   // Sort ingredients by name
   const sortedIngredients = [...ingredients].sort((a, b) => a.name.localeCompare(b.name));
   
   if (isLoading) {
-    return (
-      <div className="text-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-        <p className="text-muted-foreground">Loading ingredients...</p>
-      </div>
-    );
+    return <QuickRequestIngredientTableLoading />;
   }
   
   return (
@@ -59,46 +46,19 @@ const QuickRequestIngredientTable: React.FC<QuickRequestIngredientTableProps> = 
         </TableHeader>
         <TableBody>
           {sortedIngredients.length > 0 ? (
-            sortedIngredients.map(ingredient => {
-              // Check if this ingredient is below reorder point
-              const isLowStock = showDetails && 
-                typeof ingredient.onHandQty === 'number' && 
-                typeof ingredient.reorderPt === 'number' && 
-                ingredient.onHandQty <= ingredient.reorderPt;
-              
-              return (
-                <TableRow key={ingredient.id}>
-                  <TableCell className="font-medium">{ingredient.name}</TableCell>
-                  <TableCell>{ingredient.unit}</TableCell>
-                  {showDetails && (
-                    <>
-                      <TableCell className={cn("text-right", isLowStock && "text-red-500")}>
-                        {typeof ingredient.onHandQty === 'number' ? ingredient.onHandQty : '-'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {ingredient.reorderPt || '-'}
-                      </TableCell>
-                    </>
-                  )}
-                  <TableCell className="text-right">
-                    <Input
-                      type="number"
-                      min={0}
-                      value={ingredient.quantity || ''}
-                      onChange={(e) => handleQuantityChange(ingredient.id, e.target.value)}
-                      className="w-24 ml-auto"
-                      disabled={disabled}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })
+            sortedIngredients.map(ingredient => (
+              <QuickRequestIngredientTableRow
+                key={ingredient.id}
+                ingredient={ingredient}
+                onUpdateQuantity={onUpdateQuantity}
+                disabled={disabled}
+                showDetails={showDetails}
+              />
+            ))
           ) : (
-            <TableRow>
-              <TableCell colSpan={showDetails ? 5 : 3} className="text-center py-4">
-                No ingredients available
-              </TableCell>
-            </TableRow>
+            <QuickRequestIngredientTableEmpty 
+              showDetails={showDetails} 
+            />
           )}
         </TableBody>
       </Table>
