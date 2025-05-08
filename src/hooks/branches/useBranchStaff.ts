@@ -39,10 +39,10 @@ export const useBranchStaff = (branchId: string) => {
       // Transform the data to match our StaffMember type
       const transformedData = data.map(item => ({
         id: item.id,
-        branch_id: item.branch_id,
-        staff_name: item.staff_name,
-        created_at: item.created_at
-      })) as StaffMember[];
+        branchId: item.branch_id,
+        staffName: item.staff_name,
+        createdAt: item.created_at
+      }));
       
       console.log(`Found ${transformedData.length} staff members`);
       setStaff(transformedData);

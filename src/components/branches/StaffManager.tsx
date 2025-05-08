@@ -113,7 +113,7 @@ export default function StaffManager({ branchId }: StaffManagerProps) {
             <TableBody>
               {staff.map((member) => (
                 <TableRow key={member.id}>
-                  <TableCell>{member.staff_name}</TableCell>
+                  <TableCell>{member.staffName}</TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"
