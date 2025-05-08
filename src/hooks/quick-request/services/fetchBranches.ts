@@ -29,11 +29,13 @@ export const fetchBranches = async (): Promise<Branch[]> => {
       
       if (storesData && storesData.length > 0) {
         console.log('Stores loaded:', storesData);
-        return storesData;
+        // Create objects that satisfy the Branch interface
+        return storesData.map(store => ({ ...store, owner_id: undefined } as Branch));
       }
     } else if (branchesData && branchesData.length > 0) {
       console.log('Branches loaded:', branchesData);
-      return branchesData;
+      // Create objects that satisfy the Branch interface
+      return branchesData.map(branch => ({ ...branch, owner_id: undefined } as Branch));
     } else {
       console.log('No branches found in branches table, trying stores table');
       
@@ -49,7 +51,8 @@ export const fetchBranches = async (): Promise<Branch[]> => {
       }
       
       console.log('Stores loaded:', storesData);
-      return storesData || [];
+      // Create objects that satisfy the Branch interface
+      return (storesData || []).map(store => ({ ...store, owner_id: undefined } as Branch));
     }
   } catch (error) {
     console.error('Error fetching branches/stores:', error);

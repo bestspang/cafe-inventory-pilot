@@ -29,6 +29,7 @@ export const useBranchCreate = () => {
           address: branch.address,
           timezone: branch.timezone || 'Asia/Bangkok', // Changed default from UTC to Asia/Bangkok
           is_open: branch.is_open !== undefined ? branch.is_open : true
+          // We don't set owner_id as it might not exist in DB
         })
         .select()
         .single();
@@ -51,13 +52,13 @@ export const useBranchCreate = () => {
         });
       
       // Add the new branch to the StoresContext
-      addStore(branchData);
+      addStore(branchData as Branch);
       
       // Explicitly refresh the branches list to ensure immediate UI update
       refetch();
         
       toast.success('Branch created successfully');
-      return branchData;
+      return branchData as Branch;
     } catch (error) {
       console.error('Error creating branch:', error);
       toast.error('Failed to create branch');

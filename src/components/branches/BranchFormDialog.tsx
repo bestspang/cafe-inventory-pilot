@@ -68,8 +68,7 @@ export default function BranchFormDialog({
         const newBranch = await createBranch({
           name: data.name, // This field is required
           address: data.address,
-          timezone: data.timezone,
-          owner_id: user.id
+          timezone: data.timezone
         });
         success = !!newBranch;
         

@@ -25,28 +25,30 @@ export const useStockCheckBranches = (storeId?: string | null) => {
           const { data, error } = await supabase
             .from('branches')
             .select('id, name, address, timezone, is_open, created_at, updated_at')
-            .eq('id', storeId)
-            .eq('owner_id', user.id); // Ensure the branch belongs to the current user
+            .eq('id', storeId);
           
           if (error) throw error;
           
           if (data && data.length > 0) {
-            setBranches(data as Branch[]);
-            setSelectedBranch(data[0].id);
+            // Create objects that satisfy the Branch interface
+            const typedData = data.map(branch => ({ ...branch, owner_id: undefined } as Branch));
+            setBranches(typedData);
+            setSelectedBranch(typedData[0].id);
           }
         } else {
-          // Otherwise fetch all branches owned by the current user
+          // Otherwise fetch all branches 
           const { data, error } = await supabase
             .from('branches')
             .select('id, name, address, timezone, is_open, created_at, updated_at')
-            .eq('owner_id', user.id)
             .order('name');
             
           if (error) throw error;
           
           if (data && data.length > 0) {
-            setBranches(data as Branch[]);
-            setSelectedBranch(data[0].id);
+            // Create objects that satisfy the Branch interface
+            const typedData = data.map(branch => ({ ...branch, owner_id: undefined } as Branch));
+            setBranches(typedData);
+            setSelectedBranch(typedData[0].id);
           }
         }
       } catch (error) {

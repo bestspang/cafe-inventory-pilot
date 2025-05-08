@@ -24,7 +24,7 @@ export function useBranchesData() {
       
       if (error) throw error;
       
-      setBranches(data || []);
+      setBranches(data as Branch[] || []);
     } catch (error: any) {
       console.error('Error fetching branches:', error);
       toast({

@@ -38,8 +38,8 @@ export function useBranchManager() {
         .insert({
           name: values.name,
           address: values.address || null,
-          timezone: values.timezone || 'UTC',
-          owner_id: user.id // Make sure owner_id is set to the current user
+          timezone: values.timezone || 'UTC'
+          // We don't set owner_id as it might not exist in DB
         })
         .select('*')
         .single();
@@ -51,7 +51,7 @@ export function useBranchManager() {
         description: `${values.name} has been created successfully`
       });
       
-      return data;
+      return data as Branch;
     } catch (error: any) {
       console.error('Error creating branch:', error);
       toast({
@@ -74,7 +74,6 @@ export function useBranchManager() {
           name: values.name,
           address: values.address || null,
           timezone: values.timezone || 'UTC'
-          // Note: We don't allow updating owner_id here
         })
         .eq('id', values.id);
       

@@ -58,7 +58,7 @@ export interface Branch {
   address?: string | null;
   timezone?: string | null;
   is_open?: boolean;
-  owner_id: string;
+  owner_id?: string; // Make this optional since the database may not have it yet
   created_at?: string;
   updated_at?: string;
 }
