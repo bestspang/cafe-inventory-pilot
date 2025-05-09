@@ -5,12 +5,12 @@ import { Branch } from '@/types';
 
 export const fetchBranches = async (): Promise<Branch[]> => {
   try {
-    console.log('Fetching branches from stores table...');
+    console.log('Fetching branches from stores table for quick request...');
     
-    // Only fetch from 'stores' table
+    // Only fetch from 'stores' table, consistently
     const { data: storesData, error: storesError } = await supabase
       .from('stores')
-      .select('id, name, owner_id, address, timezone, is_open, created_at, updated_at')
+      .select('*')
       .order('name');
     
     if (storesError) {
@@ -19,11 +19,11 @@ export const fetchBranches = async (): Promise<Branch[]> => {
     }
     
     if (storesData && storesData.length > 0) {
-      console.log('Stores loaded:', storesData);
+      console.log('Stores loaded successfully:', storesData);
       return storesData as Branch[];
     }
     
-    // If no data found, return empty array
+    console.log('No stores found');
     return [];
   } catch (error) {
     console.error('Error fetching stores:', error);

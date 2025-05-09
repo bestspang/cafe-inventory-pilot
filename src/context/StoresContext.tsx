@@ -13,7 +13,7 @@ interface StoresContextType {
   createStore: (name: string, address?: string, timezone?: string) => Promise<Branch | null>;
   currentStore: Branch | null;
   refreshStores: () => Promise<void>;
-  addStore: (store: Branch) => void; // Function to add a store directly to state
+  addStore: (store: Branch) => void;
 }
 
 const StoresContext = createContext<StoresContextType | undefined>(undefined);
@@ -44,11 +44,12 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     
     try {
       setIsLoading(true);
+      console.log('Fetching stores for user:', user.id);
       
-      // Only fetch from stores table
+      // Only fetch from stores table with explicit owner_id filter
       const { data: storesData, error: storesError } = await supabase
         .from('stores')
-        .select('id, name, address, timezone, is_open, created_at, updated_at, owner_id')
+        .select('*')
         .eq('owner_id', user.id)
         .order('name');
       
@@ -57,7 +58,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
         throw storesError;
       }
       
-      console.log('Fetched stores:', storesData || []);
+      console.log('Fetched stores in context:', storesData || []);
       setStores(storesData || [] as Branch[]);
       
       // If we have stores but no current selection, try to restore from localStorage or use first
@@ -86,21 +87,15 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
     
-    console.log('Setting up realtime subscription for stores');
+    console.log('Setting up realtime subscription for stores in context');
     
     const channel = supabase
       .channel('stores_changes')
       .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'stores' },
+          { event: '*', schema: 'public', table: 'stores', filter: `owner_id=eq.${user.id}` },
           (payload) => {
-            console.group('Store change detected via StoresContext');
-            console.log('Change type:', payload.eventType);
-            console.log('Changed data:', payload.new);
-            
-            // Refresh all stores on any change
+            console.log('Store change detected via StoresContext:', payload);
             fetchStores();
-            
-            console.groupEnd();
           }
       )
       .subscribe();
@@ -134,7 +129,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
         
       if (storeError) {
         console.error('Error creating store:', storeError);
-        toast.error('Failed to create branch');
+        toast.error(`Failed to create branch: ${storeError.message}`);
         return null;
       }
       
@@ -143,7 +138,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       addStore(storeData as Branch);
       setCurrentStoreId(storeData.id);
       return storeData as Branch;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating branch:', error);
       toast.error('Failed to create branch');
       return null;

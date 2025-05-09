@@ -14,15 +14,18 @@ export const useBranchCreate = () => {
   const { refetch } = useBranchesData();
 
   const createBranch = async (branch: Partial<Branch>) => {
-    if (!user) return null;
+    if (!user) {
+      toast.error('Authentication required to create a branch');
+      return null;
+    }
     
     setIsLoading(true);
     
     try {
-      console.log('Creating new branch:', branch);
+      console.log('Creating new branch with data:', branch);
       console.log('Current user ID:', user.id);
       
-      // Only create in stores table
+      // Use only the stores table - with explicit owner_id
       const { data: storeData, error: storeError } = await supabase
         .from('stores')
         .insert({
@@ -30,9 +33,9 @@ export const useBranchCreate = () => {
           address: branch.address || null,
           timezone: branch.timezone || 'Asia/Bangkok',
           is_open: branch.is_open !== undefined ? branch.is_open : true,
-          owner_id: user.id
+          owner_id: user.id // Explicitly set owner_id for RLS
         })
-        .select()
+        .select('*')
         .single();
       
       if (storeError) {
@@ -43,7 +46,7 @@ export const useBranchCreate = () => {
       
       console.log('Store created successfully:', storeData);
       
-      // Log activity
+      // Log activity if needed
       await supabase
         .from('branch_activity')
         .insert({
@@ -52,14 +55,15 @@ export const useBranchCreate = () => {
           performed_by: user.id
         });
       
+      // Add store to local state
       addStore(storeData as Branch);
       
-      // Explicitly refresh the branches list to ensure immediate UI update
-      refetch();
+      // Explicitly refresh the branches list
+      await refetch();
         
       toast.success('Branch created successfully');
       return storeData as Branch;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating branch:', error);
       toast.error('Failed to create branch');
       return null;

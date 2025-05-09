@@ -14,6 +14,7 @@ import { BranchFormValues } from '@/lib/schemas/branch-schema';
 import { useEffect, useState } from 'react';
 import { useBranchesData } from '@/hooks/branches/useBranchesData';
 import { useAuth } from '@/context/AuthContext';
+import { useBranchCreate } from '@/hooks/branches/operations/useBranchCreate';
 
 interface BranchFormDialogProps {
   branch: Branch | null;
@@ -29,7 +30,8 @@ export default function BranchFormDialog({
   onSave
 }: BranchFormDialogProps) {
   const isEditing = !!branch;
-  const { createBranch, updateBranch, isLoading } = useBranchManager();
+  const { updateBranch, isLoading: isUpdateLoading } = useBranchManager();
+  const { createBranch, isLoading: isCreateLoading } = useBranchCreate();
   const { refetch } = useBranchesData();
   const { user } = useAuth();
   
@@ -45,9 +47,9 @@ export default function BranchFormDialog({
   
   async function onSubmit(data: BranchFormValues): Promise<void> {
     console.group('[BranchFormDialog] onSubmit triggered');
-    console.log('[BranchFormDialog] Form values (data):', data);
-    console.log('[BranchFormDialog] Current isEditing state:', isEditing);
-    console.log('[BranchFormDialog] Current branch state (for ID):', branch);
+    console.log('[BranchFormDialog] Form values:', data);
+    console.log('[BranchFormDialog] Is editing branch?', isEditing);
+    console.log('[BranchFormDialog] Current user:', user?.id);
     
     try {
       // Set submitting state to prevent multiple submissions
@@ -55,7 +57,7 @@ export default function BranchFormDialog({
       let success = false;
       
       if (isEditing && branch) {
-        console.log(`[BranchFormDialog] Attempting to update branch ${branch.id} with name: ${data.name}`);
+        console.log(`[BranchFormDialog] Updating branch ${branch.id} with name: ${data.name}`);
         success = await updateBranch({
           id: branch.id,
           name: data.name,
@@ -63,19 +65,15 @@ export default function BranchFormDialog({
           timezone: data.timezone
         });
       } else if (user) {
-        console.log('[BranchFormDialog] Attempting to create new branch');
-        // Make sure data.name is included as required by BranchCreateValues type
+        console.log('[BranchFormDialog] Creating new branch with user ID:', user.id);
+        // Use createBranch from useBranchCreate hook
         const newBranch = await createBranch({
-          name: data.name, // This field is required
+          name: data.name,
           address: data.address,
           timezone: data.timezone
         });
         success = !!newBranch;
-        
-        // Always refetch after creating a branch to ensure the list is updated
-        if (success) {
-          await refetch();
-        }
+        console.log('[BranchFormDialog] Branch creation result:', newBranch);
       }
       
       if (success) {
@@ -103,6 +101,8 @@ export default function BranchFormDialog({
     }
   }
 
+  const isLoading = isUpdateLoading || isCreateLoading || isSubmitting;
+
   return (
     <Dialog 
       open={open} 
@@ -121,13 +121,13 @@ export default function BranchFormDialog({
         className="sm:max-w-[500px]"
         onInteractOutside={(e) => {
           // Prevent interaction outside during loading or submission
-          if (isLoading || isSubmitting) {
+          if (isLoading) {
             e.preventDefault();
           }
         }}
         onEscapeKeyDown={(e) => {
           // Prevent escape key closing during loading or submission
-          if (isLoading || isSubmitting) {
+          if (isLoading) {
             e.preventDefault();
           }
         }}
@@ -145,7 +145,7 @@ export default function BranchFormDialog({
         
         <BranchForm 
           branch={branch} 
-          isLoading={isLoading || isSubmitting}
+          isLoading={isLoading}
           onSubmit={onSubmit}
           onCancel={() => {
             // Only allow cancel if not submitting

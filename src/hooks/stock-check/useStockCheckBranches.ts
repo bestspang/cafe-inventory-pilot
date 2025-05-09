@@ -24,7 +24,7 @@ export const useStockCheckBranches = (storeId?: string | null) => {
         if (storeId) {
           const { data, error } = await supabase
             .from('stores')
-            .select('id, name, address, timezone, is_open, created_at, updated_at, owner_id')
+            .select('*')
             .eq('id', storeId);
           
           if (error) throw error;
@@ -37,7 +37,7 @@ export const useStockCheckBranches = (storeId?: string | null) => {
           // Otherwise fetch all branches for the current user
           const { data, error } = await supabase
             .from('stores')
-            .select('id, name, address, timezone, is_open, created_at, updated_at, owner_id')
+            .select('*')
             .eq('owner_id', user.id)
             .order('name');
             

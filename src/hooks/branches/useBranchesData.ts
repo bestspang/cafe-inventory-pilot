@@ -18,10 +18,10 @@ export function useBranchesData() {
     try {
       console.log('Fetching branches from stores table for user:', user.id);
       
-      // Only fetch from stores table with owner_id filter
+      // Only fetch from stores table with explicit owner_id filter
       const { data: storesData, error: storesError } = await supabase
         .from('stores')
-        .select('id, name, owner_id, address, timezone, is_open, created_at, updated_at')
+        .select('*')
         .eq('owner_id', user.id)
         .order('name');
       
@@ -30,7 +30,7 @@ export function useBranchesData() {
         throw storesError;
       }
       
-      console.log('Fetched stores:', storesData || []);
+      console.log('Fetched stores data:', storesData || []);
       setBranches(storesData || [] as Branch[]);
     } catch (error: any) {
       console.error('Error fetching branches:', error);
@@ -47,26 +47,31 @@ export function useBranchesData() {
   useEffect(() => {
     if (user) {
       fetchBranches();
+    } else {
+      setBranches([]);
     }
   }, [user]);
 
-  // Listen for realtime updates
+  // Listen for realtime updates on the stores table
   useEffect(() => {
     if (!user) return;
 
-    // Only listen for changes to the stores table
+    console.log('Setting up realtime subscription for stores table changes');
     const storesChannel = supabase
       .channel('stores_changes')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'stores'
-      }, () => {
+        table: 'stores',
+        filter: `owner_id=eq.${user.id}`
+      }, (payload) => {
+        console.log('Realtime update received for stores:', payload);
         fetchBranches();
       })
       .subscribe();
 
     return () => {
+      console.log('Cleaning up stores subscription');
       supabase.removeChannel(storesChannel);
     };
   }, [user]);
