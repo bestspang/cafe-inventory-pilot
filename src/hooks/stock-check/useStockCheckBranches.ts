@@ -28,7 +28,8 @@ export const useStockCheckBranches = (storeId?: string | null) => {
           const { data, error } = await supabase
             .from('stores')
             .select('*')
-            .eq('id', storeId);
+            .eq('id', storeId)
+            .eq('owner_id', user.id); // Add owner_id filter for security
           
           if (error) {
             console.error('Error fetching specific store:', error);

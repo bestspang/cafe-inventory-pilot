@@ -7,7 +7,6 @@ export const fetchBranches = async (): Promise<Branch[]> => {
   try {
     console.log('Fetching branches from stores table for quick request...');
     
-    // Fetch from 'stores' table only - this is the source of truth
     const { data: storesData, error: storesError } = await supabase
       .from('stores')
       .select('*')

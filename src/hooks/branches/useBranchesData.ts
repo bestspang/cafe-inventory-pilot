@@ -18,7 +18,6 @@ export function useBranchesData() {
     try {
       console.log('Fetching branches from stores table for user:', user.id);
       
-      // Make sure we're querying the stores table with owner_id filter
       const { data, error } = await supabase
         .from('stores')
         .select('*')
