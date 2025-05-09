@@ -25,7 +25,7 @@ export const useBranchCreate = () => {
       console.log('Creating new branch with data:', branch);
       console.log('Current user ID:', user.id);
       
-      // Use only the stores table - with explicit owner_id
+      // Make sure we're inserting into stores table with owner_id set
       const { data: storeData, error: storeError } = await supabase
         .from('stores')
         .insert({
@@ -33,7 +33,7 @@ export const useBranchCreate = () => {
           address: branch.address || null,
           timezone: branch.timezone || 'Asia/Bangkok',
           is_open: branch.is_open !== undefined ? branch.is_open : true,
-          owner_id: user.id // Explicitly set owner_id for RLS
+          owner_id: user.id // Must set owner_id for RLS
         })
         .select('*')
         .single();

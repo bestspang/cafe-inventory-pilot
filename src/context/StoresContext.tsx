@@ -46,29 +46,29 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       console.log('Fetching stores for user:', user.id);
       
-      // Only fetch from stores table with explicit owner_id filter
-      const { data: storesData, error: storesError } = await supabase
+      // Query the stores table with owner_id filter
+      const { data, error } = await supabase
         .from('stores')
         .select('*')
         .eq('owner_id', user.id)
         .order('name');
       
-      if (storesError) {
-        console.error('Error fetching stores:', storesError);
-        throw storesError;
+      if (error) {
+        console.error('Error fetching stores:', error);
+        throw error;
       }
       
-      console.log('Fetched stores in context:', storesData || []);
-      setStores(storesData || [] as Branch[]);
+      console.log('Fetched stores in context:', data || []);
+      setStores(data || [] as Branch[]);
       
       // If we have stores but no current selection, try to restore from localStorage or use first
-      if (storesData && storesData.length > 0 && !currentStoreId) {
+      if (data && data.length > 0 && !currentStoreId) {
         const savedStoreId = localStorage.getItem('selectedStoreId');
         
         // Check if the saved ID is in the available stores
-        const validSavedId = savedStoreId && storesData.some(store => store.id === savedStoreId);
+        const validSavedId = savedStoreId && data.some(store => store.id === savedStoreId);
         
-        setCurrentStoreId(validSavedId ? savedStoreId : storesData[0].id);
+        setCurrentStoreId(validSavedId ? savedStoreId : data[0].id);
       }
     } catch (error) {
       console.error('Error fetching stores:', error);

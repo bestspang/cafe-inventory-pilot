@@ -37,17 +37,23 @@ export default function CreateStoreDialog({ open, onOpenChange }: CreateStoreDia
     
     try {
       console.log('Creating branch for user:', user.id);
-      // This will now automatically set owner_id to the current user
+      
+      // This will now explicitly set owner_id to the current user
       const newStore = await createStore(name.trim(), address.trim());
       
       if (newStore) {
+        console.log('Store successfully created:', newStore);
         // Reset form and close dialog on success
         setName('');
         setAddress('');
         onOpenChange(false);
+      } else {
+        console.error('Store creation returned null');
+        toast.error('Failed to create branch - unknown error');
       }
     } catch (error) {
       console.error('Error creating branch:', error);
+      toast.error('Failed to create branch');
     } finally {
       setIsSubmitting(false);
     }

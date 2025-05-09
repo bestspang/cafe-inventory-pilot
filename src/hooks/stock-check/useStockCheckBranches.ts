@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,18 +21,26 @@ export const useStockCheckBranches = (storeId?: string | null) => {
           return;
         }
         
-        // When storeId is provided, fetch this specific branch
+        console.log('Fetching branches for stock check, user ID:', user.id);
+        
+        // When storeId is provided, fetch this specific store
         if (storeId) {
           const { data, error } = await supabase
             .from('stores')
             .select('*')
             .eq('id', storeId);
           
-          if (error) throw error;
+          if (error) {
+            console.error('Error fetching specific store:', error);
+            throw error;
+          }
           
           if (data && data.length > 0) {
+            console.log('Found specific store:', data);
             setBranches(data as Branch[]);
             setSelectedBranch(data[0].id);
+          } else {
+            console.log('No store found with ID:', storeId);
           }
         } else {
           // Otherwise fetch all branches for the current user
@@ -41,15 +50,21 @@ export const useStockCheckBranches = (storeId?: string | null) => {
             .eq('owner_id', user.id)
             .order('name');
             
-          if (error) throw error;
+          if (error) {
+            console.error('Error fetching stores for user:', error);
+            throw error;
+          }
           
           if (data && data.length > 0) {
+            console.log('Found stores for user:', data);
             setBranches(data as Branch[]);
             setSelectedBranch(data[0].id);
+          } else {
+            console.log('No stores found for user:', user.id);
           }
         }
       } catch (error) {
-        console.error('Error fetching branches:', error);
+        console.error('Error in useStockCheckBranches:', error);
         toast({
           title: "Failed to load branches",
           description: "Please try again later",

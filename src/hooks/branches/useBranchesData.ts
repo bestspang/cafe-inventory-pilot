@@ -18,20 +18,20 @@ export function useBranchesData() {
     try {
       console.log('Fetching branches from stores table for user:', user.id);
       
-      // Only fetch from stores table with explicit owner_id filter
-      const { data: storesData, error: storesError } = await supabase
+      // Make sure we're querying the stores table with owner_id filter
+      const { data, error } = await supabase
         .from('stores')
         .select('*')
         .eq('owner_id', user.id)
         .order('name');
       
-      if (storesError) {
-        console.error('Error fetching stores:', storesError);
-        throw storesError;
+      if (error) {
+        console.error('Error fetching stores:', error);
+        throw error;
       }
       
-      console.log('Fetched stores data:', storesData || []);
-      setBranches(storesData || [] as Branch[]);
+      console.log('Fetched stores data:', data || []);
+      setBranches(data || [] as Branch[]);
     } catch (error: any) {
       console.error('Error fetching branches:', error);
       toast({

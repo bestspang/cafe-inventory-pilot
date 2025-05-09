@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { useBranchesData } from '@/hooks/branches/useBranchesData';
 import { useAuth } from '@/context/AuthContext';
 import { useBranchCreate } from '@/hooks/branches/operations/useBranchCreate';
+import { toast } from '@/components/ui/sonner';
 
 interface BranchFormDialogProps {
   branch: Branch | null;
@@ -66,14 +67,21 @@ export default function BranchFormDialog({
         });
       } else if (user) {
         console.log('[BranchFormDialog] Creating new branch with user ID:', user.id);
+        
         // Use createBranch from useBranchCreate hook
         const newBranch = await createBranch({
           name: data.name,
           address: data.address,
-          timezone: data.timezone
+          timezone: data.timezone,
+          owner_id: user.id // Explicitly include owner_id for new branches
         });
+        
         success = !!newBranch;
         console.log('[BranchFormDialog] Branch creation result:', newBranch);
+        
+        if (!newBranch) {
+          toast.error("Failed to create branch - please check console for details");
+        }
       }
       
       if (success) {
