@@ -132,18 +132,18 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Creating new store with owner_id:', user.id);
       
-      const storeData = {
+      const newStoreData = {
         name,
         address: address || null,
         timezone,
         owner_id: user.id // Critical for RLS
       };
 
-      console.log('Full store data being sent:', storeData);
+      console.log('Full store data being sent:', newStoreData);
       
-      const { data: storeData, error: storeError } = await supabase
+      const { data: createdStore, error: storeError } = await supabase
         .from('stores')
-        .insert(storeData)
+        .insert(newStoreData)
         .select()
         .single();
         
@@ -154,15 +154,15 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       }
       
       toast.success('Branch created successfully');
-      console.log('New store created:', storeData);
+      console.log('New store created:', createdStore);
       
       // Add the new store to local state
-      addStore(storeData as Branch);
+      addStore(createdStore as Branch);
       
       // Set it as the current store
-      setCurrentStoreId(storeData.id);
+      setCurrentStoreId(createdStore.id);
       
-      return storeData as Branch;
+      return createdStore as Branch;
     } catch (error: any) {
       console.error('Error creating branch:', error);
       toast.error('Failed to create branch');
