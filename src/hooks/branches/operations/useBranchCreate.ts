@@ -25,16 +25,20 @@ export const useBranchCreate = () => {
       console.log('Creating new branch with data:', branch);
       console.log('Current user ID:', user.id);
       
+      const branchData = {
+        name: branch.name,
+        address: branch.address || null,
+        timezone: branch.timezone || 'Asia/Bangkok',
+        is_open: branch.is_open !== undefined ? branch.is_open : true,
+        owner_id: user.id // Critical for RLS
+      };
+      
+      console.log('Full branch data being sent:', branchData);
+      
       // Make sure we're inserting into stores table with owner_id set
       const { data: storeData, error: storeError } = await supabase
         .from('stores')
-        .insert({
-          name: branch.name,
-          address: branch.address || null,
-          timezone: branch.timezone || 'Asia/Bangkok',
-          is_open: branch.is_open !== undefined ? branch.is_open : true,
-          owner_id: user.id // Must set owner_id for RLS
-        })
+        .insert(branchData)
         .select('*')
         .single();
       
@@ -46,17 +50,10 @@ export const useBranchCreate = () => {
       
       console.log('Store created successfully:', storeData);
       
-      // Log activity if needed
-      await supabase
-        .from('branch_activity')
-        .insert({
-          branch_id: storeData.id,
-          action: 'created',
-          performed_by: user.id
-        });
-      
       // Add store to local state
-      addStore(storeData as Branch);
+      if (storeData) {
+        addStore(storeData as Branch);
+      }
       
       // Explicitly refresh the branches list
       await refetch();

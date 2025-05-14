@@ -36,11 +36,19 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
 
   // Function to directly add a store to the local state
   const addStore = (store: Branch) => {
-    setStores(prevStores => [...prevStores, store]);
+    setStores(prevStores => {
+      // Check if store already exists to avoid duplicates
+      const exists = prevStores.some(s => s.id === store.id);
+      if (exists) return prevStores;
+      return [...prevStores, store];
+    });
   };
 
   const fetchStores = async () => {
-    if (!isAuthenticated || !user?.id) return;
+    if (!isAuthenticated || !user?.id) {
+      setIsLoading(false);
+      return;
+    }
     
     try {
       setIsLoading(true);
@@ -69,6 +77,9 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
         const validSavedId = savedStoreId && data.some(store => store.id === savedStoreId);
         
         setCurrentStoreId(validSavedId ? savedStoreId : data[0].id);
+      } else if (!data || data.length === 0) {
+        // Clear current store if no stores are available
+        setCurrentStoreId(null);
       }
     } catch (error) {
       console.error('Error fetching stores:', error);
@@ -80,7 +91,12 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch stores when the component mounts or auth changes
   useEffect(() => {
-    fetchStores();
+    if (isAuthenticated && user?.id) {
+      fetchStores();
+    } else {
+      setStores([]);
+      setCurrentStoreId(null);
+    }
   }, [isAuthenticated, user?.id]);
 
   // Set up realtime subscription for stores changes
@@ -107,7 +123,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, user?.id]);
 
   // Function to create a new store
-  const createStore = async (name: string, address?: string, timezone: string = 'UTC') => {
+  const createStore = async (name: string, address?: string, timezone: string = 'Asia/Bangkok') => {
     if (!user?.id) {
       toast.error('You must be logged in to create a branch');
       return null;
@@ -116,14 +132,18 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Creating new store with owner_id:', user.id);
       
+      const storeData = {
+        name,
+        address: address || null,
+        timezone,
+        owner_id: user.id // Critical for RLS
+      };
+
+      console.log('Full store data being sent:', storeData);
+      
       const { data: storeData, error: storeError } = await supabase
         .from('stores')
-        .insert({
-          name,
-          address: address || null,
-          timezone,
-          owner_id: user.id
-        })
+        .insert(storeData)
         .select()
         .single();
         
@@ -135,8 +155,13 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       
       toast.success('Branch created successfully');
       console.log('New store created:', storeData);
+      
+      // Add the new store to local state
       addStore(storeData as Branch);
+      
+      // Set it as the current store
       setCurrentStoreId(storeData.id);
+      
       return storeData as Branch;
     } catch (error: any) {
       console.error('Error creating branch:', error);

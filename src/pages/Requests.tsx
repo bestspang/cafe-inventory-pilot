@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import RequestsFilters from '@/components/requests/RequestsFilters';
 import RequestsTable from '@/components/requests/RequestsTable';
@@ -12,9 +12,11 @@ import { useRequestsFilters } from '@/hooks/requests/useRequestsFilters';
 import { useRequestsRealtime } from '@/hooks/requests/useRequestsRealtime';
 import { useRequestDelete } from '@/hooks/requests/useRequestDelete';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useStores } from '@/context/StoresContext';
 
 const Requests = () => {
   const { user } = useAuth();
+  const { currentStoreId } = useStores();
   
   // Use our custom hooks without passing currentStoreId
   const { requests, setRequests, isLoading, branches, fetchRequests } = useRequestsFetch();
@@ -23,6 +25,14 @@ const Requests = () => {
   
   // Set up realtime subscription
   useRequestsRealtime(fetchRequests);
+  
+  // Force refresh when currentStoreId changes
+  useEffect(() => {
+    if (currentStoreId) {
+      console.log('Current store changed, refreshing requests for store:', currentStoreId);
+      fetchRequests();
+    }
+  }, [currentStoreId]);
   
   // Use our filter hook
   const {
