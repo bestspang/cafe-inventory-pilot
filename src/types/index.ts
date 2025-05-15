@@ -1,4 +1,3 @@
-
 export type UserRole = 'owner' | 'manager' | 'staff';
 
 export interface User {
@@ -71,13 +70,5 @@ export interface Category {
   name: string;
 }
 
-// Re-export StockItem for consistency
-export interface StockItem {
-  id: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  categoryId?: string;
-  categoryName?: string;
-  reorder_point?: number;
-}
+// Export StockItem from stock-check.ts
+export * from '@/types/stock-check';

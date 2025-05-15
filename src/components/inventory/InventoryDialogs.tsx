@@ -5,6 +5,7 @@ import IngredientFormDialog from './IngredientFormDialog';
 import DeleteIngredientDialog from './DeleteIngredientDialog';
 import CostHistoryDialog from './CostHistoryDialog';
 import ArchivedIngredientsDialog from './ArchivedIngredientsDialog';
+import InventorySettingsDialog from './InventorySettingsDialog'; // We'll create this next
 
 interface InventoryDialogsProps {
   formDialogOpen: boolean;
@@ -15,7 +16,10 @@ interface InventoryDialogsProps {
   setCostHistoryDialogOpen: (open: boolean) => void;
   archiveDialogOpen: boolean;
   setArchiveDialogOpen: (open: boolean) => void;
+  settingsDialogOpen?: boolean;
+  setSettingsDialogOpen?: (open: boolean) => void;
   currentIngredient: Ingredient | null;
+  currentStoreId?: string | null;
   categories: Category[];
   onSubmitForm: (data: Partial<Ingredient>) => Promise<void>;
   onConfirmDelete: () => void;
@@ -33,7 +37,10 @@ const InventoryDialogs: React.FC<InventoryDialogsProps> = ({
   setCostHistoryDialogOpen,
   archiveDialogOpen,
   setArchiveDialogOpen,
+  settingsDialogOpen = false,
+  setSettingsDialogOpen,
   currentIngredient,
+  currentStoreId,
   categories,
   onSubmitForm,
   onConfirmDelete,
@@ -75,6 +82,15 @@ const InventoryDialogs: React.FC<InventoryDialogsProps> = ({
         onRestoreIngredient={onRestoreIngredient}
         isLoading={archiveLoading}
       />
+
+      {/* Settings Dialog */}
+      {setSettingsDialogOpen && (
+        <InventorySettingsDialog
+          open={settingsDialogOpen}
+          onOpenChange={setSettingsDialogOpen}
+          storeId={currentStoreId}
+        />
+      )}
     </>
   );
 };

@@ -9,7 +9,7 @@ import { useFilterManager } from './inventory/useFilterManager';
 
 export type { ViewMode };
 
-export const useInventory = () => {
+export const useInventory = (storeId?: string | null) => {
   const { user } = useAuth();
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -18,8 +18,7 @@ export const useInventory = () => {
   // Only owners and managers can modify ingredients
   const canModify = ['owner', 'manager'].includes(user?.role || '');
   
-  // Use our smaller, focused hooks - now without passing store context
-  const { categories, handleNewCategory, isLoading: categoriesLoading } = useCategoryManager();
+  // Pass storeId to the ingredient manager
   const { 
     ingredients, 
     currentIngredient, 
@@ -30,7 +29,10 @@ export const useInventory = () => {
     confirmDelete,
     fetchIngredients,
     isLoading: ingredientsLoading
-  } = useIngredientManager(setFormDialogOpen, setDeleteDialogOpen);
+  } = useIngredientManager(setFormDialogOpen, setDeleteDialogOpen, storeId);
+  
+  // Use our smaller, focused hooks - now without passing store context
+  const { categories, handleNewCategory, isLoading: categoriesLoading } = useCategoryManager();
   
   const {
     search,
@@ -49,8 +51,14 @@ export const useInventory = () => {
   // Wrapper for handleAddEdit to include category creation
   const handleAddEditIngredient = async (data: Partial<Ingredient>) => {
     console.log('handleAddEditIngredient called with data:', data);
-    // No longer setting branch_id to currentStoreId
-    await handleAddEdit(data, categories, (name: string) => {
+    
+    // Set the branch_id to the current storeId if provided
+    const ingredientWithStore = {
+      ...data,
+      branch_id: storeId || data.branch_id
+    };
+    
+    await handleAddEdit(ingredientWithStore, categories, (name: string) => {
       // The handleNewCategory function requires two arguments: tempId and categoryName
       // Here we're generating a temporary ID using the current timestamp
       const tempId = `temp-${Date.now()}`;

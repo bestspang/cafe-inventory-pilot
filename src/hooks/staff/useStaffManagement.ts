@@ -1,177 +1,216 @@
 
 import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Branch, StaffMember } from '@/types';
-import { useToast } from '@/hooks/use-toast';
 
-export function useStaffManagement() {
+export const useStaffManagement = (initialBranchId?: string) => {
   const [branches, setBranches] = useState<Branch[]>([]);
-  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-  
+  const [staff, setStaff] = useState<StaffMember[]>([]);
   const [newStaff, setNewStaff] = useState<{
     staff_name: string;
     branch_id: string;
   }>({
     staff_name: '',
-    branch_id: '',
+    branch_id: initialBranchId || '',
   });
   
-  const fetchBranches = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('branches')
-        .select('*')
-        .order('name');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  // Fetch branches
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('stores')  // Updated to use 'stores' instead of 'branches'
+          .select('*')
+          .order('name');
         
-      if (error) throw error;
-      
-      // Ensure we properly cast the result to the Branch type
-      const branchesWithOwner = data?.map(branch => ({
-        ...branch,
-        owner_id: branch.owner_id || '' // Add owner_id if missing
-      })) || [];
-      
-      setBranches(branchesWithOwner as Branch[]);
-      
-      if (data && data.length > 0 && !newStaff.branch_id) {
-        setNewStaff(prev => ({ ...prev, branch_id: data[0].id }));
-      }
-    } catch (error: any) {
-      console.error('Error fetching branches:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load branches',
-        variant: 'destructive',
-      });
-    }
-  };
-  
-  const fetchAllStaff = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Get all staff members with branch details
-      const { data, error } = await supabase
-        .from('store_staff')
-        .select(`
-          *,
-          branches:branch_id (
-            name
-          )
-        `);
+        if (error) throw error;
         
-      if (error) throw error;
-      
-      const formattedStaff: StaffMember[] = data.map(staff => ({
-        id: staff.id,
-        staff_name: staff.staff_name,
-        branch_id: staff.branch_id,
-        created_at: staff.created_at,
-        branchName: staff.branches?.name
-      }));
-      
-      setStaffMembers(formattedStaff);
-    } catch (error: any) {
-      console.error('Error fetching staff:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load staff members',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const handleAddStaff = async (staffData: {
-    staff_name: string;
-    branch_id: string;
-  }) => {
-    try {
-      if (!staffData.staff_name || !staffData.branch_id) {
+        // Make sure each branch has an owner_id property
+        const processedBranches: Branch[] = data?.map(branch => ({
+          ...branch,
+          owner_id: branch.owner_id || ''  // Ensure owner_id exists
+        })) || [];
+        
+        setBranches(processedBranches);
+        
+        if (processedBranches.length > 0 && !newStaff.branch_id) {
+          setNewStaff(prev => ({ ...prev, branch_id: processedBranches[0].id }));
+        }
+      } catch (error: any) {
+        console.error('Error fetching branches:', error);
         toast({
-          title: 'Missing information',
-          description: 'Please provide a name and select a branch',
-          variant: 'destructive',
+          title: 'Failed to load branches',
+          description: error.message || 'An unexpected error occurred',
+          variant: 'destructive'
         });
-        return;
       }
-      
-      const { error } = await supabase
+    };
+
+    fetchBranches();
+  }, [toast]);
+
+  // Fetch staff for all branches
+  useEffect(() => {
+    const fetchStaff = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('store_staff')
+          .select(`
+            id,
+            staff_name,
+            branch_id,
+            created_at,
+            branches:branch_id (
+              id,
+              name
+            )
+          `)
+          .order('staff_name');
+
+        if (error) throw error;
+
+        // Format the data to match our StaffMember type
+        const mappedStaff: StaffMember[] = data.map((item: any) => ({
+          id: item.id,
+          staff_name: item.staff_name,
+          branch_id: item.branch_id,
+          created_at: item.created_at,
+          branchName: item.branches?.name || 'Unknown Branch'
+        }));
+
+        setStaff(mappedStaff);
+      } catch (error: any) {
+        console.error('Error fetching staff:', error);
+        toast({
+          title: 'Failed to load staff members',
+          description: error.message || 'An unexpected error occurred',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (branches.length > 0) {
+      fetchStaff();
+    }
+  }, [branches, toast]);
+
+  // Add a new staff member
+  const handleAddStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStaff.staff_name || !newStaff.branch_id) {
+      toast({
+        title: 'Missing information',
+        description: 'Please enter a name and select a branch',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase
         .from('store_staff')
-        .insert([{
-          staff_name: staffData.staff_name,
-          branch_id: staffData.branch_id
-        }]);
-        
+        .insert({
+          staff_name: newStaff.staff_name,
+          branch_id: newStaff.branch_id
+        })
+        .select('*, branches:branch_id (id, name)')
+        .single();
+
       if (error) throw error;
-      
+
+      // Add the new staff member to the list
+      const newStaffMember: StaffMember = {
+        id: data.id,
+        staff_name: data.staff_name,
+        branch_id: data.branch_id,
+        created_at: data.created_at,
+        branchName: data.branches?.name || 'Unknown Branch'
+      };
+
+      setStaff(prev => [...prev, newStaffMember]);
+
+      // Reset form
+      setNewStaff(prev => ({ ...prev, staff_name: '' }));
+
       toast({
         title: 'Staff added',
-        description: `${staffData.staff_name} has been added successfully`,
+        description: `${newStaff.staff_name} has been added successfully`
       });
-      
-      setNewStaff({
-        staff_name: '',
-        branch_id: staffData.branch_id,
-      });
-      
-      fetchAllStaff();
     } catch (error: any) {
       console.error('Error adding staff:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to add staff member',
-        variant: 'destructive',
+        title: 'Failed to add staff member',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
-  const handleDeleteStaff = async (staffId: string) => {
+
+  // Delete staff member
+  const handleDeleteStaff = async () => {
+    if (!selectedStaff) return;
+
+    setIsSubmitting(true);
     try {
       const { error } = await supabase
         .from('store_staff')
         .delete()
-        .eq('id', staffId);
-        
+        .eq('id', selectedStaff.id);
+
       if (error) throw error;
-      
+
+      // Remove the deleted staff member from the list
+      setStaff(prev => prev.filter(s => s.id !== selectedStaff.id));
+
       toast({
         title: 'Staff removed',
-        description: 'Staff member has been removed successfully',
+        description: `${selectedStaff.staff_name} has been removed successfully`
       });
-      
-      fetchAllStaff();
+
+      setDeleteDialogOpen(false);
+      setSelectedStaff(null);
     } catch (error: any) {
       console.error('Error deleting staff:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to remove staff member',
-        variant: 'destructive',
+        title: 'Failed to remove staff member',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
-  const getBranchName = (branchId: string) => {
-    const branch = branches.find(b => b.id === branchId);
-    return branch?.name || 'Unknown branch';
+
+  const openDeleteDialog = (staffMember: StaffMember) => {
+    setSelectedStaff(staffMember);
+    setDeleteDialogOpen(true);
   };
-  
-  useEffect(() => {
-    fetchBranches();
-    fetchAllStaff();
-  }, []);
-  
+
   return {
     branches,
-    staffMembers,
-    isLoading,
+    staff,
     newStaff,
     setNewStaff,
+    isLoading,
+    isSubmitting,
     handleAddStaff,
     handleDeleteStaff,
-    getBranchName
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    selectedStaff,
+    openDeleteDialog
   };
-}
+};

@@ -51,8 +51,8 @@ export const useStockCheckItems = (selectedBranch: string) => {
           });
         });
         
-        // Create stock items
-        const items = ingredients.map((ingredient: any) => {
+        // Create stock items with proper fields mapping to our StockItem interface
+        const items: StockItem[] = ingredients.map((ingredient: any) => {
           const inventoryData = inventoryMap.get(ingredient.id) || { 
             onHandQty: 0, 
             reorderPt: 10, 
@@ -115,7 +115,7 @@ export const useStockCheckItems = (selectedBranch: string) => {
   // Filter ingredients based on search
   const filteredItems = stockItems.filter(item => 
     item.name.toLowerCase().includes(search.toLowerCase()) ||
-    item.categoryName.toLowerCase().includes(search.toLowerCase())
+    item.categoryName?.toLowerCase().includes(search.toLowerCase() || '')
   );
 
   const handleQuantityChange = (id: string, quantity: number) => {

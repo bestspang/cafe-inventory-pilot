@@ -5,11 +5,13 @@ import { Ingredient } from '@/types';
 export interface StockItem {
   id: string;
   name: string;
-  quantity: number;
   unit: string;
   categoryId?: string;
   categoryName?: string;
-  reorder_point?: number;
+  onHandQty: number;  // Changed from quantity to onHandQty
+  reorderPt: number;  // Changed to camelCase for consistency
+  lastChange: number; // Add this field
+  isActive?: boolean;
 }
 
 export interface StockCheck {
