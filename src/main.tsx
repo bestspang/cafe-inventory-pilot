@@ -7,7 +7,6 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { StoresProvider } from './context/StoresContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { IntlProvider } from 'react-intl'
 import { LocaleProvider } from './context/LocaleContext'
 import { StockCheckSettingsProvider } from './context/StockCheckSettingsContext'
 
@@ -26,13 +25,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <LocaleProvider>
-          <IntlProvider locale="en" defaultLocale="en">
-            <AuthProvider>
-              <StoresProvider>
-                <App />
-              </StoresProvider>
-            </AuthProvider>
-          </IntlProvider>
+          <AuthProvider>
+            <StoresProvider>
+              <App />
+            </StoresProvider>
+          </AuthProvider>
         </LocaleProvider>
       </BrowserRouter>
     </QueryClientProvider>

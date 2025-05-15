@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Routes, Route } from "react-router-dom";
 import { seedDemoData } from "@/utils/seedDemoData";
+import { IntlProvider } from "react-intl";
 import enMessages from "@/messages/en.json";
 import thMessages from "@/messages/th.json";
 
@@ -29,6 +30,10 @@ import ComingSoonPage from "./pages/ComingSoonPage";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
 
+// Context
+import { useLocale } from "@/context/LocaleContext";
+import { StockCheckSettingsProvider } from "@/context/StockCheckSettingsContext";
+
 // Helper component to get locale from context and provide IntlProvider
 const AppWithIntl = ({ children }: { children: React.ReactNode }) => {
   const { locale } = useLocale();
@@ -40,9 +45,6 @@ const AppWithIntl = ({ children }: { children: React.ReactNode }) => {
     </IntlProvider>
   );
 };
-
-// We need to import useLocale here after defining AppWithIntl
-import { useLocale } from "@/context/LocaleContext";
 
 const App = () => {
   // Seed demo data on app initialization
@@ -62,11 +64,7 @@ const App = () => {
           </AuthGuard>
         } />
         
-        <Route path="/quick-request" element={
-          <StockCheckSettingsProvider branchId="">
-            <QuickRequest />
-          </StockCheckSettingsProvider>
-        } />
+        <Route path="/quick-request" element={<QuickRequest />} />
         
         {/* Root route - determines where to go based on auth */}
         <Route path="/" element={<Index />} />
