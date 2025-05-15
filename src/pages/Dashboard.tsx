@@ -10,6 +10,7 @@ import BranchesSection from '@/components/dashboard/BranchesSection';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardMetrics from '@/components/dashboard/DashboardMetrics';
 import QuickActionsSection from '@/components/dashboard/QuickActionsSection';
+import { useStores } from '@/context/StoresContext';
 
 const extractNameFromEmail = (email: string): string => {
   // Extract the part before @ and capitalize the first letter
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [branchFilter, setBranchFilter] = useState<'all' | 'healthy' | 'at-risk'>('all');
   const intl = useIntl();
+  const { stores } = useStores(); // Make sure we're using the StoresContext
   
   const isOwner = user?.role === 'owner';
   const isManager = user?.role === 'manager';
@@ -29,7 +31,7 @@ export default function Dashboard() {
   const { metrics, isLoading: isLoadingMetrics } = useDashboardMetrics();
   const { trends, isLoading: isLoadingTrends } = useDashboardTrends();
   
-  // Don't pass the branchFilter to useBranchSnapshots
+  // Pass the branchFilter to useBranchSnapshots
   const { branches, isLoading: isLoadingBranches } = useBranchSnapshots({ 
     branchFilter 
   });
