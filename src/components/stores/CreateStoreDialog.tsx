@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useStores } from '@/context/StoresContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/components/ui/sonner';
+import { useBranchCreate } from '@/hooks/branches/operations/useBranchCreate';
 
 interface CreateStoreDialogProps {
   open: boolean;
@@ -14,11 +15,11 @@ interface CreateStoreDialogProps {
 }
 
 export default function CreateStoreDialog({ open, onOpenChange }: CreateStoreDialogProps) {
-  const { createStore } = useStores();
+  const { refreshStores } = useStores();
   const { user } = useAuth();
+  const { createBranch, isLoading } = useBranchCreate();
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,30 +34,35 @@ export default function CreateStoreDialog({ open, onOpenChange }: CreateStoreDia
       return;
     }
     
-    setIsSubmitting(true);
-    
     try {
       console.log('Creating branch for user:', user.id);
-      console.log('Branch data:', { name: name.trim(), address: address.trim(), owner_id: user.id });
+      console.log('Branch data:', { name: name.trim(), address: address.trim() });
       
-      // Make sure owner_id is included when creating the store
-      const newStore = await createStore(name.trim(), address.trim());
+      // Use the dedicated createBranch hook
+      const newBranch = await createBranch({
+        name: name.trim(),
+        address: address.trim(),
+        timezone: 'Asia/Bangkok',
+        owner_id: user.id
+      });
       
-      if (newStore) {
-        console.log('Store successfully created:', newStore);
+      if (newBranch) {
+        console.log('Branch successfully created:', newBranch);
+        // Refresh stores list to show the new branch
+        await refreshStores();
+        
         // Reset form and close dialog on success
         setName('');
         setAddress('');
         onOpenChange(false);
+        toast.success('Branch created successfully');
       } else {
-        console.error('Store creation returned null');
+        console.error('Branch creation returned null');
         toast.error('Failed to create branch - unknown error');
       }
     } catch (error) {
       console.error('Error creating branch:', error);
       toast.error('Failed to create branch');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -105,12 +111,12 @@ export default function CreateStoreDialog({ open, onOpenChange }: CreateStoreDia
               type="button" 
               variant="outline" 
               onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
+              disabled={isLoading}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !name.trim()}>
-              {isSubmitting ? 'Creating...' : 'Create Branch'}
+            <Button type="submit" disabled={isLoading || !name.trim()}>
+              {isLoading ? 'Creating...' : 'Create Branch'}
             </Button>
           </DialogFooter>
         </form>

@@ -18,11 +18,13 @@ import {
 } from '@/components/ui/popover';
 import { useStores } from '@/context/StoresContext';
 import CreateStoreDialog from './CreateStoreDialog';
+import { useNavigate } from 'react-router-dom';
 
 export default function StoreSwitcher() {
   const { stores, currentStoreId, setCurrentStoreId, isLoading } = useStores();
   const [open, setOpen] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const navigate = useNavigate();
 
   // Find the current store
   const currentStore = stores.find((store) => store.id === currentStoreId);

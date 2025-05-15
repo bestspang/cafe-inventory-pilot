@@ -10,14 +10,15 @@ import { useBranchesData } from '@/hooks/branches/useBranchesData';
 import { useBranchManager } from '@/hooks/branches/useBranchManager';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FormattedMessage } from 'react-intl';
-import { useStores } from '@/context/StoresContext';  // Import useStores
+import { useStores } from '@/context/StoresContext';
+import { toast } from '@/components/ui/sonner';
 
 export default function Branches() {
   const { user } = useAuth();
   const { branches, isLoading: isLoadingBranches, refetch } = useBranchesData();
   const { deleteBranch, toggleBranchStatus } = useBranchManager();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { refreshStores } = useStores();  // Add this to refresh the stores context
+  const { refreshStores } = useStores();
   
   // Only owners and managers can access this page
   if (user && user.role !== 'owner' && user.role !== 'manager') {
@@ -28,13 +29,20 @@ export default function Branches() {
   console.log('Branches - Current user:', user);
   console.log('Branches - Available branches:', branches);
 
-  const handleAddBranch = () => {
+  const handleAddBranch = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsAddDialogOpen(true);
   };
 
   const handleBranchAdded = async () => {
-    await refetch();
-    await refreshStores();  // Also refresh the stores in context
+    try {
+      await refetch();
+      await refreshStores();
+      toast.success('Branch list refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing branch list:', error);
+      toast.error('Failed to refresh branch list');
+    }
   };
 
   return (
@@ -89,7 +97,7 @@ export default function Branches() {
             const success = await deleteBranch(branchId, branch.name);
             if (success) {
               await refetch();
-              await refreshStores();  // Also refresh the stores in context
+              await refreshStores();
             }
             return success;
           }}
@@ -97,13 +105,13 @@ export default function Branches() {
             const success = await toggleBranchStatus(branch);
             if (success) {
               await refetch();
-              await refreshStores();  // Also refresh the stores in context
+              await refreshStores();
             }
             return success;
           }}
           onSave={async () => {
             await refetch();
-            await refreshStores();  // Also refresh the stores in context
+            await refreshStores();
           }}
         />
       )}

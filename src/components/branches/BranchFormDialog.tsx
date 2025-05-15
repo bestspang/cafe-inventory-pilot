@@ -5,7 +5,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogClose
 } from '@/components/ui/dialog';
 import { useBranchManager } from '@/hooks/branches/useBranchManager';
 import { Branch } from '@/types/branch';
@@ -97,12 +96,14 @@ export default function BranchFormDialog({
         
         // Explicitly close the dialog and reset state
         onOpenChange(false);
+        toast.success(isEditing ? 'Branch updated successfully' : 'Branch created successfully');
       } else {
         console.log('[BranchFormDialog] Operation reported as failed, keeping dialog open');
         setIsSubmitting(false);
       }
     } catch (error) {
       console.error('[BranchFormDialog] Error in onSubmit handler:', error);
+      toast.error('An error occurred while saving the branch');
       setIsSubmitting(false);
     } finally {
       console.groupEnd(); // End [BranchFormDialog] onSubmit triggered
