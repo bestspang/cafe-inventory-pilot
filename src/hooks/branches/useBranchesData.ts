@@ -18,10 +18,10 @@ export function useBranchesData() {
     try {
       console.log('Fetching branches from stores table for user:', user.id);
       
+      // With RLS in place, this query will automatically filter by owner_id
       const { data, error } = await supabase
         .from('stores')
         .select('*')
-        .eq('owner_id', user.id)
         .order('name');
       
       if (error) {
@@ -61,8 +61,7 @@ export function useBranchesData() {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'stores',
-        filter: `owner_id=eq.${user.id}`
+        table: 'stores'
       }, (payload) => {
         console.log('Realtime update received for stores:', payload);
         fetchBranches();

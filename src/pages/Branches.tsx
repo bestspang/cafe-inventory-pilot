@@ -10,17 +10,32 @@ import { useBranchesData } from '@/hooks/branches/useBranchesData';
 import { useBranchManager } from '@/hooks/branches/useBranchManager';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FormattedMessage } from 'react-intl';
+import { useStores } from '@/context/StoresContext';  // Import useStores
 
 export default function Branches() {
   const { user } = useAuth();
   const { branches, isLoading: isLoadingBranches, refetch } = useBranchesData();
   const { deleteBranch, toggleBranchStatus } = useBranchManager();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const { refreshStores } = useStores();  // Add this to refresh the stores context
   
   // Only owners and managers can access this page
   if (user && user.role !== 'owner' && user.role !== 'manager') {
     return <Navigate to="/dashboard" replace />;
   }
+
+  // Debug logs
+  console.log('Branches - Current user:', user);
+  console.log('Branches - Available branches:', branches);
+
+  const handleAddBranch = () => {
+    setIsAddDialogOpen(true);
+  };
+
+  const handleBranchAdded = async () => {
+    await refetch();
+    await refreshStores();  // Also refresh the stores in context
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -33,7 +48,7 @@ export default function Branches() {
             <FormattedMessage id="branches.subtitle" defaultMessage="Manage your café & juice bar locations" />
           </p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
+        <Button onClick={handleAddBranch}>
           <Plus className="mr-2 h-4 w-4" /> 
           <FormattedMessage id="branches.add" defaultMessage="Add Branch" />
         </Button>
@@ -58,7 +73,7 @@ export default function Branches() {
               defaultMessage="Add your first branch to get started with managing your café inventory system."
             />
           </p>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Button onClick={handleAddBranch}>
             <Plus className="mr-2 h-4 w-4" /> 
             <FormattedMessage id="branches.add" defaultMessage="Add Branch" />
           </Button>
@@ -68,20 +83,28 @@ export default function Branches() {
           branches={branches}
           isLoading={isLoadingBranches}
           onDelete={async (branchId) => {
-            // Fix: Pass both branchId and the branch name to deleteBranch
             const branch = branches.find(b => b.id === branchId);
             if (!branch) return false;
             
             const success = await deleteBranch(branchId, branch.name);
-            if (success) refetch();
+            if (success) {
+              await refetch();
+              await refreshStores();  // Also refresh the stores in context
+            }
             return success;
           }}
           onToggleStatus={async (branch) => {
             const success = await toggleBranchStatus(branch);
-            if (success) refetch();
+            if (success) {
+              await refetch();
+              await refreshStores();  // Also refresh the stores in context
+            }
             return success;
           }}
-          onSave={refetch}
+          onSave={async () => {
+            await refetch();
+            await refreshStores();  // Also refresh the stores in context
+          }}
         />
       )}
       
@@ -89,6 +112,7 @@ export default function Branches() {
         branch={null}
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
+        onSave={handleBranchAdded}
       />
     </div>
   );

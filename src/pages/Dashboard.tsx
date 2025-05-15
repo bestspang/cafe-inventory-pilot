@@ -71,6 +71,11 @@ export default function Dashboard() {
   const requestsTrendValues = trends.requestsTrends.map(point => point.value);
   const stockChecksTrendValues = trends.stockChecksTrends.map(point => point.value);
 
+  // Debug logs
+  console.log('Dashboard - Current user:', user);
+  console.log('Dashboard - Stores from context:', stores);
+  console.log('Dashboard - Branches from snapshots:', branches);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <DashboardHeader 

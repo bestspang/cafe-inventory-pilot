@@ -51,6 +51,7 @@ export const useRequestsFetch = () => {
       if (!user) return;
       
       setIsLoading(true);
+      // RLS will handle filtering to only show appropriate requests
       let query = supabase
         .from('requests')
         .select(`
@@ -80,8 +81,6 @@ export const useRequestsFetch = () => {
         `)
         .order('requested_at', { ascending: false });
 
-      // Query is automatically filtered by RLS to only branches owned by the current user
-
       const { data, error } = await query;
 
       if (error) {
@@ -103,17 +102,15 @@ export const useRequestsFetch = () => {
     }
   };
 
-  // Fetch branches for filter - only those owned by the current user
+  // Fetch branches for filter - RLS will handle access control
   const fetchBranches = async () => {
     if (!user) return;
     
     try {
       const { data, error } = await supabase
-        .from('branches')
+        .from('stores')
         .select('id, name')
         .order('name');
-
-      // Query is automatically filtered by RLS to only branches owned by the current user
       
       if (error) {
         throw error;

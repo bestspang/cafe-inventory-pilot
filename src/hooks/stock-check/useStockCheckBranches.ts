@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,8 +27,7 @@ export const useStockCheckBranches = (storeId?: string | null) => {
           const { data, error } = await supabase
             .from('stores')
             .select('*')
-            .eq('id', storeId)
-            .eq('owner_id', user.id); // Add owner_id filter for security
+            .eq('id', storeId);
           
           if (error) {
             console.error('Error fetching specific store:', error);
@@ -44,11 +42,10 @@ export const useStockCheckBranches = (storeId?: string | null) => {
             console.log('No store found with ID:', storeId);
           }
         } else {
-          // Otherwise fetch all branches for the current user
+          // Otherwise fetch all branches for the current user - RLS will handle access
           const { data, error } = await supabase
             .from('stores')
             .select('*')
-            .eq('owner_id', user.id)
             .order('name');
             
           if (error) {

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -53,11 +54,10 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       console.log('Fetching stores for user:', user.id);
       
-      // Query the stores table with owner_id filter
+      // No need to explicitly filter by owner_id - RLS does this now
       const { data, error } = await supabase
         .from('stores')
         .select('*')
-        .eq('owner_id', user.id)
         .order('name');
       
       if (error) {
@@ -107,7 +107,7 @@ export function StoresProvider({ children }: { children: React.ReactNode }) {
     const channel = supabase
       .channel('stores_changes')
       .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'stores', filter: `owner_id=eq.${user.id}` },
+          { event: '*', schema: 'public', table: 'stores' },
           (payload) => {
             console.log('Store change detected via StoresContext:', payload);
             fetchStores();

@@ -9,7 +9,7 @@ import StockCheckTable from '@/components/stock-check/StockCheckTable';
 import StockCheckLoadingState from '@/components/stock-check/StockCheckLoadingState';
 import StockCheckFilters from '@/components/stock-check/StockCheckFilters';
 import { useStockCheckFilters } from '@/hooks/stock-check/useStockCheckFilters';
-import { ViewMode } from '@/components/ui/data-table/DataTableViewOptions';
+import { ViewMode } from '@/types/inventory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StockCheckActivity from '@/components/stock-check/StockCheckActivity';
 import StockCheckSettingsModal from '@/components/stock-check/StockCheckSettingsModal';
@@ -30,6 +30,9 @@ const StockCheck = () => {
       setActiveTab('activity');
     }
   }, []);
+
+  // Debug logs
+  console.log('StockCheck - Current user:', user);
   
   const {
     selectedBranch,
@@ -43,6 +46,10 @@ const StockCheck = () => {
     handleReorderPointSave,
     handleSave
   } = useStockCheck();
+
+  // Debug logs
+  console.log('StockCheck - Branches available:', branches);
+  console.log('StockCheck - Selected branch:', selectedBranch);
 
   // Extract categories from stock items for the filter
   const categories = React.useMemo(() => {
