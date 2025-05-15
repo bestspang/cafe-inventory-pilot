@@ -17,8 +17,6 @@ export const useStaffManagement = (initialBranchId?: string) => {
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
 
   // Fetch branches
@@ -105,8 +103,7 @@ export const useStaffManagement = (initialBranchId?: string) => {
   }, [branches, toast]);
 
   // Add a new staff member
-  const handleAddStaff = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddStaff = async () => {
     if (!newStaff.staff_name || !newStaff.branch_id) {
       toast({
         title: 'Missing information',
@@ -160,28 +157,24 @@ export const useStaffManagement = (initialBranchId?: string) => {
   };
 
   // Delete staff member
-  const handleDeleteStaff = async () => {
-    if (!selectedStaff) return;
+  const handleDeleteStaff = async (staffId: string) => {
+    if (!staffId) return;
 
-    setIsSubmitting(true);
     try {
       const { error } = await supabase
         .from('store_staff')
         .delete()
-        .eq('id', selectedStaff.id);
+        .eq('id', staffId);
 
       if (error) throw error;
 
       // Remove the deleted staff member from the list
-      setStaff(prev => prev.filter(s => s.id !== selectedStaff.id));
+      setStaff(prev => prev.filter(s => s.id !== staffId));
 
       toast({
         title: 'Staff removed',
-        description: `${selectedStaff.staff_name} has been removed successfully`
+        description: 'Staff member has been removed successfully'
       });
-
-      setDeleteDialogOpen(false);
-      setSelectedStaff(null);
     } catch (error: any) {
       console.error('Error deleting staff:', error);
       toast({
@@ -189,14 +182,7 @@ export const useStaffManagement = (initialBranchId?: string) => {
         description: error.message || 'An unexpected error occurred',
         variant: 'destructive'
       });
-    } finally {
-      setIsSubmitting(false);
     }
-  };
-
-  const openDeleteDialog = (staffMember: StaffMember) => {
-    setSelectedStaff(staffMember);
-    setDeleteDialogOpen(true);
   };
 
   return {
@@ -207,10 +193,6 @@ export const useStaffManagement = (initialBranchId?: string) => {
     isLoading,
     isSubmitting,
     handleAddStaff,
-    handleDeleteStaff,
-    deleteDialogOpen,
-    setDeleteDialogOpen,
-    selectedStaff,
-    openDeleteDialog
+    handleDeleteStaff
   };
 };

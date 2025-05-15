@@ -9,21 +9,26 @@ const ManageStaffForm: React.FC = () => {
   const {
     isLoading,
     branches,
-    staffMembers,
+    staff,
     newStaff,
     setNewStaff,
     handleAddStaff,
-    handleDeleteStaff,
-    getBranchName
+    handleDeleteStaff
   } = useStaffManagement();
   
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   
+  // Create a local getBranchName function
+  const getBranchName = (branchId: string): string => {
+    const branch = branches.find(b => b.id === branchId);
+    return branch?.name || 'Unknown Branch';
+  };
+  
   const handleAddStaffSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await handleAddStaff(newStaff);
+    await handleAddStaff();
   };
   
   const confirmDeleteStaff = (staffId: string) => {
@@ -55,7 +60,7 @@ const ManageStaffForm: React.FC = () => {
       />
       
       <StaffTable
-        staffMembers={staffMembers}
+        staffMembers={staff}
         isLoading={isLoading}
         onDelete={confirmDeleteStaff}
         getBranchName={getBranchName}
