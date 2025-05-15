@@ -1,6 +1,6 @@
 
 import { StockItem } from '@/types/stock-check';
-import { Ingredient } from '@/types';
+import { Category, Ingredient } from '@/types';
 
 // Mock stock items for testing
 export const mockStockItems: StockItem[] = [

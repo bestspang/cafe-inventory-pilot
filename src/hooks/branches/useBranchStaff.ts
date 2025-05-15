@@ -1,163 +1,111 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/sonner';
 import { StaffMember } from '@/types';
-import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
-export const useBranchStaff = (branchId: string) => {
+export function useBranchStaff(branchId: string) {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { user } = useAuth();
-  
-  const fetchStaff = useCallback(async () => {
-    if (!branchId) {
-      console.warn('Cannot fetch staff: No branch ID provided');
-      setStaff([]);
-      setIsLoading(false);
-      return;
-    }
-    
+  const { toast } = useToast();
+
+  const fetchStaff = async () => {
     try {
       setIsLoading(true);
-      console.log(`Fetching staff for branch ${branchId}`);
-      
       const { data, error } = await supabase
         .from('store_staff')
         .select('*')
-        .eq('branch_id', branchId)
-        .order('staff_name');
+        .eq('branch_id', branchId);
+
+      if (error) throw error;
       
-      if (error) {
-        console.error('Error fetching branch staff:', error);
-        toast.error(`Failed to load staff: ${error.message}`);
-        return;
-      }
-      
-      // Transform the data to match our StaffMember type
-      const transformedData: StaffMember[] = data.map(item => ({
+      // Convert data to match StaffMember interface
+      const formattedData: StaffMember[] = data.map(item => ({
         id: item.id,
-        branchId: item.branch_id,
-        staffName: item.staff_name,
-        createdAt: item.created_at
+        staff_name: item.staff_name,
+        branch_id: item.branch_id,
+        created_at: item.created_at
       }));
       
-      console.log(`Found ${transformedData.length} staff members`);
-      setStaff(transformedData);
+      setStaff(formattedData);
     } catch (error: any) {
-      console.error('Error in fetchStaff:', error);
-      toast.error(`Error loading staff: ${error?.message || 'Unknown error'}`);
+      console.error('Error fetching staff members:', error);
+      toast({
+        title: 'Error fetching staff',
+        description: error.message || 'Failed to load staff members',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [branchId]);
-  
-  // Fetch staff on mount and when branchId changes
-  useEffect(() => {
-    fetchStaff();
-  }, [fetchStaff]);
-  
-  const addStaffMember = async (staffName: string): Promise<boolean> => {
-    if (!branchId) {
-      toast.error('Cannot add staff: No branch selected');
-      return false;
-    }
-    
-    if (!staffName.trim()) {
-      toast.error('Staff name is required');
-      return false;
-    }
-    
-    if (!user) {
-      toast.error('You must be logged in to add staff');
-      return false;
-    }
-    
+  };
+
+  const addStaffMember = async (staffName: string) => {
     try {
-      setIsAdding(true);
-      console.log(`Adding staff "${staffName}" to branch ${branchId}`);
-      
       const { data, error } = await supabase
         .from('store_staff')
-        .insert({
-          branch_id: branchId,
-          staff_name: staffName.trim()
-        })
-        .select();
+        .insert([{
+          staff_name: staffName,
+          branch_id: branchId
+        }])
+        .select('*')
+        .single();
+
+      if (error) throw error;
       
-      if (error) {
-        console.error('Error adding staff member:', error);
-        toast.error(`Failed to add staff: ${error.message}`);
-        return false;
-      }
-      
-      console.log('Staff member added successfully:', data);
-      toast.success(`${staffName} added successfully`);
-      
-      // Refresh staff list
-      await fetchStaff();
+      toast({
+        title: 'Staff member added',
+        description: `${staffName} has been added to this branch`,
+      });
       
       return true;
     } catch (error: any) {
-      console.error('Error in addStaffMember:', error);
-      toast.error(`Error adding staff: ${error?.message || 'Unknown error'}`);
+      console.error('Error adding staff member:', error);
+      toast({
+        title: 'Error adding staff',
+        description: error.message || 'Failed to add staff member',
+        variant: 'destructive',
+      });
       return false;
-    } finally {
-      setIsAdding(false);
     }
   };
   
-  const deleteStaffMember = async (staffId: string): Promise<boolean> => {
-    if (!user) {
-      toast.error('You must be logged in to delete staff');
-      return false;
-    }
-    
-    if (!staffId) {
-      toast.error('No staff member selected to delete');
-      return false;
-    }
-    
+  const deleteStaffMember = async (staffId: string) => {
     try {
-      setIsDeleting(true);
-      console.log(`Deleting staff with ID ${staffId}`);
-      
       const { error } = await supabase
         .from('store_staff')
         .delete()
         .eq('id', staffId);
       
-      if (error) {
-        console.error('Error deleting staff member:', error);
-        toast.error(`Failed to delete staff: ${error.message}`);
-        return false;
-      }
+      if (error) throw error;
       
-      console.log('Staff member deleted successfully');
-      toast.success('Staff member removed');
-      
-      // Refresh staff list
-      await fetchStaff();
+      toast({
+        title: 'Staff member removed',
+      });
       
       return true;
     } catch (error: any) {
-      console.error('Error in deleteStaffMember:', error);
-      toast.error(`Error deleting staff: ${error?.message || 'Unknown error'}`);
+      console.error('Error removing staff member:', error);
+      toast({
+        title: 'Error removing staff',
+        description: error.message || 'Failed to remove staff member',
+        variant: 'destructive',
+      });
       return false;
-    } finally {
-      setIsDeleting(false);
     }
   };
-  
+
+  useEffect(() => {
+    if (branchId) {
+      fetchStaff();
+    }
+  }, [branchId]);
+
   return {
     staff,
     isLoading,
-    isAdding,
-    isDeleting,
     addStaffMember,
     deleteStaffMember,
     fetchStaff
   };
-};
+}

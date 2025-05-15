@@ -7,6 +7,7 @@ export interface User {
   name?: string;
   role: UserRole;
   avatar_url?: string;
+  branchId?: string; // Adding branchId for NewRequest.tsx
 }
 
 export interface Branch {
@@ -26,13 +27,18 @@ export interface BranchActivity {
   performed_at: string;
   performed_by: string;
   branch_id: string;
+  user?: {  // Add user property to support ActivityLog component
+    name?: string;
+    email: string;
+  };
 }
 
 export interface StaffMember {
   id: string;
-  staff_name: string;
-  branch_id: string;
+  staff_name: string; // Using snake_case to match database schema
+  branch_id: string;  // Using snake_case to match database schema
   created_at?: string;
+  branchName?: string; // Extra field for display purposes
 }
 
 export interface InventoryFilters {
@@ -47,3 +53,19 @@ export interface SortState {
 }
 
 export type ViewMode = 'list' | 'grid';
+
+// Add missing types
+export interface Ingredient {
+  id: string;
+  name: string;
+  categoryId: string;
+  categoryName?: string;
+  unit: string;
+  costPerUnit?: number;
+  isActive?: boolean;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+}

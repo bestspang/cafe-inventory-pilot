@@ -1,13 +1,14 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
 } from '@/components/ui/table';
 import { StaffMember } from '@/types';
 
@@ -57,8 +58,8 @@ const StaffTable: React.FC<StaffTableProps> = ({
         <TableBody>
           {staffMembers.map(staff => (
             <TableRow key={staff.id}>
-              <TableCell className="font-medium">{staff.staffName}</TableCell>
-              <TableCell>{staff.branchName || getBranchName(staff.branchId)}</TableCell>
+              <TableCell className="font-medium">{staff.staff_name}</TableCell>
+              <TableCell>{staff.branchName || getBranchName(staff.branch_id)}</TableCell>
               <TableCell className="text-right">
                 <Button
                   variant="ghost"
