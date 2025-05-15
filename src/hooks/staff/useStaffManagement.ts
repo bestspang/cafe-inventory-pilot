@@ -27,7 +27,13 @@ export function useStaffManagement() {
         
       if (error) throw error;
       
-      setBranches(data || []);
+      // Ensure we properly cast the result to the Branch type
+      const branchesWithOwner = data?.map(branch => ({
+        ...branch,
+        owner_id: branch.owner_id || '' // Add owner_id if missing
+      })) || [];
+      
+      setBranches(branchesWithOwner as Branch[]);
       
       if (data && data.length > 0 && !newStaff.branch_id) {
         setNewStaff(prev => ({ ...prev, branch_id: data[0].id }));

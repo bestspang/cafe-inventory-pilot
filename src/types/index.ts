@@ -63,9 +63,21 @@ export interface Ingredient {
   unit: string;
   costPerUnit?: number;
   isActive?: boolean;
+  branch_id?: string; // Add branch_id to Ingredient type
 }
 
 export interface Category {
   id: string;
   name: string;
+}
+
+// Re-export StockItem for consistency
+export interface StockItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  categoryId?: string;
+  categoryName?: string;
+  reorder_point?: number;
 }

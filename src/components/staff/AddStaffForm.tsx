@@ -11,17 +11,17 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Branch } from '@/types/branch';
+import { Branch } from '@/types';
 
 interface AddStaffFormProps {
   branches: Branch[];
   newStaff: {
-    branchId: string;
-    staffName: string;
+    staff_name: string;
+    branch_id: string;
   };
   setNewStaff: (staff: {
-    branchId: string;
-    staffName: string;
+    staff_name: string;
+    branch_id: string;
   }) => void;
   onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
@@ -40,10 +40,10 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({
         <div>
           <Label htmlFor="branch">Store</Label>
           <Select
-            value={newStaff.branchId}
+            value={newStaff.branch_id}
             onValueChange={(value) => setNewStaff({
               ...newStaff,
-              branchId: value
+              branch_id: value
             })}
             disabled={isLoading}
           >
@@ -65,10 +65,10 @@ const AddStaffForm: React.FC<AddStaffFormProps> = ({
           <Input
             id="staffName"
             placeholder="Enter staff name"
-            value={newStaff.staffName}
+            value={newStaff.staff_name}
             onChange={(e) => setNewStaff({
               ...newStaff,
-              staffName: e.target.value
+              staff_name: e.target.value
             })}
             disabled={isLoading}
           />

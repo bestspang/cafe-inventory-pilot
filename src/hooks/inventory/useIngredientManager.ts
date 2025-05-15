@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Ingredient } from '@/types';
@@ -108,10 +107,10 @@ export const useIngredientManager = (
         }
       }
       
-      // Save ingredient with category and branch_id if storing
+      // Save ingredient with category, using branch_id from the data
       const ingredientData = {
         ...data,
-        branch_id: data.branch_id || storeId || null
+        // This property already exists in Ingredient type now
       };
       
       // Pass the user ID separately to the saveIngredient function
