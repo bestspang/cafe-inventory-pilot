@@ -1,109 +1,61 @@
 
-import React, { useState, useEffect } from 'react';
-import { useIntl } from 'react-intl';
-import { Settings } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { useBranchInventory } from '@/hooks/useBranchInventory';
-import { useInventory } from '@/hooks/useInventory';
-import { useInventoryFilters } from '@/hooks/inventory/useInventoryFilters';
-import { useArchivedIngredients } from '@/hooks/inventory/useArchivedIngredients';
-import { useStores } from '@/context/StoresContext';
+import React from 'react';
+import { useInventoryPage } from '@/hooks/inventory/useInventoryPage';
 import InventoryFilters from '@/components/inventory/InventoryFilters';
 import InventorySkeletons from '@/components/inventory/InventorySkeletons';
 import InventoryHeader from '@/components/inventory/InventoryHeader';
 import InventoryContent from '@/components/inventory/InventoryContent';
 import InventoryDialogs from '@/components/inventory/InventoryDialogs';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import InventoryActions from '@/components/inventory/InventoryActions';
 
 const Inventory = () => {
-  const intl = useIntl();
-  const { stores, currentStoreId, setCurrentStoreId } = useStores();
-  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
-  const [formDialogOpen, setFormDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [costHistoryDialogOpen, setCostHistoryDialogOpen] = useState(false);
-  const [currentIngredient, setCurrentIngredient] = useState(null);
-  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
-  
-  // Fetch branch inventory data using our new hook
-  const { data: branchInventoryItems = [], isLoading, refetch: refreshInventory } = useBranchInventory(currentStoreId);
-  
-  // Use the useInventory hook for ingredient operations
   const {
-    handleAddEdit,
-    confirmDelete,
-    canModify
-  } = useInventory(currentStoreId);
-  
-  // Use the archived ingredients hook
-  const {
+    // State and data
+    stores,
+    currentStoreId,
+    setCurrentStoreId,
+    categories,
+    isLoading,
+    canModify,
+    
+    // Dialogs state
+    settingsDialogOpen,
+    setSettingsDialogOpen,
+    formDialogOpen,
+    setFormDialogOpen,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    costHistoryDialogOpen,
+    setCostHistoryDialogOpen,
+    archiveDialogOpen,
+    setArchiveDialogOpen,
+    currentIngredient,
+    
+    // Archived ingredients
     archivedIngredients,
-    isLoading: archiveLoading,
-    restoreIngredient
-  } = useArchivedIngredients(refreshInventory);
-
-  // Use our filter hook
-  const {
+    archiveLoading,
+    restoreIngredient,
+    
+    // Filters and content
     filters,
     setFilters,
-    sortState,
-    handleSort,
     viewMode,
     setViewMode,
+    sortState,
+    handleSort,
+    hasFilters,
     resetFilters,
     activeFilterCount,
-    hasFilters,
-    filteredAndSortedItems
-  } = useInventoryFilters(branchInventoryItems);
-
-  // Auto-select first store if none is selected
-  useEffect(() => {
-    if (!currentStoreId && stores.length > 0) {
-      setCurrentStoreId(stores[0].id);
-    }
-  }, [currentStoreId, stores, setCurrentStoreId]);
-
-  // User permissions check
-  const { user } = useAuth();
-
-  // Extract unique categories from inventory items
-  const categories = React.useMemo(() => {
-    const uniqueCategories = new Map();
-    branchInventoryItems.forEach(item => {
-      if (item.categoryId && item.categoryName) {
-        uniqueCategories.set(item.categoryId, { id: item.categoryId, name: item.categoryName });
-      }
-    });
-    return Array.from(uniqueCategories.values());
-  }, [branchInventoryItems]);
-
-  // Handlers
-  const handleOpenAddIngredient = () => {
-    setCurrentIngredient(null);
-    setFormDialogOpen(true);
-  };
-
-  const handleEdit = (ingredient) => {
-    setCurrentIngredient(ingredient);
-    setFormDialogOpen(true);
-  };
-
-  const handleDelete = (ingredient) => {
-    setCurrentIngredient(ingredient);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleViewCostHistory = (ingredient) => {
-    setCurrentIngredient(ingredient);
-    setCostHistoryDialogOpen(true);
-  };
+    filteredAndSortedItems,
+    
+    // Action handlers
+    handleOpenAddIngredient,
+    handleEdit,
+    handleDelete,
+    handleViewCostHistory,
+    handleAddEdit,
+    confirmDelete
+  } = useInventoryPage();
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -113,46 +65,14 @@ const Inventory = () => {
           onOpenArchives={() => setArchiveDialogOpen(true)}
         />
         
-        <div className="flex items-center gap-2">
-          <Select 
-            value={currentStoreId || ''} 
-            onValueChange={setCurrentStoreId}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select store" />
-            </SelectTrigger>
-            <SelectContent>
-              {stores.map(store => (
-                <SelectItem key={store.id} value={store.id}>
-                  {store.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {canModify && (
-            <>
-              <Button 
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => setArchiveDialogOpen(true)}
-              >
-                Archives
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => setSettingsDialogOpen(true)}
-              >
-                <Settings className="h-4 w-4" />
-                Settings
-              </Button>
-            </>
-          )}
-        </div>
+        <InventoryActions
+          stores={stores}
+          currentStoreId={currentStoreId}
+          onStoreChange={setCurrentStoreId}
+          onOpenSettings={() => setSettingsDialogOpen(true)}
+          onOpenArchives={() => setArchiveDialogOpen(true)}
+          canModify={canModify}
+        />
       </div>
 
       {isLoading ? (
