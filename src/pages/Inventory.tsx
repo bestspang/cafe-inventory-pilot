@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { Settings } from 'lucide-react';
-import { useInventory } from '@/hooks/useInventory';
+import { useAuth } from '@/context/AuthContext';
+import { useBranchInventory } from '@/hooks/useBranchInventory';
 import { useInventoryFilters } from '@/hooks/inventory/useInventoryFilters';
 import { useArchivedIngredients } from '@/hooks/inventory/useArchivedIngredients';
 import { useStores } from '@/context/StoresContext';
@@ -24,39 +25,21 @@ const Inventory = () => {
   const intl = useIntl();
   const { stores, currentStoreId, setCurrentStoreId } = useStores();
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [costHistoryDialogOpen, setCostHistoryDialogOpen] = useState(false);
+  const [currentIngredient, setCurrentIngredient] = useState(null);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   
-  // Initialize with the current store ID from context
-  const storeId = currentStoreId;
+  // Fetch branch inventory data using our new hook
+  const { data: branchInventoryItems = [], isLoading, refetch: refreshInventory } = useBranchInventory(currentStoreId);
   
-  const {
-    ingredients,
-    formDialogOpen,
-    setFormDialogOpen,
-    deleteDialogOpen,
-    setDeleteDialogOpen,
-    costHistoryDialogOpen,
-    setCostHistoryDialogOpen,
-    currentIngredient,
-    setCurrentIngredient,
-    canModify,
-    categories,
-    handleAddEdit,
-    handleEdit,
-    handleDelete,
-    confirmDelete,
-    handleViewCostHistory,
-    isLoading,
-    fetchIngredients
-  } = useInventory(storeId);
-
-  // Use the archived ingredients hook and pass the fetchIngredients callback
+  // Use the archived ingredients hook
   const {
     archivedIngredients,
     isLoading: archiveLoading,
-    dialogOpen: archiveDialogOpen,
-    setDialogOpen: setArchiveDialogOpen,
     restoreIngredient
-  } = useArchivedIngredients(fetchIngredients);
+  } = useArchivedIngredients(refreshInventory);
 
   // Use our filter hook
   const {
@@ -70,7 +53,7 @@ const Inventory = () => {
     activeFilterCount,
     hasFilters,
     filteredAndSortedItems
-  } = useInventoryFilters(ingredients);
+  } = useInventoryFilters(branchInventoryItems);
 
   // Auto-select first store if none is selected
   useEffect(() => {
@@ -79,9 +62,40 @@ const Inventory = () => {
     }
   }, [currentStoreId, stores, setCurrentStoreId]);
 
+  // User permissions check
+  const { user } = useAuth();
+  const canModify = ['owner', 'manager'].includes(user?.role || '');
+
+  // Extract unique categories from inventory items
+  const categories = React.useMemo(() => {
+    const uniqueCategories = new Map();
+    branchInventoryItems.forEach(item => {
+      if (item.categoryId && item.categoryName) {
+        uniqueCategories.set(item.categoryId, { id: item.categoryId, name: item.categoryName });
+      }
+    });
+    return Array.from(uniqueCategories.values());
+  }, [branchInventoryItems]);
+
+  // Handlers
   const handleOpenAddIngredient = () => {
     setCurrentIngredient(null);
     setFormDialogOpen(true);
+  };
+
+  const handleEdit = (ingredient) => {
+    setCurrentIngredient(ingredient);
+    setFormDialogOpen(true);
+  };
+
+  const handleDelete = (ingredient) => {
+    setCurrentIngredient(ingredient);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleViewCostHistory = (ingredient) => {
+    setCurrentIngredient(ingredient);
+    setCostHistoryDialogOpen(true);
   };
 
   return (

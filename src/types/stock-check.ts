@@ -1,4 +1,3 @@
-
 import { Branch } from '@/types';
 import { Ingredient } from '@/types';
 
@@ -12,6 +11,8 @@ export interface StockItem {
   reorderPt: number;  // Changed to camelCase for consistency
   lastChange: number; // Add this field
   isActive?: boolean;
+  branch_id?: string; // Add branch_id to support per-branch inventory
+  costPerUnit?: number;
 }
 
 export interface StockCheck {
