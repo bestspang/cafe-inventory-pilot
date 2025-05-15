@@ -29,6 +29,13 @@ export default function StoreSwitcher() {
   // Find the current store
   const currentStore = stores.find((store) => store.id === currentStoreId);
 
+  const handleCreateNewBranch = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling
+    setOpen(false);
+    setShowCreateDialog(true);
+  };
+
   return (
     <>
       <Popover open={open} onOpenChange={setOpen}>
@@ -83,10 +90,7 @@ export default function StoreSwitcher() {
                 variant="outline"
                 size="sm"
                 className="w-full"
-                onClick={() => {
-                  setOpen(false);
-                  setShowCreateDialog(true);
-                }}
+                onClick={handleCreateNewBranch}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Create New Branch

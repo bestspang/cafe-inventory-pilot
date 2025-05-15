@@ -1,82 +1,56 @@
 
-import { useEffect } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Branch } from '@/types/branch';
-import { branchFormSchema, BranchFormValues, TIMEZONES } from '@/lib/schemas/branch-schema';
+import { branchFormSchema, BranchFormValues } from '@/lib/schemas/branch-schema';
 
 interface BranchFormProps {
   branch: Branch | null;
   isLoading: boolean;
-  onSubmit: (data: BranchFormValues) => Promise<void>;
+  onSubmit: (values: BranchFormValues) => Promise<void>;
   onCancel: () => void;
 }
 
-export default function BranchForm({ 
-  branch, 
-  isLoading, 
-  onSubmit, 
-  onCancel 
-}: BranchFormProps) {
-  // Initialize form with default values
+const BranchForm = ({ branch, isLoading, onSubmit, onCancel }: BranchFormProps) => {
+  const isEditing = !!branch;
+  
   const form = useForm<BranchFormValues>({
     resolver: zodResolver(branchFormSchema),
     defaultValues: {
-      name: '',
-      address: '',
-      timezone: 'Asia/Bangkok' // Changed default from UTC to Asia/Bangkok
+      name: branch?.name || '',
+      address: branch?.address || '',
+      timezone: branch?.timezone || 'Asia/Bangkok'
     }
   });
-  
-  // Update form when editing branch changes
-  useEffect(() => {
-    if (branch) {
-      form.reset({
-        name: branch.name || '',
-        address: branch.address || '',
-        timezone: branch.timezone || 'Asia/Bangkok' // Changed fallback from UTC to Asia/Bangkok
-      });
-    } else {
-      form.reset({
-        name: '',
-        address: '',
-        timezone: 'Asia/Bangkok' // Changed default from UTC to Asia/Bangkok
-      });
-    }
-  }, [branch, form]);
 
-  const handleSubmit = async (data: BranchFormValues) => {
-    await onSubmit(data);
+  const handleSubmit = async (values: BranchFormValues) => {
+    try {
+      await onSubmit(values);
+    } catch (error) {
+      console.error('Error submitting branch form:', error);
+      // Form submission errors are handled by the onSubmit callback
+    }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" id="branch-form">
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Branch Name*</FormLabel>
+              <FormLabel>Branch Name</FormLabel>
               <FormControl>
-                <Input placeholder="Downtown Café" {...field} />
+                <Input 
+                  placeholder="Enter branch name" 
+                  {...field} 
+                  disabled={isLoading}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -88,9 +62,13 @@ export default function BranchForm({
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Address</FormLabel>
+              <FormLabel>Address (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="123 Main St, City, State" {...field} />
+                <Input 
+                  placeholder="Enter branch address" 
+                  {...field} 
+                  disabled={isLoading}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -102,43 +80,38 @@ export default function BranchForm({
           name="timezone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Timezone*</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-                value={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a timezone" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {TIMEZONES.map((timezone) => (
-                    <SelectItem key={timezone} value={timezone}>
-                      {timezone}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormLabel>Timezone</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="Asia/Bangkok" 
+                  {...field} 
+                  disabled={isLoading}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         
-        <div className="flex justify-end space-x-2">
+        <div className="flex justify-end space-x-2 pt-4">
           <Button 
             type="button" 
             variant="outline" 
-            onClick={onCancel}
+            onClick={(e) => {
+              e.preventDefault();
+              onCancel();
+            }}
+            disabled={isLoading}
           >
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : (branch ? 'Update Branch' : 'Create Branch')}
+            {isLoading ? `${isEditing ? 'Updating...' : 'Creating...'}` : `${isEditing ? 'Update' : 'Create'}`}
           </Button>
         </div>
       </form>
     </Form>
   );
-}
+};
+
+export default BranchForm;

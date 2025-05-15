@@ -31,6 +31,7 @@ export default function Branches() {
 
   const handleAddBranch = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling that might cause refresh
     setIsAddDialogOpen(true);
   };
 
