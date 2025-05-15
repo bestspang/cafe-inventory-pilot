@@ -1,3 +1,4 @@
+
 export type UserRole = 'owner' | 'manager' | 'staff';
 
 export interface User {
@@ -53,7 +54,7 @@ export interface SortState {
 
 export type ViewMode = 'list' | 'grid';
 
-// Add missing types
+// Updated Ingredient interface with branch inventory fields
 export interface Ingredient {
   id: string;
   name: string;
@@ -62,7 +63,10 @@ export interface Ingredient {
   unit: string;
   costPerUnit?: number;
   isActive?: boolean;
-  branch_id?: string; // Add branch_id to Ingredient type
+  branch_id?: string; // Branch this ingredient belongs to
+  onHandQty?: number; // Quantity on hand in the branch
+  reorderPt?: number; // Reorder point for the branch
+  lastChange?: number; // Last change in quantity
 }
 
 export interface Category {

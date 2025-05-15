@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Ingredient } from '@/types';
+import { beginTransaction, commitTransaction, rollbackTransaction } from '../supabase/transactionHelpers';
 
 /**
  * Save ingredient and update branch inventory
@@ -13,7 +14,7 @@ export const saveBranchIngredient = async (
 ) => {
   try {
     // Start a transaction
-    const { error: transactionError } = await supabase.rpc('begin_transaction');
+    const { error: transactionError } = await beginTransaction();
     if (transactionError) throw transactionError;
 
     // First check if the ingredient already exists in the global ingredients table
@@ -72,21 +73,25 @@ export const saveBranchIngredient = async (
     }
 
     // Now upsert into branch_inventory
+    const onHandQty = typeof data.onHandQty === 'number' ? data.onHandQty : 0;
+    const reorderPt = typeof data.reorderPt === 'number' ? data.reorderPt : 10;
+    const lastChange = typeof data.lastChange === 'number' ? data.lastChange : 0;
+    
     const { error: inventoryError } = await supabase
       .from('branch_inventory')
       .upsert({
         branch_id: branchId,
         ingredient_id: ingredientId,
-        on_hand_qty: data.onHandQty || 0,
-        reorder_pt: data.reorderPt || 10,
-        last_change: data.lastChange || 0,
+        on_hand_qty: onHandQty,
+        reorder_pt: reorderPt,
+        last_change: lastChange,
         last_checked: new Date().toISOString()
       });
 
     if (inventoryError) throw inventoryError;
 
     // Commit transaction
-    const { error: commitError } = await supabase.rpc('commit_transaction');
+    const { error: commitError } = await commitTransaction();
     if (commitError) throw commitError;
 
     return {
@@ -96,7 +101,7 @@ export const saveBranchIngredient = async (
     };
   } catch (error) {
     // Rollback transaction on error
-    await supabase.rpc('rollback_transaction');
+    await rollbackTransaction();
     console.error('Error in saveBranchIngredient:', error);
     return {
       success: false,

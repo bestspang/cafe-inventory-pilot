@@ -4,6 +4,7 @@ import { useIntl } from 'react-intl';
 import { Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useBranchInventory } from '@/hooks/useBranchInventory';
+import { useInventory } from '@/hooks/useInventory';
 import { useInventoryFilters } from '@/hooks/inventory/useInventoryFilters';
 import { useArchivedIngredients } from '@/hooks/inventory/useArchivedIngredients';
 import { useStores } from '@/context/StoresContext';
@@ -33,6 +34,13 @@ const Inventory = () => {
   
   // Fetch branch inventory data using our new hook
   const { data: branchInventoryItems = [], isLoading, refetch: refreshInventory } = useBranchInventory(currentStoreId);
+  
+  // Use the useInventory hook for ingredient operations
+  const {
+    handleAddEdit,
+    confirmDelete,
+    canModify
+  } = useInventory(currentStoreId);
   
   // Use the archived ingredients hook
   const {
@@ -64,7 +72,6 @@ const Inventory = () => {
 
   // User permissions check
   const { user } = useAuth();
-  const canModify = ['owner', 'manager'].includes(user?.role || '');
 
   // Extract unique categories from inventory items
   const categories = React.useMemo(() => {
