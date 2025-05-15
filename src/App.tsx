@@ -53,45 +53,47 @@ const App = () => {
   }, []);
   
   return (
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <Routes>
-        {/* Public routes - these don't require authentication */}
-        <Route path="/login" element={
-          <AuthGuard requireAuth={false} redirectTo="/dashboard">
-            <Login />
-          </AuthGuard>
-        } />
-        
-        <Route path="/quick-request" element={<QuickRequest />} />
-        
-        {/* Root route - determines where to go based on auth */}
-        <Route path="/" element={<Index />} />
-        
-        {/* Protected routes - require authentication */}
-        <Route element={<AuthGuard requireAuth={true}><AppLayout /></AuthGuard>}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="stock-check" element={<StockCheck />} />
-          <Route path="requests" element={<Requests />} />
-          <Route path="requests/new" element={<NewRequest />} />
-          <Route path="branches" element={<Branches />} />
-          <Route path="manage-staff" element={<ManageStaff />} />
-          <Route path="settings" element={<Settings />} />
+    <AppWithIntl>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <Routes>
+          {/* Public routes - these don't require authentication */}
+          <Route path="/login" element={
+            <AuthGuard requireAuth={false} redirectTo="/dashboard">
+              <Login />
+            </AuthGuard>
+          } />
           
-          {/* Coming Soon Pages */}
-          <Route path="suppliers" element={<ComingSoonPage />} />
-          <Route path="purchase-orders" element={<ComingSoonPage />} />
-          <Route path="reports" element={<ComingSoonPage />} />
-          <Route path="users" element={<ComingSoonPage />} />
-          <Route path="profile" element={<ComingSoonPage />} />
+          <Route path="/quick-request" element={<QuickRequest />} />
           
-          {/* Catch-all for other routes */}
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-    </TooltipProvider>
+          {/* Root route - determines where to go based on auth */}
+          <Route path="/" element={<Index />} />
+          
+          {/* Protected routes - require authentication */}
+          <Route element={<AuthGuard requireAuth={true}><AppLayout /></AuthGuard>}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="stock-check" element={<StockCheck />} />
+            <Route path="requests" element={<Requests />} />
+            <Route path="requests/new" element={<NewRequest />} />
+            <Route path="branches" element={<Branches />} />
+            <Route path="manage-staff" element={<ManageStaff />} />
+            <Route path="settings" element={<Settings />} />
+            
+            {/* Coming Soon Pages */}
+            <Route path="suppliers" element={<ComingSoonPage />} />
+            <Route path="purchase-orders" element={<ComingSoonPage />} />
+            <Route path="reports" element={<ComingSoonPage />} />
+            <Route path="users" element={<ComingSoonPage />} />
+            <Route path="profile" element={<ComingSoonPage />} />
+            
+            {/* Catch-all for other routes */}
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </TooltipProvider>
+    </AppWithIntl>
   );
 };
 
