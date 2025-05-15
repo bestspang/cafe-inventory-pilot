@@ -36,7 +36,7 @@ export const useBranchSnapshots = ({
       try {
         setIsLoading(true);
         
-        if (!stores || stores.length === 0) {
+        if (!user || !stores || stores.length === 0) {
           setIsLoading(false);
           setBranches([]);
           return;
@@ -114,9 +114,14 @@ export const useBranchSnapshots = ({
 
     if (user && stores.length > 0) {
       fetchBranchSnapshots();
+    } else {
+      setIsLoading(false);
+      setBranches([]);
     }
     
-    // Set up realtime subscriptions for branch snapshot updates
+    // Set up realtime subscriptions for branch snapshot updates if we have stores
+    if (!user || !stores || stores.length === 0) return;
+    
     const channels = stores.map(store => {
       return supabase
         .channel(`branch_inventory_updates_${store.id}`)

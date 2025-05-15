@@ -1,5 +1,5 @@
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardMetrics } from '@/hooks/dashboard/useDashboardMetrics';
@@ -11,6 +11,8 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardMetrics from '@/components/dashboard/DashboardMetrics';
 import QuickActionsSection from '@/components/dashboard/QuickActionsSection';
 import { useStores } from '@/context/StoresContext';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
 
 const extractNameFromEmail = (email: string): string => {
   // Extract the part before @ and capitalize the first letter
@@ -23,7 +25,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [branchFilter, setBranchFilter] = useState<'all' | 'healthy' | 'at-risk'>('all');
   const intl = useIntl();
-  const { stores } = useStores(); // Make sure we're using the StoresContext
+  const { stores, createStore } = useStores();
   
   const isOwner = user?.role === 'owner';
   const isManager = user?.role === 'manager';
@@ -62,6 +64,16 @@ export default function Dashboard() {
         break;
     }
   }, [navigate]);
+
+  const handleCreateFirstStore = async () => {
+    try {
+      const demoStoreName = `${welcomeName}'s Cafe`;
+      await createStore(demoStoreName);
+      // The store context will automatically refresh
+    } catch (error) {
+      console.error("Failed to create store:", error);
+    }
+  };
   
   const isLoading = isLoadingMetrics || isLoadingBranches || isLoadingTrends;
 
@@ -71,10 +83,27 @@ export default function Dashboard() {
   const requestsTrendValues = trends.requestsTrends.map(point => point.value);
   const stockChecksTrendValues = trends.stockChecksTrends.map(point => point.value);
 
-  // Debug logs
-  console.log('Dashboard - Current user:', user);
-  console.log('Dashboard - Stores from context:', stores);
-  console.log('Dashboard - Branches from snapshots:', branches);
+  // Show an empty state if the user has no stores
+  if (!isLoading && isOwner && (!stores || stores.length === 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh] space-y-4 p-4 text-center">
+        <div className="w-16 h-16 rounded-full bg-cafe-100 flex items-center justify-center">
+          <PlusCircle className="w-8 h-8 text-cafe-700" />
+        </div>
+        <h1 className="text-2xl font-bold">{welcomeMessage}</h1>
+        <p className="text-muted-foreground max-w-md">
+          <FormattedMessage 
+            id="dashboard.no.stores" 
+            defaultMessage="You don't have any branches yet. Create your first branch to get started." 
+          />
+        </p>
+        <Button onClick={handleCreateFirstStore} className="mt-4">
+          <PlusCircle className="mr-2 h-4 w-4" />
+          <FormattedMessage id="dashboard.create.first.branch" defaultMessage="Create Your First Branch" />
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">

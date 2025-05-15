@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { useStores } from '@/context/StoresContext';
 
 export interface DashboardMetrics {
   totalBranches: number;
@@ -20,6 +21,7 @@ const defaultMetrics: DashboardMetrics = {
 
 export const useDashboardMetrics = () => {
   const { user } = useAuth();
+  const { stores } = useStores();
   const [metrics, setMetrics] = useState<DashboardMetrics>(defaultMetrics);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -27,43 +29,48 @@ export const useDashboardMetrics = () => {
     try {
       setIsLoading(true);
       
-      // Fetch branch count - Get total count of all branches
-      const { count: branchCount, error: branchError } = await supabase
-        .from('branches')
-        .select('*', { count: 'exact', head: true });
-        
-      if (branchError) {
-        console.error('Error fetching branch count:', branchError);
+      if (!user || stores.length === 0) {
+        setMetrics(defaultMetrics);
+        return;
       }
+
+      // Use the store IDs from context to filter data
+      const storeIds = stores.map(store => store.id);
       
-      // Fetch low stock items count - don't filter by branch_id
+      // Fetch branch count - RLS will automatically filter to user's branches
+      const branchCount = stores.length;
+      
+      // Fetch low stock items count - filtered by user's branches
       const { count: lowStockCount, error: lowStockError } = await supabase
         .from('branch_inventory')
         .select('*', { count: 'exact', head: true })
-        .lt('on_hand_qty', 10); // Simplified low stock check
+        .lt('on_hand_qty', 10) // Simplified low stock check
+        .in('branch_id', storeIds);
         
       if (lowStockError) {
         console.error('Error fetching low stock count:', lowStockError);
       }
 
-      // Fetch pending requests count - don't filter by branch_id
+      // Fetch pending requests count - filtered by user's branches
       const { count: requestsCount, error: requestsError } = await supabase
         .from('requests')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
+        .eq('status', 'pending')
+        .in('branch_id', storeIds);
         
       if (requestsError) {
         console.error('Error fetching requests count:', requestsError);
       }
 
-      // Fetch missing stock checks count - don't filter by branch_id
+      // Fetch missing stock checks count - filtered by user's branches
       const currentDate = new Date();
       currentDate.setDate(currentDate.getDate() - 7); // Consider checks missing if not done in last 7 days
       
       const { count: missingChecksCount, error: stockChecksError } = await supabase
         .from('stock_checks')
         .select('id', { count: 'exact', head: true })
-        .lt('checked_at', currentDate.toISOString());
+        .lt('checked_at', currentDate.toISOString())
+        .in('branch_id', storeIds);
         
       if (stockChecksError) {
         console.error('Error fetching missing checks count:', stockChecksError);
@@ -83,38 +90,68 @@ export const useDashboardMetrics = () => {
   };
 
   useEffect(() => {
-    fetchMetrics();
+    if (user && stores.length > 0) {
+      fetchMetrics();
+    } else {
+      setMetrics(defaultMetrics);
+      setIsLoading(false);
+    }
     
     // Subscribe to changes on relevant tables that would affect metrics
-    const channel = supabase
-      .channel('dashboard-metrics-changes')
+    if (!user || stores.length === 0) return;
+    
+    const storeIds = stores.map(store => store.id);
+    
+    const channels = [];
+    
+    // Add channel for branch_inventory changes
+    const inventoryChannel = supabase
+      .channel('dashboard-metrics-inventory')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
-        table: 'branch_inventory'
-      }, () => {
-        fetchMetrics();
-      })
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'stock_checks'
-      }, () => {
-        fetchMetrics();
-      })
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'requests'
+        table: 'branch_inventory',
+        filter: `branch_id=in.(${storeIds.join(',')})` 
       }, () => {
         fetchMetrics();
       })
       .subscribe();
+    channels.push(inventoryChannel);
+    
+    // Add channel for stock_checks changes
+    const checksChannel = supabase
+      .channel('dashboard-metrics-checks')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'stock_checks',
+        filter: `branch_id=in.(${storeIds.join(',')})` 
+      }, () => {
+        fetchMetrics();
+      })
+      .subscribe();
+    channels.push(checksChannel);
+    
+    // Add channel for requests changes
+    const requestsChannel = supabase
+      .channel('dashboard-metrics-requests')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'requests',
+        filter: `branch_id=in.(${storeIds.join(',')})` 
+      }, () => {
+        fetchMetrics();
+      })
+      .subscribe();
+    channels.push(requestsChannel);
       
     return () => {
-      supabase.removeChannel(channel);
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
     };
-  }, []);
+  }, [user, stores]);
 
   return { metrics, isLoading, refetch: fetchMetrics };
 };
