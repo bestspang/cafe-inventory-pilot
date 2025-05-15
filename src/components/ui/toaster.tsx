@@ -1,4 +1,5 @@
 
+// Update toaster component to import from the correct location
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
