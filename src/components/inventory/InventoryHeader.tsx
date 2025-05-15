@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { Archive } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { FormattedMessage } from 'react-intl';
 
 interface InventoryHeaderProps {
@@ -30,18 +28,6 @@ const InventoryHeader: React.FC<InventoryHeaderProps> = ({
           )}
         </p>
       </div>
-      
-      {canModify && (
-        <Button 
-          variant="outline"
-          size="sm"
-          className="gap-1"
-          onClick={onOpenArchives}
-        >
-          <Archive className="h-4 w-4" />
-          <FormattedMessage id="inventory.archives" defaultMessage="Archives" />
-        </Button>
-      )}
     </div>
   );
 };
