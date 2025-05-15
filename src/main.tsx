@@ -29,9 +29,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <IntlProvider locale="en" defaultLocale="en">
             <AuthProvider>
               <StoresProvider>
-                <StockCheckSettingsProvider>
-                  <App />
-                </StockCheckSettingsProvider>
+                <App />
               </StoresProvider>
             </AuthProvider>
           </IntlProvider>

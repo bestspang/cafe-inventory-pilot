@@ -3,13 +3,8 @@ import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/context/AuthContext";
-import { StoresProvider } from "@/context/StoresContext";
-import { LocaleProvider } from "@/context/LocaleContext";
+import { Routes, Route } from "react-router-dom";
 import { seedDemoData } from "@/utils/seedDemoData";
-import { IntlProvider } from "react-intl";
 import enMessages from "@/messages/en.json";
 import thMessages from "@/messages/th.json";
 
@@ -34,8 +29,6 @@ import ComingSoonPage from "./pages/ComingSoonPage";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
 
-const queryClient = new QueryClient();
-
 // Helper component to get locale from context and provide IntlProvider
 const AppWithIntl = ({ children }: { children: React.ReactNode }) => {
   const { locale } = useLocale();
@@ -58,57 +51,49 @@ const App = () => {
   }, []);
   
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <StoresProvider>
-            <LocaleProvider>
-              <AppWithIntl>
-                <BrowserRouter>
-                  <Toaster />
-                  <Sonner />
-                  <Routes>
-                    {/* Public routes - these don't require authentication */}
-                    <Route path="/login" element={
-                      <AuthGuard requireAuth={false} redirectTo="/dashboard">
-                        <Login />
-                      </AuthGuard>
-                    } />
-                    
-                    <Route path="/quick-request" element={<QuickRequest />} />
-                    
-                    {/* Root route - determines where to go based on auth */}
-                    <Route path="/" element={<Index />} />
-                    
-                    {/* Protected routes - require authentication */}
-                    <Route element={<AuthGuard requireAuth={true}><AppLayout /></AuthGuard>}>
-                      <Route path="dashboard" element={<Dashboard />} />
-                      <Route path="inventory" element={<Inventory />} />
-                      <Route path="stock-check" element={<StockCheck />} />
-                      <Route path="requests" element={<Requests />} />
-                      <Route path="requests/new" element={<NewRequest />} />
-                      <Route path="branches" element={<Branches />} />
-                      <Route path="manage-staff" element={<ManageStaff />} />
-                      <Route path="settings" element={<Settings />} />
-                      
-                      {/* Coming Soon Pages */}
-                      <Route path="suppliers" element={<ComingSoonPage />} />
-                      <Route path="purchase-orders" element={<ComingSoonPage />} />
-                      <Route path="reports" element={<ComingSoonPage />} />
-                      <Route path="users" element={<ComingSoonPage />} />
-                      <Route path="profile" element={<ComingSoonPage />} />
-                      
-                      {/* Catch-all for other routes */}
-                      <Route path="*" element={<NotFound />} />
-                    </Route>
-                  </Routes>
-                </BrowserRouter>
-              </AppWithIntl>
-            </LocaleProvider>
-          </StoresProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <Routes>
+        {/* Public routes - these don't require authentication */}
+        <Route path="/login" element={
+          <AuthGuard requireAuth={false} redirectTo="/dashboard">
+            <Login />
+          </AuthGuard>
+        } />
+        
+        <Route path="/quick-request" element={
+          <StockCheckSettingsProvider branchId="">
+            <QuickRequest />
+          </StockCheckSettingsProvider>
+        } />
+        
+        {/* Root route - determines where to go based on auth */}
+        <Route path="/" element={<Index />} />
+        
+        {/* Protected routes - require authentication */}
+        <Route element={<AuthGuard requireAuth={true}><AppLayout /></AuthGuard>}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="stock-check" element={<StockCheck />} />
+          <Route path="requests" element={<Requests />} />
+          <Route path="requests/new" element={<NewRequest />} />
+          <Route path="branches" element={<Branches />} />
+          <Route path="manage-staff" element={<ManageStaff />} />
+          <Route path="settings" element={<Settings />} />
+          
+          {/* Coming Soon Pages */}
+          <Route path="suppliers" element={<ComingSoonPage />} />
+          <Route path="purchase-orders" element={<ComingSoonPage />} />
+          <Route path="reports" element={<ComingSoonPage />} />
+          <Route path="users" element={<ComingSoonPage />} />
+          <Route path="profile" element={<ComingSoonPage />} />
+          
+          {/* Catch-all for other routes */}
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </TooltipProvider>
   );
 };
 
