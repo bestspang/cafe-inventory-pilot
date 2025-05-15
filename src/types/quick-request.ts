@@ -1,20 +1,25 @@
 
-import { Ingredient } from '@/types';
-
-export interface QuickRequestIngredient extends Ingredient {
+export interface QuickRequestIngredient {
+  id: string;
+  name: string;
+  unit: string;
   quantity: number;
+  onHandQty?: number;
+  reorderPt?: number;
 }
 
 export interface StaffMember {
   id: string;
-  staff_name: string;
-  branch_id?: string;
-  created_at?: string;
+  branchId: string;
+  staffName: string;
+  createdAt: string;
+  branchName?: string;
 }
 
 export interface QuickRequestFormState {
   branchId: string;
   staffId: string;
   action: 'request' | 'stock-update';
+  comment?: string;
   ingredients: QuickRequestIngredient[];
 }

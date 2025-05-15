@@ -136,6 +136,7 @@ const QuickRequestFormContainer: React.FC<QuickRequestFormContainerProps> = ({ o
           )}
         </div>
         
+        {/* Add the request summary component */}
         {selectedIngredients.length > 0 && (
           <QuickRequestSummary 
             ingredients={selectedIngredients}
