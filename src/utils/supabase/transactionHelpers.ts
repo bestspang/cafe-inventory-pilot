@@ -4,8 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 // Begin a transaction
 export async function beginTransaction() {
   try {
-    // Call the RPC function without specific type assertion
-    const { data, error } = await supabase.rpc('begin_transaction');
+    // Use a type assertion to bypass TypeScript's type checking for the RPC function name
+    const { data, error } = await supabase.rpc('begin_transaction' as any);
+    
+    if (error) {
+      console.error('Error beginning transaction:', error);
+    }
+    
     return { data, error };
   } catch (error) {
     console.error('Error beginning transaction:', error);
@@ -16,8 +21,13 @@ export async function beginTransaction() {
 // Commit a transaction
 export async function commitTransaction() {
   try {
-    // Call the RPC function without specific type assertion
-    const { data, error } = await supabase.rpc('commit_transaction');
+    // Use a type assertion to bypass TypeScript's type checking for the RPC function name
+    const { data, error } = await supabase.rpc('commit_transaction' as any);
+    
+    if (error) {
+      console.error('Error committing transaction:', error);
+    }
+    
     return { data, error };
   } catch (error) {
     console.error('Error committing transaction:', error);
@@ -28,8 +38,13 @@ export async function commitTransaction() {
 // Rollback a transaction
 export async function rollbackTransaction() {
   try {
-    // Call the RPC function without specific type assertion
-    const { data, error } = await supabase.rpc('rollback_transaction');
+    // Use a type assertion to bypass TypeScript's type checking for the RPC function name
+    const { data, error } = await supabase.rpc('rollback_transaction' as any);
+    
+    if (error) {
+      console.error('Error rolling back transaction:', error);
+    }
+    
     return { data, error };
   } catch (error) {
     console.error('Error rolling back transaction:', error);
